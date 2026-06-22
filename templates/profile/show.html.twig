@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'profile.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h1 class="h4 mb-3">{{ 'profile.page.title'|trans({}, 'messages', currentLocale) }}</h1>
+                    <p class="text-muted mb-4">{{ 'profile.page.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">{{ 'profile.fields.email'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8">{{ profileUser.email }}</dd>
+
+                        <dt class="col-sm-4">{{ 'profile.fields.pseudonym'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8">{{ profileUser.pseudonym }}</dd>
+
+                        <dt class="col-sm-4">{{ 'profile.fields.status'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8">
+                            {{ (profileUser.active ? 'profile.status.active' : 'profile.status.inactive')|trans({}, 'messages', currentLocale) }}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h2 class="h6">{{ 'profile.sections.public_profile'|trans({}, 'messages', currentLocale) }}</h2>
+                    <form method="post" action="{{ path('app_profile_update_pseudonym') }}" class="row g-2">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label" for="pseudonym">{{ 'profile.fields.pseudonym'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="pseudonym" class="form-control" type="text" name="pseudonym" value="{{ profileUser.pseudonym }}" required>
+                        </div>
+                        <div class="col-12 col-md-4 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" type="submit">{{ 'profile.actions.update_pseudonym'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h2 class="h6">{{ 'profile.sections.email_change'|trans({}, 'messages', currentLocale) }}</h2>
+                    <form method="post" action="{{ path('app_profile_email_request') }}" class="row g-2 mb-3">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label" for="new_email">{{ 'profile.fields.new_email'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="new_email" class="form-control" type="email" name="new_email" placeholder="{{ 'profile.placeholders.new_email'|trans({}, 'messages', currentLocale) }}" required>
+                        </div>
+                        <div class="col-12 col-md-4 d-flex align-items-end">
+                            <button class="btn btn-outline-primary w-100" type="submit">{{ 'profile.actions.request_email_change'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                    </form>
+
+                    <form method="post" action="{{ path('app_profile_email_confirm') }}" class="row g-2">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label" for="email_totp_code">{{ 'profile.fields.totp_code'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="email_totp_code" class="form-control" type="text" name="email_totp_code" placeholder="{{ 'profile.placeholders.totp_code'|trans({}, 'messages', currentLocale) }}" required>
+                        </div>
+                        <div class="col-12 col-md-4 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" type="submit">{{ 'profile.actions.confirm_email_change'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6">{{ 'profile.sections.password_change'|trans({}, 'messages', currentLocale) }}</h2>
+                    <form method="post" action="{{ path('app_profile_password_request') }}" class="mb-3">
+                        <button class="btn btn-outline-primary" type="submit">{{ 'profile.actions.send_password_totp'|trans({}, 'messages', currentLocale) }}</button>
+                    </form>
+
+                    <form method="post" action="{{ path('app_profile_password_confirm') }}" class="row g-2">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="current_password">{{ 'profile.fields.current_password'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="current_password" class="form-control" type="password" name="current_password" required>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="new_password">{{ 'profile.fields.new_password'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="new_password" class="form-control" type="password" name="new_password" required>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="password_totp_code">{{ 'profile.fields.totp_code'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="password_totp_code" class="form-control" type="text" name="password_totp_code" required>
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary" type="submit">{{ 'profile.actions.confirm_password_change'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

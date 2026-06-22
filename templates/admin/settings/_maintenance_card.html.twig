@@ -1,0 +1,33 @@
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+<div class="card shadow-sm h-100" id="settings-maintenance">
+    <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+                <h2 class="h5 mb-1">{{ 'admin.settings.maintenance.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <p class="text-body-secondary small mb-0">{{ 'admin.settings.maintenance.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+            </div>
+            {% if accessGateSettings.maintenanceModeEnabled %}
+                <span class="badge text-bg-warning">{{ 'admin.settings.maintenance.status_active'|trans({}, 'messages', currentLocale) }}</span>
+            {% else %}
+                <span class="badge text-bg-success">{{ 'admin.settings.maintenance.status_inactive'|trans({}, 'messages', currentLocale) }}</span>
+            {% endif %}
+        </div>
+        <form method="post" action="{{ path('admin_settings_maintenance_update') }}" class="row g-3">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token(maintenanceCsrfToken) }}">
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="maintenance_mode_enabled" name="maintenance_mode_enabled" value="1" {% if accessGateSettings.maintenanceModeEnabled %}checked{% endif %}>
+                    <label class="form-check-label" for="maintenance_mode_enabled">{{ 'maintenance.admin.enabled_label'|trans({}, 'messages', currentLocale) }}</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="maintenance_message">{{ 'maintenance.admin.message_label'|trans({}, 'messages', currentLocale) }}</label>
+                <textarea id="maintenance_message" name="maintenance_message" class="form-control" rows="3" placeholder="{{ 'maintenance.admin.message_placeholder'|trans({}, 'messages', currentLocale) }}">{{ accessGateSettings.maintenanceMessage|default('') }}</textarea>
+                <div class="form-text">{{ 'maintenance.admin.message_help'|trans({}, 'messages', currentLocale) }}</div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">{{ 'maintenance.admin.save'|trans({}, 'messages', currentLocale) }}</button>
+            </div>
+        </form>
+    </div>
+</div>

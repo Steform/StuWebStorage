@@ -1,0 +1,22 @@
+<div class="modal fade" id="filesDeleteConfirmModal" tabindex="-1" aria-labelledby="filesDeleteConfirmModalTitle" aria-describedby="filesDeleteConfirmModalMessage" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="filesDeleteConfirmModalTitle">{{ 'files.delete_confirm.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'files.delete_confirm.close_aria'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <form id="files-delete-confirm-form" method="post" action="">
+                <div class="modal-body">
+                    <p id="filesDeleteConfirmModalMessage" class="mb-2">{{ 'files.delete_confirm.message'|trans({}, 'messages', currentLocale) }}</p>
+                    <p class="mb-3"><strong data-files-delete-target-name>—</strong></p>
+                    <input type="hidden" name="_csrf_token" value="" data-files-delete-csrf-input>
+                    {% include 'files/_listing_retain.html.twig' %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.delete_confirm.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                    <button type="submit" class="btn btn-danger" data-files-delete-confirm-submit>{{ 'files.delete_confirm.confirm'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,30 @@
+.flash-toast-container {
+    z-index: 1200;
+    width: min(24rem, calc(100vw - 1rem));
+}
+
+.flash-toast-container .toast {
+    width: 100%;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+}
+
+.flash-toast-container .flash-toast-content {
+    width: 100%;
+}
+
+.flash-toast-container .flash-toast-body {
+    min-width: 0;
+}
+
+.flash-toast-container .flash-toast-close {
+    margin: 0.5rem 0.5rem 0 0.5rem;
+    align-self: flex-start;
+}
+
+@media (max-width: 576px) {
+    .flash-toast-container {
+        left: 0.5rem;
+        right: 0.5rem;
+        width: auto;
+    }
+}

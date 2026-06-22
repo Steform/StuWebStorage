@@ -1,0 +1,57 @@
+{# Global reusable media preview modal (images, PDF iframe, native video/audio, plain text). #}
+{% set currentLocale = app.request.locale|default('fr') %}
+<div
+    class="modal fade"
+    id="mediaPreviewModal"
+    tabindex="-1"
+    aria-labelledby="mediaPreviewModalTitle"
+    aria-hidden="true"
+    data-media-preview-default-title="{{ 'media.preview.title'|trans({}, 'messages', currentLocale) }}"
+    data-media-preview-pdf-frame-title-default="{{ 'media.preview.pdf_frame_title'|trans({}, 'messages', currentLocale) }}"
+    data-media-preview-video-label="{{ 'media.preview.video_label'|trans({}, 'messages', currentLocale) }}"
+    data-media-preview-audio-label="{{ 'media.preview.audio_label'|trans({}, 'messages', currentLocale) }}"
+    data-media-preview-text-label="{{ 'media.preview.text_label'|trans({}, 'messages', currentLocale) }}"
+>
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="mediaPreviewModalTitle">{{ 'media.preview.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'media.preview.close_aria'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <div class="modal-body media-preview-modal-body p-0">
+                <div id="mediaPreviewBody" class="media-preview-modal-body__inner">
+                    <p id="mediaPreviewPlaybackError" class="alert alert-warning d-none mx-3 mt-3 mb-0" role="alert">{{ 'media.preview.playback_failed'|trans({}, 'messages', currentLocale) }}</p>
+                    <p id="mediaPreviewTextLoadError" class="alert alert-danger d-none mx-3 mt-3 mb-0" role="alert">{{ 'media.preview.text_load_failed'|trans({}, 'messages', currentLocale) }}</p>
+                    <div class="media-preview-slot media-preview-slot--image d-flex justify-content-center align-items-center p-3 bg-body-secondary rounded" data-media-preview-role="image">
+                        <img id="mediaPreviewImage" src="" alt="" class="media-preview-modal__img">
+                    </div>
+                    <div class="media-preview-slot media-preview-slot--pdf d-none w-100 bg-body-secondary rounded" data-media-preview-role="pdf" aria-hidden="true">
+                        <div class="d-flex flex-wrap align-items-center gap-2 px-3 pt-3 pb-2 border-bottom border-secondary-subtle">
+                            <a id="mediaPreviewPdfOpenTab" class="btn btn-sm btn-outline-primary" href="#" target="_blank" rel="noopener noreferrer">{{ 'media.preview.open_new_tab'|trans({}, 'messages', currentLocale) }}</a>
+                        </div>
+                        <div class="media-preview-pdf-frame-wrap p-3 pt-2">
+                            <iframe id="mediaPreviewPdfFrame" class="media-preview-modal__pdf-frame" title="{{ 'media.preview.pdf_frame_title'|trans({}, 'messages', currentLocale) }}" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <div class="media-preview-slot media-preview-slot--video d-none p-3 bg-body-secondary rounded" data-media-preview-role="video" aria-hidden="true">
+                        <div class="d-flex flex-wrap align-items-center gap-2 pb-2 mb-2 border-bottom border-secondary-subtle">
+                            <button type="button" id="mediaPreviewVideoFullscreen" class="btn btn-sm btn-outline-secondary">{{ 'media.preview.fullscreen'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                        <div id="mediaPreviewVideoWrap" class="media-preview-video-wrap bg-black rounded overflow-hidden">
+                            <video id="mediaPreviewVideo" class="media-preview-modal__video w-100" controls playsinline preload="metadata" aria-label="{{ 'media.preview.video_label'|trans({}, 'messages', currentLocale) }}"></video>
+                        </div>
+                    </div>
+                    <div class="media-preview-slot media-preview-slot--audio d-none p-3 bg-body-secondary rounded" data-media-preview-role="audio" aria-hidden="true">
+                        <audio id="mediaPreviewAudio" class="media-preview-modal__audio w-100" controls preload="metadata" aria-label="{{ 'media.preview.audio_label'|trans({}, 'messages', currentLocale) }}"></audio>
+                    </div>
+                    <div class="media-preview-slot media-preview-slot--text d-none p-3 bg-body-secondary rounded" data-media-preview-role="text" aria-hidden="true">
+                        <pre id="mediaPreviewText" class="media-preview-modal__text mb-0" tabindex="0" aria-label="{{ 'media.preview.text_label'|trans({}, 'messages', currentLocale) }}"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'media.preview.close_button'|trans({}, 'messages', currentLocale) }}</button>
+            </div>
+        </div>
+    </div>
+</div>

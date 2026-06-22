@@ -1,0 +1,37 @@
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+<nav class="navbar navbar-expand-lg border-bottom bg-body-tertiary shadow-sm">
+    <div class="container-fluid px-3">
+        <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="{{ path('app_home') }}">
+            <i class="bi bi-cloud-arrow-up-fill text-primary" aria-hidden="true"></i>
+            <span>{{ storage_site_title() }}</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#storageNavCollapse" aria-controls="storageNavCollapse" aria-expanded="false" aria-label="Menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="storageNavCollapse">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                {% if app.user %}
+                    {% if is_granted('ROLE_SHARE') %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('files_index') }}">{{ 'app.nav.files_user'|trans({}, 'messages', currentLocale) }}</a>
+                        </li>
+                    {% endif %}
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('admin_files_index') }}">{{ 'app.nav.files_admin'|trans({}, 'messages', currentLocale) }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('admin_settings_index') }}">{{ 'app.nav.dashboard'|trans({}, 'messages', currentLocale) }}</a>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    {% if not storage_maintenance_mode_enabled() %}
+                        <li class="nav-item">
+                            <a class="btn btn-primary btn-sm" href="{{ path('app_login') }}">{{ 'storage.home.cta_login'|trans({}, 'messages', currentLocale) }}</a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,948 @@
+app:
+  close: Schliessen
+  meta:
+    title: 'Lebenslauf- und Freigabeplattform'
+  nav:
+    home: Startseite
+    my_profile: 'Mein Profil'
+    logout: Abmelden
+    language: Sprache
+    files_user: 'Meine Dateien'
+    files_admin: 'Alle Dateien (Admin)'
+    security_users: Benutzerliste
+    security_invite: 'Benutzer einladen'
+    settings: Konfiguration
+    dashboard: Dashboard
+    bug_reports: 'Bug-Tickets'
+profile:
+  meta:
+    title: 'Mein Profil'
+  page:
+    title: 'Mein Profil'
+    subtitle: 'Sehen Sie Ihre Kontoinformationen.'
+  sections:
+    public_profile: 'Oeffentliches Profil'
+    email_change: 'Meine E-Mail aendern'
+    password_change: 'Mein Passwort aendern'
+  fields:
+    email: E-Mail
+    pseudonym: Pseudonym
+    status: Status
+    new_email: 'Neue E-Mail'
+    totp_code: TOTP-Code
+    current_password: 'Aktuelles Passwort'
+    new_password: 'Neues Passwort'
+  placeholders:
+    new_email: neu@example.com
+    totp_code: '123456'
+  actions:
+    update_pseudonym: 'Pseudonym aktualisieren'
+    request_email_change: 'TOTP-Code senden'
+    confirm_email_change: 'E-Mail-Aenderung bestaetigen'
+    send_password_totp: 'Passwort-TOTP-Code senden'
+    confirm_password_change: 'Passwort aendern'
+  status:
+    active: Aktiv
+    inactive: Inaktiv
+  success:
+    pseudonym_updated: 'Pseudonym aktualisiert.'
+    email_change_requested: 'TOTP-Code an die neue E-Mail gesendet.'
+    email_updated: 'E-Mail nach Bestaetigung aktualisiert.'
+    password_totp_sent: 'TOTP-Code fuer Passwortaenderung gesendet.'
+    password_updated: 'Passwort geaendert.'
+  error:
+    pseudonym_required: 'Pseudonym ist erforderlich.'
+    pseudonym_too_long: 'Pseudonym ist zu lang.'
+    email_invalid: 'Ungueltige neue E-Mail.'
+    email_same_as_current: 'Neue E-Mail ist identisch mit der aktuellen E-Mail.'
+    email_already_used: 'Diese E-Mail wird bereits verwendet.'
+    email_change_not_found: 'Keine ausstehende E-Mail-Aenderung gefunden.'
+    totp_invalid: 'Ungueltiger oder abgelaufener TOTP-Code.'
+    password_required: 'Neues Passwort ist erforderlich.'
+    current_password_invalid: 'Aktuelles Passwort ist ungueltig.'
+security:
+  login:
+    meta:
+      title: Anmeldung
+    title: 'Sichere Anmeldung'
+    subtitle: 'Melden Sie sich mit E-Mail und Passwort an.'
+    email: E-Mail
+    email_placeholder: sie@example.com
+    password: Passwort
+    password_placeholder: 'Ihr Passwort'
+    totp: TOTP-Code
+    totp_placeholder: '123456'
+    submit: Fortfahren
+    remember_me: 'Diesem Geraet fuer 6 Monate vertrauen'
+    error_invalid_credentials: 'Ungueltige Zugangsdaten oder TOTP-Code.'
+  totp:
+    meta:
+      title: TOTP-Bestaetigung
+    title: 'Bestaetigung in zweitem Schritt'
+    subtitle: 'Geben Sie den per E-Mail gesendeten TOTP-Code ein.'
+    submit: 'Code bestaetigen'
+    resend: 'Code erneut per E-Mail senden'
+    resend_wait: 'Erneut senden in %seconds% s'
+    resend_error: 'Der Code kann derzeit nicht erneut gesendet werden.'
+auth:
+  totp:
+    challenge:
+      invalid_payload: 'E-Mail ist erforderlich, um einen TOTP-Code zu senden.'
+      sent: 'TOTP-Code wurde per E-Mail gesendet.'
+      cooldown: 'Bitte warten Sie, bevor Sie einen weiteren Code anfordern.'
+      rate_limited: 'Zu viele erneute Sendungen. Bitte warten Sie, bevor Sie einen neuen Code anfordern.'
+    invalid: 'Ungueltiger oder abgelaufener TOTP-Code.'
+    valid: 'TOTP-Code bestaetigt.'
+mail:
+  invite:
+    subject: 'Ihre Benutzereinladung'
+    title: 'Einladung zur Plattform'
+    intro: 'Sie haben eine Einladung erhalten. Nutzen Sie den untenstehenden Link, um Ihr Konto zu aktivieren und Ihr Passwort festzulegen.'
+    cta: 'Mein Konto aktivieren'
+    expiry_hint: 'Dieser Link laeuft schnell ab. Fordern Sie bei Bedarf eine neue Einladung an.'
+    security_hint: 'Teilen Sie diesen Link niemals. Unser Team wird Sie nie danach fragen.'
+    footer: 'Automatische Einladungs-E-Mail - bitte nicht antworten.'
+  totp:
+    subject: 'Ihr TOTP-Bestaetigungscode'
+    brand: StuWebStorage
+    title: Bestaetigungscode
+    intro: 'Verwenden Sie den folgenden Code, um die Validierung Ihrer Administratorsitzung abzuschliessen.'
+    code_label: TOTP-Code
+    expiry_hint: 'Dieser Code laeuft schnell ab. Fordern Sie bei Bedarf einen neuen Code an.'
+    security_hint: 'Teilen Sie diesen Code niemals. Unser Team wird Sie nie danach fragen.'
+    footer: 'Automatische Sicherheits-E-Mail - bitte nicht antworten.'
+share:
+  file:
+    expired: 'Diese geteilte Datei ist abgelaufen oder nicht mehr verfuegbar.'
+download:
+  challenge:
+    invalid_payload: 'E-Mail und Dateitoken sind erforderlich.'
+    resource_not_found: 'Diese Datei ist oeffentlich nicht verfuegbar.'
+    cooldown: 'Bitte warten Sie, bevor Sie einen neuen Code anfordern.'
+    sent: 'Ein Bestaetigungscode wurde an Ihre E-Mail gesendet.'
+    totp_required: 'Ungueltiger oder abgelaufener Bestaetigungscode.'
+  verify:
+    invalid_payload: 'Sitzungskennung und Code sind erforderlich.'
+    challenge_not_found: 'Diese Bestaetigungssitzung wurde nicht gefunden.'
+  resource:
+    unreadable: 'Die Datei konnte nicht gelesen werden.'
+  authorized: 'Sie koennen die Datei jetzt herunterladen.'
+  totp_ok_password_required: 'E-Mail verifiziert. Geben Sie das Zugangspasswort ein, um fortzufahren.'
+  share_password:
+    invalid: 'Zugriff verweigert. Pruefen Sie das Passwort und versuchen Sie es erneut.'
+    rate_limited: 'Zu viele Versuche. Bitte warten Sie etwa fuenf Minuten, bevor Sie es erneut versuchen.'
+    preauth_invalid: 'Dieser Verifizierungsschritt ist abgelaufen. Bestaetigen Sie den E-Mail-Code erneut.'
+  public_folder:
+    zip_empty: 'In diesem Ordner ist kein oeffentlich freigegebenes File zum Download verfuegbar.'
+    zip_limit_files: 'Zu viele Dateien fuer ein ZIP. Bitte den Besitzer, den Ordner aufzuteilen oder oeffentliche Freigaben zu reduzieren.'
+    zip_limit_bytes: 'Das ZIP wuerde die maximal erlaubte Gesamtgroesse ueberschreiten.'
+    zip_limit_time: 'Das Erstellen des ZIP hat zu lange gedauert. Bitte spaeter erneut versuchen.'
+media:
+  preview:
+    title: Dateivorschau
+    close_aria: 'Vorschaufenster schliessen'
+    close_button: Schliessen
+    pdf_frame_title: 'Vorschau des PDF-Dokuments'
+    open_new_tab: 'In neuem Tab oeffnen'
+    video_label: Video-Vorschau
+    audio_label: Audio-Vorschau
+    fullscreen: Vollbild
+    playback_failed: 'Diese Mediendatei konnte in Ihrem Browser nicht abgespielt werden (nicht unterstuetztes Format oder Codec).'
+    text_label: Textdatei-Vorschau
+    text_load_failed: 'Der Dateiinhalt konnte nicht geladen werden.'
+files:
+  meta:
+    title: 'Meine Dateien'
+  section:
+    my_files: 'Meine Dateien'
+    shared_for_me: 'Mit mir geteilt'
+    shared_for_me_empty: 'Aktuell wurden keine Dateien mit Ihnen geteilt.'
+  listing_scope:
+    empty_owned: 'Keine Dateien in diesem Bereich.'
+    empty_shared: 'Keine empfangenen Freigaben in diesem Bereich.'
+  intro: 'Uploads sind at rest verschluesselt. Sichtbarkeit richtet sich nach Ihren Rollen.'
+  admin:
+    mode_banner: 'Administrationsmodus aktiv (Bereich: %owner%).'
+    owner_fallback_notice: 'Kein Zielbenutzer in der URL. Dateien fuer Konto %label% (ID %id%).'
+    view_scope_owner: 'Ein Benutzer'
+    view_scope_all: 'Alle Benutzer'
+    owner_filter_label: Benutzer
+    owner_filter_apply: Anwenden
+    owner_badge: 'Eigentuemer: %owner%'
+    target_owner_label: Zielbenutzer
+    target_owner_hint: 'Namen oder E-Mail eingeben, Vorschlag waehlen oder die vorausgefuellte ID aus dem aktiven Bereich nutzen.'
+    users_pagination:
+      nav_aria: Benutzerlisten-Seitennummerierung
+      summary: 'Benutzer %start%–%end% von %total%'
+      per_page: 'Pro Seite'
+      page_controls: Seitennavigation
+      prev: Zurueck
+      next: Weiter
+    users_pane:
+      grid_fallback: 'Wechseln Sie zur Listenansicht, um Ordner in dieser Ansicht zu durchsuchen.'
+  nav:
+    filter: Filtern
+  toolbar:
+    send: Senden
+    columns_label: Spalten
+    columns_aria: 'Sichtbare Spalten auswählen'
+    action_global: 'Aktion (%count%)'
+    heading: 'Suche und Filter'
+    search_label: Suchen
+    search_placeholder: Suchen
+    filter_public_label: Veroeffentlichung
+    filter_public_all: Alle
+    filter_public_yes: 'Nur oeffentlich'
+    filter_public_no: 'Nur privat'
+    extensions_label: Endungen
+    sort_label: Sortierung
+    sort_name: Name
+    sort_size: Groesse
+    sort_uploaded: Hochgeladen
+    sort_modified: Geaendert
+    sort_ext: Endung
+    dir_label: Richtung
+    dir_asc: Aufsteigend
+    dir_desc: Absteigend
+    apply: Anwenden
+    reset: Zuruecksetzen
+    listing_scope_owned: 'Meine Dateien'
+    listing_scope_shared: 'Mit mir geteilt'
+    listing_scope_both: Beides
+    listing_scope_group_aria: 'Anzeigebereich der Dateien'
+    display_menu_label: Anzeige
+    display_menu_aria: 'Bereich und Layout'
+    display_section_scope: Bereich
+    display_section_layout: Layout
+  search:
+    clear_aria: 'Suche zuruecksetzen'
+  advanced:
+    open: 'Erweiterte Filter'
+    title: 'Erweiterte Filter'
+    close: Schliessen
+    apply: 'Filter anwenden'
+    cancel: Abbrechen
+    reset_only: 'Erweiterte Filter zuruecksetzen'
+    reset_in_modal: 'Erweiterte Filter loeschen'
+    uploaded_after: 'Hochgeladen nach'
+    uploaded_before: 'Hochgeladen vor'
+    updated_after: 'Geaendert nach'
+    updated_before: 'Geaendert vor'
+    expires_after: 'Laueft ab nach'
+    expires_before: 'Laueft ab vor'
+    filter_has_grant: 'Mit Nutzerfreigabe'
+    filter_has_grant_all: Egal
+    filter_has_grant_yes: 'Mindestens eine Freigabe'
+    filter_has_grant_no: 'Keine Freigabe'
+    grantees_label: Freigabe-Empfaenger
+    grantees_hint: 'Nur bereits freigegebene Nutzer erscheinen.'
+    extensions_dropdown_aria: 'Dateierweiterungen zum Filtern waehlen'
+    extensions_button_all: 'Alle Erweiterungen'
+    extensions_button_count: '%count% Erweiterung(en) gewaehlt'
+    grantees_dropdown_aria: 'Freigabe-Empfaenger zum Filtern waehlen'
+    grantees_button_all: 'Alle Empfaenger'
+    grantees_button_count: '%count% Empfaenger gewaehlt'
+    filter_select_all: 'Alle auswaehlen'
+    filter_clear_selection: 'Auswahl leeren'
+    filters_owned_list_hint: 'Erweiterungs- und Empfaengerfilter gelten fuer Ihre eigene Dateiliste. Der Bereich „Mit mir geteilt“ uebernimmt hier nur die Sortierung.'
+    filters_shared_list_hint: 'Erweiterungs- und Empfaengerfilter schraenken „Mit mir geteilt“ nicht ein; es gilt nur die Sortierung.'
+    view_layout: Darstellung
+  chips:
+    search: 'Suche: %value%'
+    filter_public_yes: 'Sichtbarkeit: oeffentlich'
+    filter_public_no: 'Sichtbarkeit: privat'
+    extensions: 'Endungen: %list%'
+    filter_has_grant_yes: 'Mit Nutzerfreigabe'
+    filter_has_grant_no: 'Ohne Nutzerfreigabe'
+    uploaded_after: 'Hochgeladen nach %date%'
+    uploaded_before: 'Hochgeladen vor %date%'
+    updated_after: 'Geaendert nach %date%'
+    updated_before: 'Geaendert vor %date%'
+    expires_after: 'Ablauf nach %date%'
+    expires_before: 'Ablauf vor %date%'
+    grantee: '%name% (#%id%)'
+  view:
+    list: Liste
+    grid: Raster
+    toggle_aria: 'Listen- oder Rasteransicht'
+  grid:
+    open_actions_aria: 'Dateiaktionen fuer %name% oeffnen'
+    badge:
+      public_aria: 'Oeffentliche Freigabe aktiv'
+      friends_aria: 'Freundes-Freigabe aktiv'
+  upload:
+    heading: 'Datei hochladen'
+    collapsed_heading: 'Upload-Optionen anzeigen (verschluesselt)'
+    modal_title: 'Datei hochladen'
+    modal_close: 'Upload-Dialog schliessen'
+    modal_cancel: Abbrechen
+    drop_hint: 'Datei hier ablegen oder das Feld unten nutzen.'
+    file_label: Datei
+    visibility_label: Sichtbarkeit
+    visibility_private: Privat
+    visibility_public: Oeffentlich
+    expires_label: 'Laueft ab am (optional)'
+    grantees_label: 'Berechtigte Benutzer (private Freigabe)'
+    grantee_search_placeholder: 'Mindestens zwei Buchstaben des Pseudonyms'
+    grantee_search_hint: 'Empfaenger aus den Vorschlaegen auswaehlen (bis zu fuenf, Pseudonym).'
+    grantees_selected_aria: 'Ausgewaehlte Empfaenger fuer private Freigabe'
+    grantee_label_fallback: Benutzer
+    grantee_fetch_error: 'Suche nach Pseudonym fehlgeschlagen. Bitte erneut versuchen.'
+    grantee_live_none: 'Keine passenden Benutzer.'
+    grantee_live_results: '%count% Treffer.'
+    grantee_remove_aria: 'Diesen Empfaenger entfernen'
+    submit: Hochladen
+    bytes_hint: 'Maximale Klartextgroesse: %formatted_size%.'
+    progress_sending: 'Wird gesendet'
+    progress_processing: 'Verarbeitung auf dem Server'
+    progress_bar_aria: 'Fortschritt des Datei-Uploads'
+    xhr_network_error: 'Server nicht erreichbar. Verbindung pruefen und erneut versuchen.'
+    selected_byte_size_label: 'Groesse:'
+  table:
+    name: Name
+    extension: Typ
+    pseudo: Pseudonym
+    size: Groesse
+    uploaded: Hochgeladen
+    modified: 'Geaendert am'
+    expires: Ablauf
+    visibility: Sichtbarkeit
+    share_public: Oeffentlich
+    share_friends: Geteilt
+    token: 'Oeffentliches Token'
+    actions: Aktionen
+    sort:
+      state:
+        none: 'Nicht sortiert'
+        desc: 'Absteigend sortiert'
+        asc: 'Aufsteigend sortiert'
+  boolean:
+    'yes': Ja
+    'no': Nein
+  visibility:
+    public: Oeffentlich
+    private: Privat
+  action:
+    label: Aktionen
+    create_folder: 'Ordner erstellen'
+    download: Herunterladen
+    delete: Loeschen
+    delete_selection: 'Auswahl loeschen'
+    move_selection: 'Auswahl verschieben'
+    download_selection: 'Auswahl herunterladen'
+    share: Freigeben
+    share_public: 'Oeffentliche Freigabe'
+    share_friends: Freunde-Freigabe
+    make_public: 'Oeffentlich machen'
+    make_private: 'Privat machen'
+    add_grant: 'Freigabe hinzufuegen'
+    revoke_grant: Entziehen
+    properties: Eigenschaften
+    preview: Vorschau
+    rename: Umbenennen
+    copy_public_link: 'Link kopieren'
+    copy_public_link_with_password: 'Link mit Passwort kopieren'
+    copy_public_link_aria: 'Oeffentlichen Link in die Zwischenablage kopieren'
+    copy_public_link_with_password_aria: 'Oeffentlichen Link inklusive Passwort in die Zwischenablage kopieren'
+    copy_public_link_done: 'Oeffentlicher Link in die Zwischenablage kopiert.'
+    copy_public_link_failed: 'Link konnte nicht kopiert werden.'
+    copy_public_link_password_missing: 'Oeffentliches Passwort nicht verfuegbar. Oeffnen Sie die oeffentliche Freigabe und pruefen Sie, ob ein Passwort aktiv ist.'
+    menu:
+      global_aria: 'Aktionen auf Auswahl'
+  folder:
+    root: 'Wurzel'
+    open: 'Ordner %name% oeffnen'
+    breadcrumb:
+      aria: Ordner-Breadcrumb
+    field:
+      name: Ordnername
+    action:
+      create: 'Neuer Ordner'
+      open: Oeffnen
+      properties: Eigenschaften
+      share_public: 'Oeffentlich teilen'
+      share_friends: 'Mit Freunden teilen'
+      rename: Umbenennen
+      download_zip: 'ZIP herunterladen'
+      delete: 'Ordner loeschen'
+    rename:
+      modal_title: 'Ordner umbenennen'
+    modal:
+      create_title: 'Ordner erstellen'
+      delete_title: 'Ordner loeschen'
+      delete_recursive_message: 'Der Ordner ist nicht leer. Moechten Sie ihn wirklich loeschen?'
+    properties:
+      title: Ordnereigenschaften
+      total_size: Gesamtgroesse
+      total_files: Dateianzahl
+      total_subfolders: Unterordneranzahl
+      error: 'Ordnereigenschaften konnten nicht geladen werden.'
+    share:
+      public:
+        modal_title_single: 'Ordner oeffentlich teilen'
+      friends:
+        modal_title_single: 'Ordner mit Freunden teilen'
+        friends_expiration_mixed: 'Die Dateien in diesem Ordner haben fuer diesen Empfaenger unterschiedliche Ablaufdaten.'
+        friends_grant_expired: Abgelaufen
+    flash:
+      name_required: 'Ordnername ist erforderlich.'
+      already_exists: 'Ein Ordner mit diesem Namen existiert hier bereits.'
+      name_conflict_with_file: 'Eine Datei mit diesem Namen existiert an diesem Ort bereits.'
+      parent_invalid: 'Der ausgewaehlte Elternordner ist ungueltig.'
+      created: 'Ordner erfolgreich erstellt.'
+      deleted_recursive: 'Ordner rekursiv geloescht.'
+      share_empty: 'Dieser Ordner enthaelt derzeit keine teilbaren Dateien.'
+    public_link:
+      resolve_failed: 'Oeffentlicher Link konnte nicht erstellt werden. Pruefen Sie die Ordnerfreigabe oder versuchen Sie es erneut.'
+      no_files: 'In diesem Ordner wurde keine geeignete Datei fuer einen oeffentlichen Link gefunden.'
+      copy_fallback_intro: 'Ihr oeffentlicher Link ist bereit. Kopieren Sie aus dem Feld oder mit der Schaltflaeche.'
+  public_landing:
+    meta_title: 'Geteilte Datei herunterladen'
+    title: 'Geteilte Datei'
+    intro: 'Geben Sie Ihre E-Mail ein, erhalten Sie einen Code, bestaetigen Sie Vorschau (wenn moeglich) und Download.'
+    preview_alt: 'Vorschau: %name%'
+    file_name_label: Dateiname
+    size_label: Groesse
+    type_label: Typ
+    type_unknown: Unbekannt
+    uploaded_label: 'Hochgeladen am'
+    public_expires_label: 'Oeffentlicher Link laeuft ab'
+    public_expires_never: 'Kein Ablauf'
+    section_email_title: E-Mail-Bestaetigung
+    email_hint: 'Wir senden einen kurzen Code, um Missbrauch des Links zu begrenzen.'
+    email_label: E-Mail
+    email_placeholder: sie@beispiel.de
+    send_code: 'Code senden'
+    code_label: 'Code aus der E-Mail'
+    code_placeholder: '6 Ziffern'
+    verify_submit: 'Bestaetigen und herunterladen'
+    download_file: 'Datei herunterladen'
+    share_password_label: Zugangspasswort
+    share_password_submit: 'Passwort bestaetigen und herunterladen'
+    share_password_hint: 'Das Passwort in der URL (?share_password=) ist optional und kann in der Browserhistorie erscheinen.'
+    api_error: 'Etwas ist schiefgelaufen. Bitte erneut versuchen.'
+  public_folder_landing:
+    meta_title: 'Geteilten Ordner herunterladen (ZIP)'
+    title: 'Geteilter Ordner'
+    intro: 'Geben Sie Ihre E-Mail ein, erhalten Sie einen Code und bestaetigen Sie den Download eines ZIP mit Dateien, die in diesem Ordnerbaum eine aktive oeffentliche Freigabe haben.'
+    folder_name_label: Ordnername
+    public_files_label: 'Oeffentliche Dateien (Teilbaum)'
+    public_expires_label: 'Oeffentliche Freigabe laeuft ab'
+    public_expires_never: 'Kein Ablauf'
+    no_public_files_hint: 'Derzeit keine Datei mit aktiver oeffentlicher Freigabe in diesem Baum. Nach der Verifizierung kann das ZIP fehlschlagen, bis Dateien oeffentlich freigegeben sind.'
+    section_email_title: E-Mail-Verifizierung
+    email_hint: 'Wir senden einen kurzen Code, um diesen Ordnerlink vor Missbrauch zu schuetzen.'
+    email_label: E-Mail
+    email_placeholder: sie@beispiel.de
+    send_code: 'Code senden'
+    code_label: 'Code aus der E-Mail'
+    code_placeholder: '6 Ziffern'
+    verify_submit: 'Bestaetigen und ZIP laden'
+    download_zip: 'ZIP herunterladen'
+    share_password_label: Zugangspasswort
+    share_password_submit: 'Passwort bestaetigen und ZIP laden'
+    share_password_hint: 'Das Passwort in der URL ist optional; es kann in der Browserhistorie erscheinen.'
+    api_error: 'Etwas ist schiefgelaufen. Bitte erneut versuchen.'
+  grant:
+    label: 'Benutzer-ID fuer Freigabe'
+    submit: 'Freigabe gewaehren'
+  selection:
+    aria_select_all: 'Alle auswaehlen / abwaehlen'
+    aria_select_row: 'Datei %name% auswaehlen'
+    live_count: '%count% Datei(en) ausgewaehlt'
+    multi_pane_error: 'Waehlen Sie Elemente nur in einem Benutzerbereich fuer diese Aktion.'
+  share:
+    modal_title_single: 'Datei freigeben'
+    modal_title_bulk: '%count% Dateien freigeben'
+    public_label: Sichtbarkeit
+    expires_label: 'Ablauf der Freigabe (optional)'
+    expires_hint: 'Der Ablauf beendet nur die Freigabe, die Datei bleibt erhalten.'
+    grants_label: 'Empfaenger (Pseudonym)'
+    grant_expires_per_label: 'Persoenlicher Ablauf'
+    grant_expires_per_aria: 'Ablauf fuer diesen Empfaenger'
+    replace_existing_label: 'Bestehende Freigaben ersetzen'
+    replace_existing_warning: 'Aktuelle Freigaben werden durch diese Eingabe ueberschrieben.'
+    apply: 'Freigabe anwenden'
+    bulk_results:
+      ok: '%count% Datei(en) erfolgreich freigegeben.'
+      failed: '%count% Datei(en) fehlgeschlagen.'
+    load_error: 'Freigabestatus konnte nicht geladen werden.'
+    submit_error: 'Freigabe konnte nicht angewendet werden. Erneut versuchen.'
+    target_summary_single: 'Datei: %name%'
+    target_summary_bulk: 'Auswahl: %count% Datei(en)'
+    'yes': Ja
+    'no': Nein
+    expiration_active_aria: 'Ablauf fuer diesen Kanal konfiguriert'
+    public:
+      modal_title_single: 'Oeffentlicher Link'
+      modal_title_bulk: 'Oeffentlicher Link fuer Auswahl'
+      enable_label: 'Oeffentlichen Link aktivieren'
+      enable_hint: 'Jeder mit dem Link kann herunterladen, solange der Link aktiv ist.'
+      expires_label: 'Ablauf des oeffentlichen Links (optional)'
+      expires_hint: 'Leer lassen fuer keinen Ablauf. Danach funktioniert der oeffentliche Link nicht mehr.'
+      expires_relative_future: 'Etwa ~M~ Minute(n) bis zum Ablauf (Uhr dieses Geraets).'
+      expires_relative_past: 'Dieses Datum und diese Uhrzeit liegen etwa ~M~ Minute(n) in der Vergangenheit (dieses Geraet): Nach dem Speichern ist der Link inaktiv.'
+      expires_relative_soon: 'Weniger als eine Minute bis zum Ablauf.'
+      password_enable_label: 'Zugangspasswort erforderlich (nach E-Mail-Verifizierung)'
+      password_enable_hint: 'Beim Aktivieren wird ein zufaelliges Passwort erzeugt. Es in der URL zu verwenden ist praktisch, aber etwas weniger sicher als separates Senden.'
+      password_field_label: 'Aktuelles Zugangspasswort'
+      password_copy: 'Passwort kopieren'
+      password_copy_aria: 'Zugangspasswort in die Zwischenablage kopieren'
+      password_copy_done: 'Zugangspasswort in die Zwischenablage kopiert.'
+      password_copy_unavailable_godview: 'Passwortkopie ist in diesem Admin-Kontext nicht verfuegbar.'
+    friends:
+      modal_title_single: 'Mit Freunden teilen'
+      modal_title_bulk: 'Mit Freunden teilen (Auswahl)'
+      grants_label: 'Empfaenger (Pseudonym)'
+      role_required: 'Ihre Rollen erlauben keine Freundes-Freigabe.'
+  move_bulk:
+    title: 'Auswahl verschieben'
+    message: 'Zielordner waehlen, dann Verschieben bestaetigen.'
+    breadcrumb_root: Wurzel
+    empty_child_folders: 'Keine Unterordner. Hier verschieben oder nach oben gehen.'
+    open_child_aria: 'Ordner oeffnen'
+    parent_up: 'Uebergeordneter Ordner'
+    go_root: 'Zur Wurzel'
+    move_here: 'Hierher verschieben'
+    cancel: Abbrechen
+    close_aria: 'Verschieben schliessen'
+    toast_success: 'Verschieben abgeschlossen: %count% Element(e).'
+    toast_partial: 'Teilweise: %ok% verschoben, %failed% fehlgeschlagen.'
+    toast_error: 'Verschieben fehlgeschlagen. Erneut versuchen.'
+  delete_bulk:
+    title: 'Loeschen bestaetigen'
+    message: 'Ausgewaehlte Elemente dauerhaft loeschen?'
+    count_suffix: 'Element(e) ausgewaehlt'
+    more_template: '+%count% weitere'
+    toast_success: 'Loeschung abgeschlossen: %count% Element(e) entfernt.'
+    toast_partial: 'Teilweise geloescht: %ok% Element(e) entfernt, %failed% fehlgeschlagen.'
+    toast_error: 'Auswahl konnte nicht geloescht werden. Bitte erneut versuchen.'
+    cancel: Abbrechen
+    confirm: 'Loeschen bestaetigen'
+    close_aria: 'Bestaetigungsdialog schliessen'
+  delete_confirm:
+    title: 'Loeschen bestaetigen'
+    close_aria: 'Bestaetigungsdialog schliessen'
+    message: 'Dieses Element endgueltig loeschen?'
+    cancel: Abbrechen
+    confirm: Loeschen
+  properties:
+    title: Dateieigenschaften
+    preview_alt: Dateivorschau
+    extension_fallback: DATEI
+    loading: 'Eigenschaften werden geladen...'
+    error: 'Eigenschaften der Datei konnten nicht geladen werden.'
+    never_expires: 'Kein Ablauf'
+    no_recipients: 'Keine aktiven Empfaenger.'
+    recipients: Empfaenger
+    recipient_until: 'Bis %date%'
+    recipient_no_expiry: 'Kein Ablauf'
+    public_token: 'Oeffentliches Token'
+    public_validity: 'Gueltigkeit der oeffentlichen Freigabe'
+    public_no_expiry: 'Kein Ablauf'
+    public_status: 'Status oeffentlicher Link'
+    public_disabled: 'Oeffentliche Freigabe ist deaktiviert.'
+    public_status_off: Aus
+    public_status_active: Aktiv
+    public_status_expired: Abgelaufen
+    edit_public: 'Oeffentlichen Link bearbeiten'
+    edit_friends: 'Freunde bearbeiten'
+    shared_by: 'Geteilt von'
+    section:
+      public: 'Oeffentliche Freigabe'
+      private: 'Private Freigaben'
+      friends: Freundes-Freigabe
+  rename:
+    modal_title: 'Datei umbenennen'
+    name_label: 'Neuer Name'
+    submit: Umbenennen
+    cancel: Abbrechen
+    modal_error: 'Datei konnte nicht umbenannt werden.'
+  list:
+    empty: 'Noch keine Dateien.'
+    filtered_empty: 'Keine Dateien entsprechen diesen Kriterien.'
+    folder_empty: 'Der Ordner ist leer.'
+  pagination:
+    nav_label: Dateiseiten
+    previous: Zurueck
+    next: Weiter
+    page: 'Seite %page% / %pages% — %total% Datei(en)'
+  preferences:
+    invalid_payload: 'Ungueltige Praeferenzdaten.'
+    invalid_device_id: 'Ungueltige Geraetekennung.'
+    save_failed: 'Oberflaechenpraeferenzen konnten nicht gespeichert werden.'
+  flash:
+    csrf_invalid: 'Ungueltiges Sicherheitstoken. Bitte erneut.'
+    target_owner_required: 'Waehlen Sie in der Ansicht aller Benutzer einen Zielbenutzer.'
+    target_owner_forbidden: 'Sie duerfen nicht im Namen eines anderen Benutzers handeln.'
+    target_owner_context_invalid: 'Zielbenutzerauswahl in diesem Listenkontext nicht erlaubt.'
+    target_owner_invalid: 'Der ausgewaehlte Benutzer ist ungueltig oder kann hier keine Dateien erhalten.'
+    target_folder_invalid: 'Der ausgewaehlte Zielordner ist fuer diesen Benutzer ungueltig.'
+    target_owner_ambiguous: 'Mehrere Benutzer passen zu diesem Pseudonym. Waehlen Sie einen Vorschlag oder praezisieren Sie die Eingabe.'
+    target_owner_not_found: 'Kein aktiver Benutzer mit genau diesem Pseudonym entspricht dieser Eingabe.'
+    upload_invalid: 'Upload fehlgeschlagen oder Datei unlesbar.'
+    upload_too_large: 'Datei ueberschreitet die maximale Groesse.'
+    quota_exceeded: 'Speicherkontingent fuer diesen Benutzer erreicht.'
+    public_not_allowed: 'Ihre Rollen erlauben keine oeffentliche Sichtbarkeit.'
+    storage_failed: 'Verschluesselte Datei konnte nicht gespeichert werden.'
+    uploaded: 'Datei erfolgreich hochgeladen.'
+    not_found: 'Datei nicht gefunden.'
+    deleted: 'Datei geloescht.'
+    visibility_updated: 'Sichtbarkeit aktualisiert.'
+    grant_invalid: 'Freigabe konnte nicht gesetzt werden.'
+    grant_exists: 'Freigabe besteht bereits.'
+    grant_added: 'Freigabe hinzugefuegt.'
+    grant_removed: 'Freigabe entfernt.'
+    share_applied: 'Freigabe aktualisiert.'
+    bulk_share_ok: 'Freigabe auf Auswahl angewendet.'
+    bulk_share_partial: 'Einige Dateien konnten nicht freigegeben werden.'
+    bulk_delete_ok: 'Loeschung auf Auswahl angewendet.'
+    bulk_delete_partial: 'Einige Dateien konnten nicht geloescht werden.'
+    move_target_invalid: 'Ungueltiger Zielordner.'
+    move_name_conflict: 'Eine Datei mit diesem Namen existiert bereits im Zielordner.'
+    move_folder_into_self_or_descendant: 'Ordner kann nicht in sich selbst oder Unterordner verschoben werden.'
+    move_folder_name_conflict: 'Ein Ordner mit diesem Namen existiert bereits im Zielordner.'
+    move_bulk_ok: 'Verschieben auf Auswahl angewendet.'
+    move_bulk_partial: 'Einige Elemente konnten nicht verschoben werden.'
+    bulk_no_ids: 'Keine Datei ausgewaehlt.'
+    rename_name_required: 'Dateiname ist erforderlich.'
+    rename_name_too_long: 'Dateiname ist zu lang.'
+    rename_unchanged: 'Keine Aenderung erkannt.'
+    renamed: 'Datei erfolgreich umbenannt.'
+    upload_name_conflict: 'Eine Datei oder ein Ordner mit diesem Namen existiert an diesem Ort bereits.'
+    name_conflict_same_level: 'Eine Datei oder ein Ordner mit diesem Namen existiert an diesem Ort bereits.'
+    folder_rename_name_required: 'Der Ordnername ist erforderlich.'
+    folder_rename_name_too_long: 'Der Ordnername ist zu lang.'
+    folder_rename_unchanged: 'Keine Aenderung erkannt.'
+    folder_rename_name_conflict: 'An diesem Ort existiert bereits ein Ordner mit diesem Namen.'
+    folder_renamed: 'Ordner erfolgreich umbenannt.'
+    not_owner: 'Zugriff auf diese Datei verweigert.'
+    godview_subject_invalid: 'Ungültiger Zielbenutzer für diese Aktion.'
+    expired: 'Diese Datei ist abgelaufen.'
+    download_failed: 'Gespeicherte Datei konnte nicht entschluesselt werden.'
+admin:
+  invite:
+    meta:
+      title: 'Benutzer einladen'
+    title: 'Benutzer einladen'
+    intro: 'Senden Sie eine E-Mail-Einladung. Ein Aktivierungslink wird bereitgestellt.'
+    email: E-Mail
+    pseudonym: Pseudonym
+    submit: 'Einladung senden'
+    back_users: 'Zurueck zur Liste'
+    flash:
+      sent: 'Einladung gesendet.'
+  users:
+    meta:
+      title: Benutzerverwaltung
+    list:
+      title: Benutzerverwaltung
+      search_placeholder: 'Suche nach E-Mail oder Pseudonym'
+      search_submit: Suchen
+      empty: 'Keine Benutzer gefunden.'
+      total: '%count% Benutzer'
+    show:
+      title: Benutzerdetails
+    roles_labels:
+      ROLE_USER: Benutzer
+      ROLE_ADMIN: Administrator
+      ROLE_CV_CONSULT: CV-Berater
+      ROLE_TUILE: 'Startseiten-Kacheln verwalten'
+      ROLE_SHARE: 'Dateifreigabe (Basis)'
+      ROLE_SHARE_SEND: 'Freigaben senden'
+      ROLE_SHARE_PUBLIC: 'Oeffentliche Freigabe'
+      ROLE_SHARE_FRIENDS: Freundesfreigabe
+    sections:
+      profile: Profil
+      roles: Rollen
+      trusted_devices: Vertrauensgeraete
+      security: Sicherheit
+      danger_zone: Gefahrenbereich
+    fields:
+      email: E-Mail
+      pseudonym: Pseudonym
+      roles: Rollen
+      active: Aktiv
+      actions: Aktionen
+      fingerprint: Fingerabdruck
+      trusted_until: 'Vertrauen bis'
+      hard_delete_reason: Loeschgrund
+      hard_delete_confirm: 'Zur Bestaetigung DELETE eingeben'
+      hard_delete_placeholder: DELETE
+      storage_quota_gib: 'Speicherkontingent (GiB)'
+      storage_quota_placeholder: 'Plattform-Standard'
+    storage:
+      usage: 'Belegt: %used%'
+      quota_effective: 'Kontingent: %quota%'
+      quota_personal: 'persoenliches Kontingent'
+      quota_default: 'Standard-Kontingent'
+      quota_unlimited: 'Unbegrenztes Kontingent'
+    actions:
+      manage: Verwalten
+      back: Zurueck
+      save_profile: 'Profil speichern'
+      save_roles: 'Rollen speichern'
+      revoke: Widerrufen
+      revoke_all_devices: 'Alle Geraete widerrufen'
+      force_password_reset: 'Passwort-Reset erzwingen'
+      invalidate_sessions: 'Aktive Sitzungen invalidieren'
+      hard_delete: 'Endgueltig loeschen'
+    help:
+      hard_delete: 'Diese Aktion entfernt funktionale Daten endgueltig; ein verschluesselter Snapshot ermoeglicht Admin-Rollback.'
+      storage_quota: 'Leer = Plattform-Kontingent. 0 = unbegrenzt. Beispiel: 10 fuer 10 GiB.'
+    status:
+      active: Aktiv
+      inactive: Inaktiv
+    devices:
+      empty: 'Kein Vertrauensgeraet.'
+    success:
+      profile_updated: 'Benutzerprofil aktualisiert.'
+      roles_updated: 'Benutzerrollen aktualisiert.'
+      device_revoked: 'Vertrauensgeraet widerrufen.'
+      devices_revoked: 'Vertrauensgeraete widerrufen.'
+      password_reset_forced: 'Passwort-Reset erzwungen.'
+      sessions_invalidated: 'Aktive Sitzungen invalidiert.'
+      hard_deleted: 'Benutzer endgueltig geloescht.'
+    error:
+      invalid_payload: 'Ungueltige Daten.'
+      invalid_storage_quota: 'Ungueltiges Speicherkontingent.'
+      invalid_role: 'Ungueltige Rolle.'
+      self_role_change_forbidden: 'Sie duerfen Ihre eigenen Rollen nicht aendern.'
+      self_soft_delete_forbidden: 'Sie koennen Ihr eigenes Konto nicht deaktivieren.'
+      self_hard_delete_forbidden: 'Sie koennen Ihr eigenes Konto nicht loeschen.'
+      hard_delete_confirmation_invalid: 'Ungueltige Loeschbestaetigung.'
+      hard_delete_unavailable: 'Endgueltiges Loeschen ist voruebergehend nicht verfuegbar.'
+      vault_key_missing: 'Schluessel fuer das Loesch-Tresor fehlt.'
+      snapshot_encode_failed: 'Snapshot fuer Loeschung konnte nicht erstellt werden.'
+      snapshot_cipher_invalid: 'Snapshot-Verschluesselungskonfiguration ist ungueltig.'
+      snapshot_encrypt_failed: 'Snapshot konnte nicht verschluesselt werden.'
+      snapshot_signature_invalid: 'Snapshot-Signatur ist ungueltig.'
+      snapshot_decode_failed: 'Snapshot kann nicht gelesen werden.'
+      snapshot_decrypt_failed: 'Snapshot kann nicht entschluesselt werden.'
+      last_admin_protected: 'Der letzte aktive Administrator kann nicht geaendert werden.'
+      device_not_found: 'Geraet nicht gefunden.'
+      already_inactive: 'Dieses Konto ist bereits inaktiv.'
+      account_inactive: 'Benutzerkonto ist deaktiviert.'
+      share_requires_base: 'ROLE_SHARE_PUBLIC und ROLE_SHARE_FRIENDS erfordern ROLE_SHARE.'
+      share_public_friends_requires_send: 'ROLE_SHARE_PUBLIC und ROLE_SHARE_FRIENDS erfordern ROLE_SHARE_SEND.'
+  settings:
+    meta:
+      title: Plattform-Konfiguration
+    page:
+      title: Plattform-Konfiguration
+      subtitle: 'Globale Einstellungen, Zugangssperre und Standard-Kontingente.'
+    summary:
+      access_gate: Zugangssperre
+      access_gate_active_help: 'Nicht-Admin-Besucher muessen die Notiz eingeben, um die Seite zu oeffnen.'
+      access_gate_inactive_help: 'Die Seite ist ohne Bypass-Notiz erreichbar.'
+      default_quota: 'Standard-Speicherkontingent'
+      default_quota_help: 'Gilt fuer Konten ohne persoenliches Kontingent (Umgebungsvariable APP_USER_STORAGE_QUOTA_BYTES).'
+    access_gate:
+      title: 'Oeffentliche Zugangssperre'
+      subtitle: 'Sperren Sie den Zugang und erlauben Sie Bypass per Geheimnotiz.'
+      status_active: 'Sperre aktiv'
+      status_inactive: 'Sperre inaktiv'
+    storage:
+      title: Speicher
+      default_quota_label: Standard-Kontingent
+      per_user_label: Benutzer-Kontingent
+      per_user_help: 'Persoenliches Kontingent auf der Benutzerdetailseite setzen.'
+      manage_users: 'Benutzer verwalten'
+    shortcuts:
+      title: Admin-Shortcuts
+      preview_gate: 'Sperrseite anzeigen'
+  bug_reports:
+    meta:
+      title: 'Bug-Tickets'
+    list:
+      title: 'Bug-Tickets'
+      empty: 'Keine Bug-Tickets fuer diese Filter.'
+    detail:
+      title: 'Ticket #%id%'
+      context_title: 'Erfasster Kontext'
+      timeline_title: 'Aktionsverlauf'
+    filters:
+      status_all: 'Alle Status'
+      severity_all: 'Alle Schweregrade'
+      route_placeholder: 'Nach Route filtern'
+      include_archived: 'Archivierte einschliessen'
+      apply: Filtern
+    fields:
+      created_at: Datum
+      reporter: Benutzer
+      path: URL
+      status: Status
+      severity: Schweregrad
+      archived: Archiviert
+      actions: Aktionen
+      route_name: Route
+      query: Query
+      locale: Sprache
+      theme: Thema
+      user_agent: Browser
+      viewport: Viewport
+      referrer: Referrer
+      correlation_id: 'Request ID'
+      app_version: 'App-Version'
+      archive_reason: Archivierungsgrund
+    archived:
+      yes: Ja
+      no: Nein
+    actions:
+      open: Oeffnen
+      back: 'Zurueck zur Liste'
+      mark_in_progress: 'In Bearbeitung setzen'
+      mark_resolved: 'Als geloest markieren'
+      reopen: 'Wieder oeffnen'
+      archive: Archivieren
+      unarchive: Dearchivieren
+setup:
+  meta:
+    title: Administrator-Initialisierung
+  title: 'Ersten Administrator einrichten'
+  subtitle: 'Erstellen Sie das erste Administratorkonto, um die Plattform freizuschalten.'
+  email: Administrator-E-Mail
+  pseudonym: Pseudonym
+  password: Passwort
+  submit: 'Ersten Administrator erstellen'
+  invalid_payload: 'Alle Felder sind erforderlich.'
+  email_already_used: 'Diese E-Mail wird bereits verwendet.'
+  totp_sent: 'Administratorkonto als ausstehend erstellt. Ein TOTP-Code wurde per E-Mail gesendet.'
+  pending_confirmation: 'Ihr Administratorkonto wartet auf die TOTP-Bestaetigung.'
+invite:
+  invalid_payload: 'Ungueltige Einladungsdaten.'
+  unauthorized: 'Unzulaessige Aktion.'
+  created: 'Einladung erstellt.'
+  user_already_exists: 'Ein Benutzer mit dieser E-Mail existiert bereits.'
+  user_persist_failed: 'Eingeladenes Konto konnte nicht erstellt werden.'
+  email_send_failed: 'Einladungs-E-Mail konnte nicht gesendet werden.'
+  rate_limited: 'Zu viele Versuche. Bitte spaeter erneut versuchen.'
+  activate:
+    success: 'Aktivierung abgeschlossen. Sie koennen sich jetzt anmelden.'
+    invalid_or_expired: 'Der Link ist ungueltig, abgelaufen oder bereits verwendet.'
+    password_required: 'Passwort ist erforderlich.'
+    meta:
+      title: 'Aktivierung eingeladenes Konto'
+    title: 'Konto aktivieren'
+    subtitle: 'Legen Sie Ihr Passwort fest, um die Aktivierung abzuschliessen.'
+    password: 'Neues Passwort'
+    submit: 'Mein Konto aktivieren'
+locale:
+  invalid: 'Nicht unterstuetzte Sprache.'
+  name:
+    fr: Franzosisch
+    en: Englisch
+    de: Deutsch
+    lt: Litauisch
+    'no': Norwegisch
+  bubble:
+    aria_toggle: 'Seitensprache aendern'
+    aria_switch: 'Sprache auf %locale% wechseln'
+theme:
+  invalid: 'Nicht unterstuetztes Thema.'
+  mode:
+    light: Hell
+    dark: Dunkel
+  bubble:
+    aria_toggle: 'Seitenthema aendern'
+    aria_switch: 'Thema auf %theme% wechseln'
+floating:
+  actions:
+    toolbar_aria: 'Schnellaktionen: Sprache, Thema und Konto'
+    locale:
+      aria: 'Sprachauswahl oeffnen'
+      title: Sprache
+    theme:
+      aria: 'Thema auf %theme% wechseln'
+      title: 'Zu %theme% wechseln'
+    account:
+      aria: 'Kontoinformationen oeffnen'
+      title: 'Konto und Score'
+    logout:
+      aria: 'Von der Website abmelden'
+    bug:
+      aria: 'Einen Bug melden'
+      title: 'Bug melden'
+bug_report:
+  flash:
+    invalid_csrf: 'Ungueltige uebermittlung. Bitte erneut versuchen.'
+    missing_required: 'Bitte beschreiben Sie Ihre Aktion und das beobachtete Ergebnis.'
+    created: 'Bug-Ticket erfolgreich erstellt.'
+  modal:
+    title: 'Einen Bug melden'
+    action_description_label: 'Was ich gemacht habe'
+    observed_result_label: 'Was passiert ist'
+    expected_result_label: 'Erwartetes Ergebnis (optional)'
+    severity_label: Schweregrad
+    cancel: Abbrechen
+    submit: Senden
+  severity:
+    minor: Niedrig
+    major: Hoch
+    critical: Kritisch
+  status:
+    new: Neu
+    in_progress: 'In Bearbeitung'
+    resolved: Geloest
+    reopened: 'Wieder geoeffnet'
+storage:
+  home:
+    meta_title: Cloud-Speicher
+    title: 'Ihr verschlüsselter Cloud-Speicher'
+    subtitle: 'Speichern, organisieren und teilen Sie Ihre Dateien sicher.'
+    cta_files: 'Meine Dateien öffnen'
+    cta_login: Anmelden
+    no_share_role: 'Speicherzugriff für Ihr Konto nicht aktiviert'
+    stats_aria: 'Ihre Speicherstatistiken'
+    stats_title: 'Ueberblick ueber Ihren Speicher'
+    stats_subtitle: 'Echtzeit-Zusammenfassung Ihres persoenlichen Speichers.'
+    stat_files: Dateien
+    stat_space: 'Belegter Speicher'
+    stat_remaining: 'Verfuegbarer Speicher'
+    stat_quota: 'Zugewiesenes Kontingent: %quota%'
+    stat_space_unlimited: Unbegrenzt
+    stat_files_help: 'Verschluesselte Dateien in Ihrem persoenlichen Bereich.'
+    stat_space_help: 'Gesamtvolumen aller Ihrer Dateien.'
+    stat_remaining_help_user: 'Verbleibende Kapazitaet in Ihrem persoenlichen Kontingent (%quota%).'
+    stat_remaining_help_default: 'Verbleibende Kapazitaet im Standard-Kontingent (%quota%).'
+    stat_remaining_help_unlimited: 'Fuer Ihr Konto gilt kein Speicherlimit.'
+    stat_folders_help: 'Ordner zur Strukturierung Ihrer Baumansicht.'
+    stat_shares_help: 'Oeffentliche Links und Freundeszugriffe, die heute noch gueltig sind.'
+    stat_folders: Ordner
+    stat_shares: 'Aktive Freigaben'
+    feature_encrypt_title: 'Verschlüsselung im Ruhezustand'
+    feature_encrypt_text: 'Dateien werden vor dem Schreiben auf die Festplatte mit AES-256 verschlüsselt.'
+    feature_folders_title: Ordnerstruktur
+    feature_folders_text: 'Organisieren Sie Uploads in verschachtelten Ordnern mit Umbenennen und Verschieben.'
+    feature_share_title: 'Öffentliche Freigabe und Freunde'
+    feature_share_text: 'Freigabelinks mit optionalem Passwort und E-Mail-Bestätigung.'
+    feature_upload_title: Chunk-Uploads
+    feature_upload_text: 'Große Dateien werden zuverlässig in konfigurierbaren Blöcken hochgeladen.'
+    features_title: 'Plattform-Funktionen'
+    features_subtitle: 'Sicherer Speicher, kontrollierte Freigabe und Kontingentverfolgung pro Benutzer.'
+    feature_quota_title: 'Kontingent pro Benutzer'
+    feature_quota_text: 'Sehen Sie belegten Speicher und verbleibende Kapazitaet gemaess persoenlichem oder Plattform-Kontingent.'
+  access_gate:
+    meta:
+      title: 'Eingeschraenkter Zugang'
+    title: 'Eingeschraenkter Zugang'
+    default_message: 'Diese Plattform ist voruebergehend gesperrt. Geben Sie die Zugangsnotiz ein.'
+    bypass_note_label: 'Zugangsnotiz'
+    bypass_note_help: 'Diese Notiz wurde Ihnen vom Administrator mitgeteilt.'
+    submit: 'Zugang freischalten'
+    error:
+      csrf_invalid: 'Ungueltiges Sicherheits-Token.'
+      invalid_note: 'Falsche Zugangsnotiz.'
+      bypass_note_required: 'Eine Zugangsnotiz ist erforderlich, wenn die Sperre aktiv ist.'
+    success:
+      settings_updated: 'Zugangssperre-Einstellungen gespeichert.'
+    admin:
+      panel_aria: 'Konfiguration der Zugangssperre'
+      title: 'Site-Zugangssperre'
+      subtitle: 'Sperre aktivieren und Besuchernachricht sowie Geheimnotiz anpassen.'
+      enabled_label: 'Oeffentliche Zugangssperre aktivieren'
+      message_label: 'Nachricht fuer Besucher'
+      message_placeholder: 'Beispiel: nur fuer Beta-Tester.'
+      bypass_note_label: 'Umgehungsnotiz'
+      bypass_note_help: 'Besucher muessen diese Notiz exakt eingeben (24 h pro Sitzung).'
+      save: 'Sperre speichern'

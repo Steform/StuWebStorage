@@ -1,0 +1,32 @@
+<input type="hidden" name="_retain_q" value="{{ listingRetain.q|default('') }}">
+<input type="hidden" name="_retain_sort" value="{{ listingRetain.sort|default('uploaded') }}">
+<input type="hidden" name="_retain_dir" value="{{ listingRetain.dir|default('desc') }}">
+<input type="hidden" name="_retain_filter_public" value="{{ listingRetain.filter_public|default('') }}">
+<input type="hidden" name="_retain_view" value="{{ listingRetain.view|default('list') }}">
+<input type="hidden" name="_retain_folder" value="{{ listingRetain.folder|default('') }}">
+<input type="hidden" name="_retain_listing_scope" value="{{ listingRetain.listing_scope|default('both') }}">
+<input type="hidden" name="_retain_admin_context" value="{{ listingRetain.admin_context|default('0') }}">
+<input type="hidden" name="_retain_admin_view_scope" value="{{ listingRetain.admin_view_scope|default('') }}">
+<input type="hidden" name="_retain_owner" value="{{ listingRetain.owner|default('') }}">
+<input type="hidden" name="_retain_owner_query" value="{{ listingRetain.owner_query|default('') }}">
+<input type="hidden" name="_retain_filter_has_grant" value="{{ listingRetain.filter_has_grant|default('') }}">
+{% for ext in listingRetain.extensions|default([]) %}
+<input type="hidden" name="_retain_ext[]" value="{{ ext }}">
+{% endfor %}
+{% for gid in listingRetain.grantees|default([]) %}
+<input type="hidden" name="_retain_grantee[]" value="{{ gid }}">
+{% endfor %}
+<input type="hidden" name="_retain_uploaded_after" value="{{ listingRetain.uploaded_after is defined and listingRetain.uploaded_after ? listingRetain.uploaded_after|date('Y-m-d\\TH:i') : '' }}">
+<input type="hidden" name="_retain_uploaded_before" value="{{ listingRetain.uploaded_before is defined and listingRetain.uploaded_before ? listingRetain.uploaded_before|date('Y-m-d\\TH:i') : '' }}">
+<input type="hidden" name="_retain_updated_after" value="{{ listingRetain.updated_after is defined and listingRetain.updated_after ? listingRetain.updated_after|date('Y-m-d\\TH:i') : '' }}">
+<input type="hidden" name="_retain_updated_before" value="{{ listingRetain.updated_before is defined and listingRetain.updated_before ? listingRetain.updated_before|date('Y-m-d\\TH:i') : '' }}">
+<input type="hidden" name="_retain_expires_after" value="{{ listingRetain.expires_after is defined and listingRetain.expires_after ? listingRetain.expires_after|date('Y-m-d\\TH:i') : '' }}">
+<input type="hidden" name="_retain_expires_before" value="{{ listingRetain.expires_before is defined and listingRetain.expires_before ? listingRetain.expires_before|date('Y-m-d\\TH:i') : '' }}">
+<input type="hidden" name="_retain_view_scope" value="{{ listingRetain.view_scope|default('') }}">
+<input type="hidden" name="_retain_subject_user" value="{{ listingRetain.subject_user|default('') }}">
+<input type="hidden" name="_retain_users_page" value="{{ listingRetain.users_page|default('') }}">
+<input type="hidden" name="_retain_users_page_size" value="{{ listingRetain.users_page_size|default('') }}">
+<input type="hidden" name="_retain_users_sort" value="{{ listingRetain.users_sort|default('') }}">
+<input type="hidden" name="_retain_users_dir" value="{{ listingRetain.users_dir|default('') }}">
+<input type="hidden" name="_retain_pane" value="{{ listingRetain.pane|default('') }}">
+<input type="hidden" name="_retain_shared_folder" value="{{ listingRetain.shared_folder|default('') }}">

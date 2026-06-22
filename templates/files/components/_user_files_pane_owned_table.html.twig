@@ -1,0 +1,301 @@
+{# Owned folders + files list for one admin user pane (`uf_{subject}` folder cursor). #}
+{% set folderRootLabel = 'files.folder.root'|trans({}, 'messages', currentLocale) %}
+{% set expirationActiveAria = 'files.share.expiration_active_aria'|trans({}, 'messages', currentLocale) %}
+{% set typeState = currentSortField == 'ext' ? currentSortDirection : '' %}
+{% set typeCycle = sortCycle[typeState] %}
+{% set nameState = currentSortField == 'name' ? currentSortDirection : '' %}
+{% set nameCycle = sortCycle[nameState] %}
+{% set sizeState = currentSortField == 'size' ? currentSortDirection : '' %}
+{% set sizeCycle = sortCycle[sizeState] %}
+{% set uploadedState = currentSortField == 'uploaded' ? currentSortDirection : '' %}
+{% set uploadedCycle = sortCycle[uploadedState] %}
+{% set modifiedState = currentSortField == 'modified' ? currentSortDirection : '' %}
+{% set modifiedCycle = sortCycle[modifiedState] %}
+{% set publicState = currentSortField == 'share_public' ? currentSortDirection : '' %}
+{% set publicCycle = sortCycle[publicState] %}
+{% set friendsState = currentSortField == 'share_friends' ? currentSortDirection : '' %}
+{% set friendsCycle = sortCycle[friendsState] %}
+{% if currentFolder is not null %}
+{% set breadcrumbQueryBase = listingQuery|merge({ (ufKey): null }) %}
+<nav aria-label="{{ 'files.folder.breadcrumb.aria'|trans({}, 'messages', currentLocale) }}" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ path(filesIndexRoute|default('files_index'), breadcrumbQueryBase) }}">{{ folderRootLabel }}</a>
+        </li>
+        {% for breadcrumbFolder in breadcrumbFolders %}
+            {% if loop.last %}
+                <li class="breadcrumb-item active" aria-current="page">{{ breadcrumbFolder.name }}</li>
+            {% else %}
+                <li class="breadcrumb-item">
+                    <a href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (ufKey): breadcrumbFolder.id })) }}">{{ breadcrumbFolder.name }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}
+{% if currentFolder is not null %}
+    {% if currentFolderPublicLandingUrl is defined and currentFolderPublicLandingUrl != '' %}
+<div class="mb-3 d-flex flex-wrap align-items-center gap-2">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-files-row-action="copy-public-link" data-files-public-url="{{ currentFolderPublicLandingUrl }}" aria-label="{{ 'files.action.copy_public_link_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}</button>
+    {% if currentFolder.publicPasswordGateActive %}
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-files-folder-action="copy-public-link-with-password" data-files-folder-id="{{ currentFolder.id }}" data-files-public-url="{{ currentFolderPublicLandingUrl }}" aria-label="{{ 'files.action.copy_public_link_with_password_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link_with_password'|trans({}, 'messages', currentLocale) }}</button>
+    {% endif %}
+</div>
+    {% elseif currentFolderShareState is defined and currentFolderShareState.publicActive and is_granted('ROLE_SHARE_PUBLIC') %}
+<div class="mb-3 d-flex flex-wrap align-items-center gap-2">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-files-folder-action="resolve-copy-public-link" data-files-folder-id="{{ currentFolder.id }}" aria-label="{{ 'files.action.copy_public_link_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}</button>
+</div>
+    {% endif %}
+{% endif %}
+<div class="table-responsive mb-0 files-listing-table-wrap">
+    <table class="table table-striped table-hover align-middle w-100 files-owned-list-table" data-files-selection-scope="owned" data-files-selection-group="owned" data-files-pane-scope="{{ pane.paneId }}">
+        <thead class="files-table-head">
+            <tr>
+                <th scope="col" class="files-col-select text-start">
+                    <div class="form-check m-0">
+                        <input class="form-check-input" type="checkbox" id="files-select-all-owned-pane-{{ pane.subjectUserId }}" data-files-select-all data-files-select-all-scope="owned" data-files-select-all-pane="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_all'|trans({}, 'messages', currentLocale) }}">
+                    </div>
+                </th>
+                <th scope="col" class="files-col-icon text-start text-nowrap" data-files-col="type" aria-sort="{{ typeCycle.ariaSort }}">
+                    <a class="btn btn-link btn-sm p-0 text-decoration-none" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': typeCycle.dir == '' ? null : 'type', 'dir': typeCycle.dir == '' ? null : typeCycle.dir})) }}">
+                        {{ 'files.table.extension'|trans({}, 'messages', currentLocale) }}
+                        <i class="bi {{ typeCycle.icon }} ms-1" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ typeCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                    </a>
+                </th>
+                <th scope="col" class="text-start w-100" aria-sort="{{ nameCycle.ariaSort }}">
+                    <a class="btn btn-link btn-sm p-0 text-decoration-none" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': nameCycle.dir == '' ? null : 'name', 'dir': nameCycle.dir == '' ? null : nameCycle.dir})) }}">
+                        {{ 'files.table.name'|trans({}, 'messages', currentLocale) }}
+                        <i class="bi {{ nameCycle.icon }} ms-1" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ nameCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                    </a>
+                </th>
+                <th scope="col" class="text-end text-nowrap" data-files-col="size" aria-sort="{{ sizeCycle.ariaSort }}">
+                    <div class="d-flex justify-content-end">
+                        <a class="btn btn-link btn-sm p-0 text-decoration-none d-inline-flex align-items-center justify-content-end text-end" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': sizeCycle.dir == '' ? null : 'size', 'dir': sizeCycle.dir == '' ? null : sizeCycle.dir})) }}">
+                            {{ 'files.table.size'|trans({}, 'messages', currentLocale) }}
+                            <i class="bi {{ sizeCycle.icon }} ms-1" aria-hidden="true"></i>
+                            <span class="visually-hidden">{{ sizeCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                        </a>
+                    </div>
+                </th>
+                <th scope="col" class="d-none text-end text-nowrap" data-files-col="uploaded" aria-sort="{{ uploadedCycle.ariaSort }}">
+                    <div class="d-flex justify-content-end">
+                        <a class="btn btn-link btn-sm p-0 text-decoration-none d-inline-flex align-items-center justify-content-end text-end" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': uploadedCycle.dir == '' ? null : 'uploaded', 'dir': uploadedCycle.dir == '' ? null : uploadedCycle.dir})) }}">
+                            {{ 'files.table.uploaded'|trans({}, 'messages', currentLocale) }}
+                            <i class="bi {{ uploadedCycle.icon }} ms-1" aria-hidden="true"></i>
+                            <span class="visually-hidden">{{ uploadedCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                        </a>
+                    </div>
+                </th>
+                <th scope="col" class="d-none text-end text-nowrap" data-files-col="modified" aria-sort="{{ modifiedCycle.ariaSort }}">
+                    <div class="d-flex justify-content-end">
+                        <a class="btn btn-link btn-sm p-0 text-decoration-none d-inline-flex align-items-center justify-content-end text-end" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': modifiedCycle.dir == '' ? null : 'modified', 'dir': modifiedCycle.dir == '' ? null : modifiedCycle.dir})) }}">
+                            {{ 'files.table.modified'|trans({}, 'messages', currentLocale) }}
+                            <i class="bi {{ modifiedCycle.icon }} ms-1" aria-hidden="true"></i>
+                            <span class="visually-hidden">{{ modifiedCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                        </a>
+                    </div>
+                </th>
+                <th scope="col" class="text-start text-nowrap" data-files-col="share_public" aria-sort="{{ publicCycle.ariaSort }}">
+                    <div class="d-flex justify-content-start">
+                        <a class="btn btn-link btn-sm p-0 text-decoration-none d-inline-flex align-items-center justify-content-start text-start" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': publicCycle.dir == '' ? null : 'share_public', 'dir': publicCycle.dir == '' ? null : publicCycle.dir})) }}">
+                            {{ 'files.table.share_public'|trans({}, 'messages', currentLocale) }}
+                            <i class="bi {{ publicCycle.icon }} ms-1" aria-hidden="true"></i>
+                            <span class="visually-hidden">{{ publicCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                        </a>
+                    </div>
+                </th>
+                <th scope="col" class="text-start text-nowrap" data-files-col="share_friends" aria-sort="{{ friendsCycle.ariaSort }}">
+                    <div class="d-flex justify-content-start">
+                        <a class="btn btn-link btn-sm p-0 text-decoration-none d-inline-flex align-items-center justify-content-start text-start" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': friendsCycle.dir == '' ? null : 'share_friends', 'dir': friendsCycle.dir == '' ? null : friendsCycle.dir})) }}">
+                            {{ 'files.table.share_friends'|trans({}, 'messages', currentLocale) }}
+                            <i class="bi {{ friendsCycle.icon }} ms-1" aria-hidden="true"></i>
+                            <span class="visually-hidden">{{ friendsCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                        </a>
+                    </div>
+                </th>
+                <th scope="col" class="files-col-actions"><span class="visually-hidden">{{ 'files.table.actions'|trans({}, 'messages', currentLocale) }}</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for folder in folders %}
+                {% set folderState = folderShareStates[folder.id]|default({'publicActive': false, 'friendsActive': false, 'filesInSubtree': 0, 'hasPublicExpiration': false}) %}
+                <tr data-files-pane-row="{{ pane.paneId }}" data-files-owner-group-row="1">
+                    <td class="files-col-select text-start">
+                        <div class="form-check m-0">
+                            <input class="form-check-input" type="checkbox" data-files-select-scope="owned" data-files-select-folder-id="{{ folder.id }}" data-files-pane-id="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': folder.name}, 'messages', currentLocale) }}">
+                        </div>
+                    </td>
+                    <td class="files-col-icon files-row-clickable text-start" data-files-col="type" data-files-folder-open-url="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (ufKey): folder.id })) }}"><i class="bi bi-folder2-open text-warning"></i></td>
+                    <td class="text-break files-col-name files-row-clickable text-start w-100" data-files-folder-open-url="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (ufKey): folder.id })) }}" title="{{ folder.name }}">{{ folder.name }}</td>
+                    <td class="text-end text-nowrap" data-files-col="size"><div class="d-flex justify-content-end"><span>{{ (folderSizeBytes[folder.id]|default(0))|files_size_format }}</span></div></td>
+                    <td class="d-none text-end text-nowrap" data-files-col="uploaded"><div class="d-flex justify-content-end"><span>{{ folder.createdAt|date('Y-m-d H:i') }}</span></div></td>
+                    <td class="d-none text-end text-nowrap" data-files-col="modified"><div class="d-flex justify-content-end"><span>{{ folder.updatedAt|date('Y-m-d H:i') }}</span></div></td>
+                    <td class="text-start text-nowrap" data-files-col="share_public">
+                        <div class="d-flex flex-nowrap justify-content-start align-items-center gap-1 files-share-public-cell-inner">
+                        {% if folderState.publicActive %}
+                            <span class="badge text-bg-success">{{ 'files.boolean.yes'|trans({}, 'messages', currentLocale) }}</span>
+                        {% else %}
+                            <span class="badge text-bg-secondary">{{ 'files.boolean.no'|trans({}, 'messages', currentLocale) }}</span>
+                        {% endif %}
+                        {% if folderState.hasPublicExpiration|default(false) %}
+                            <i class="bi bi-clock-history files-share-status-icon" title="{{ expirationActiveAria }}" aria-label="{{ expirationActiveAria }}"></i>
+                        {% endif %}
+                        </div>
+                    </td>
+                    <td class="text-start text-nowrap" data-files-col="share_friends">
+                        <div class="d-flex justify-content-start">
+                        {% if folderState.friendsActive %}
+                            <span class="badge text-bg-success">{{ 'files.boolean.yes'|trans({}, 'messages', currentLocale) }}</span>
+                        {% else %}
+                            <span class="badge text-bg-secondary">{{ 'files.boolean.no'|trans({}, 'messages', currentLocale) }}</span>
+                        {% endif %}
+                        </div>
+                    </td>
+                    <td class="files-actions-anchor-cell">
+                        <div class="dropdown files-actions-dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="files-folder-actions-{{ pane.paneId }}-{{ folder.id }}" data-bs-toggle="dropdown" aria-expanded="false">{{ 'files.action.label'|trans({}, 'messages', currentLocale) }}</button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="files-folder-actions-{{ pane.paneId }}-{{ folder.id }}">
+                                {% include 'files/_files_actions_dropdown_scroll_open.html.twig' %}
+                                <li><a class="dropdown-item" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (ufKey): folder.id })) }}">{{ 'files.folder.action.open'|trans({}, 'messages', currentLocale) }}</a></li>
+                                <li><button type="button" class="dropdown-item" data-files-folder-action="properties" data-files-folder-id="{{ folder.id }}">{{ 'files.folder.action.properties'|trans({}, 'messages', currentLocale) }}</button></li>
+                                <li><button type="button" class="dropdown-item" data-files-folder-action="share-public" data-files-folder-id="{{ folder.id }}">{{ 'files.folder.action.share_public'|trans({}, 'messages', currentLocale) }}</button></li>
+                                <li><button type="button" class="dropdown-item" data-files-folder-action="share-friends" data-files-folder-id="{{ folder.id }}">{{ 'files.folder.action.share_friends'|trans({}, 'messages', currentLocale) }}</button></li>
+                                <li><button type="button" class="dropdown-item" data-files-folder-action="rename-open" data-files-folder-id="{{ folder.id }}" data-files-folder-name="{{ folder.name }}">{{ 'files.folder.action.rename'|trans({}, 'messages', currentLocale) }}</button></li>
+                                {% if folderLandingMap[folder.id] is defined and folderLandingMap[folder.id] != '' %}
+                                <li><button type="button" class="dropdown-item" data-files-row-action="copy-public-link" data-files-public-url="{{ folderLandingMap[folder.id] }}" aria-label="{{ 'files.action.copy_public_link_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}</button></li>
+                                {% if folder.publicPasswordGateActive %}
+                                <li><button type="button" class="dropdown-item" data-files-folder-action="copy-public-link-with-password" data-files-folder-id="{{ folder.id }}" data-files-public-url="{{ folderLandingMap[folder.id] }}" aria-label="{{ 'files.action.copy_public_link_with_password_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link_with_password'|trans({}, 'messages', currentLocale) }}</button></li>
+                                {% endif %}
+                                {% elseif folderState.publicActive and is_granted('ROLE_SHARE_PUBLIC') %}
+                                <li><button type="button" class="dropdown-item" data-files-folder-action="resolve-copy-public-link" data-files-folder-id="{{ folder.id }}" aria-label="{{ 'files.action.copy_public_link_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}</button></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ path('files_folder_download_zip', {id: folder.id}) }}">{{ 'files.folder.action.download_zip'|trans({}, 'messages', currentLocale) }}</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><button type="button" class="dropdown-item text-danger" data-files-folder-delete-open data-files-folder-id="{{ folder.id }}" data-files-folder-name="{{ folder.name }}" data-files-folder-delete-action="{{ path('files_folder_delete', {id: folder.id}) }}" data-files-folder-delete-csrf="{{ csrf_token(csrfFolderDelete) }}">{{ 'files.folder.action.delete'|trans({}, 'messages', currentLocale) }}</button></li>
+                                {% include 'files/_files_actions_dropdown_scroll_close.html.twig' %}
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            {% for file in files %}
+                {% set publicActive = file.isPublicShareActive %}
+                {% set showPublicClock = file.shouldShowPublicExpirationClockInListing %}
+                {% set hasFriends = (grantMaps[file.id] ?? [])|length > 0 %}
+                <tr data-files-row-target="{{ file.id }}" data-files-pane-row="{{ pane.paneId }}" data-files-owner-group-row="1">
+                    <td class="files-col-select text-start">
+                        <div class="form-check m-0">
+                            <input class="form-check-input" type="checkbox" id="files-select-pane-{{ pane.subjectUserId }}-{{ file.id }}" data-files-select-id="{{ file.id }}" data-files-select-scope="owned" data-files-pane-id="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': file.originalFileName}, 'messages', currentLocale) }}">
+                        </div>
+                    </td>
+                    {% set ext = file.fileExtension|default('')|lower %}
+                    {% set isListImage = ext in ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] %}
+                    {% set isListPdf = ext in ['pdf'] %}
+                    {% set isListVideo = ext in ['mp4', 'webm', 'ogv', 'mov'] %}
+                    {% set isListAudio = ext in ['mp3', 'mpeg', 'wav', 'ogg', 'm4a', 'aac'] %}
+                    {% set isListText = ext in ['txt', 'log', 'md', 'markdown', 'json', 'csv', 'tsv', 'xml', 'yml', 'yaml', 'ini', 'conf'] %}
+                    {% set isListStream = isListPdf or isListVideo or isListAudio or isListText %}
+                    {% set isListPreviewable = isListImage or isListStream %}
+                    <td
+                        class="files-col-icon files-row-clickable text-start{% if isListPreviewable %} files-col-icon--previewable{% endif %}"
+                        data-files-col="type"
+                        data-files-row-target="{{ file.id }}"
+                        {% if isListPreviewable %}
+                        data-files-media-preview-trigger
+                        {% if isListImage %}
+                        data-src="{{ path('files_download', { id: file.id }) }}"
+                        data-media-preview-type="image"
+                        data-title="{{ file.originalFileName }}"
+                        data-alt="{{ file.originalFileName }}"
+                        {% elseif isListPdf %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="pdf"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListVideo %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="video"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListAudio %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="audio"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListText %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="text"
+                        data-title="{{ file.originalFileName }}"
+                        {% endif %}
+                        {% endif %}
+                    >
+                        {% if isListImage %}
+                            {% set iconName = 'image' %}
+                        {% elseif ext in ['pdf'] %}
+                            {% set iconName = 'pdf' %}
+                        {% elseif ext in ['zip', 'rar', '7z', 'tar', 'gz'] %}
+                            {% set iconName = 'archive' %}
+                        {% else %}
+                            {% set iconName = 'file' %}
+                        {% endif %}
+                        <img src="{{ asset('images/files/' ~ iconName ~ '.svg') }}" alt="{{ isListImage ? '' : (ext != '' ? ext|upper : 'FILE') }}" class="files-file-type-icon" loading="lazy"{% if isListImage %} aria-hidden="true"{% endif %}>
+                    </td>
+                    <td
+                        class="text-break files-col-name files-row-clickable text-start w-100{% if isListPreviewable %} files-col-name--previewable{% endif %}"
+                        data-files-row-target="{{ file.id }}"
+                        title="{{ file.originalFileName }}"
+                        {% if isListPreviewable %}
+                        data-files-media-preview-trigger
+                        {% if isListImage %}
+                        data-src="{{ path('files_download', { id: file.id }) }}"
+                        data-media-preview-type="image"
+                        data-title="{{ file.originalFileName }}"
+                        data-alt="{{ file.originalFileName }}"
+                        {% elseif isListPdf %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="pdf"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListVideo %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="video"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListAudio %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="audio"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListText %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="text"
+                        data-title="{{ file.originalFileName }}"
+                        {% endif %}
+                        tabindex="0"
+                        role="button"
+                        aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}"
+                        {% endif %}
+                    >{{ file.originalFileName }}</td>
+                    <td class="files-row-clickable text-end text-nowrap" data-files-col="size" data-files-row-target="{{ file.id }}"><div class="d-flex justify-content-end"><span>{{ file.byteSize|files_size_format }}</span></div></td>
+                    <td class="files-row-clickable d-none text-end text-nowrap" data-files-row-target="{{ file.id }}" data-files-col="uploaded"><div class="d-flex justify-content-end"><span>{{ file.uploadedAt|date('Y-m-d H:i') }}</span></div></td>
+                    <td class="files-row-clickable d-none text-end text-nowrap" data-files-row-target="{{ file.id }}" data-files-col="modified"><div class="d-flex justify-content-end"><span>{{ file.updatedAt|date('Y-m-d H:i') }}</span></div></td>
+                    <td class="files-row-clickable text-start text-nowrap" data-files-col="share_public" data-files-row-target="{{ file.id }}">
+                        <div class="d-flex flex-nowrap justify-content-start align-items-center gap-1 files-share-public-cell-inner">
+                            {% if publicActive %}<span class="badge text-bg-success">{{ 'files.boolean.yes'|trans({}, 'messages', currentLocale) }}</span>{% else %}<span class="badge text-bg-secondary">{{ 'files.boolean.no'|trans({}, 'messages', currentLocale) }}</span>{% endif %}
+                            {% if showPublicClock %}<i class="bi bi-clock-history files-share-status-icon" title="{{ expirationActiveAria }}" aria-label="{{ expirationActiveAria }}"></i>{% endif %}
+                        </div>
+                    </td>
+                    <td class="files-row-clickable text-start text-nowrap" data-files-col="share_friends" data-files-row-target="{{ file.id }}">
+                        <div class="d-flex justify-content-start align-items-center">
+                            {% if hasFriends %}<span class="badge text-bg-success">{{ 'files.boolean.yes'|trans({}, 'messages', currentLocale) }}</span>{% else %}<span class="badge text-bg-secondary">{{ 'files.boolean.no'|trans({}, 'messages', currentLocale) }}</span>{% endif %}
+                        </div>
+                    </td>
+                    <td class="files-actions-anchor-cell">{% include 'files/_file_actions_dropdown.html.twig' with { file: file } %}</td>
+                </tr>
+            {% else %}
+                {% if folders is empty %}
+                    <tr>
+                        <td colspan="9" class="text-muted">{% set emptyMessageKey = hasActiveCriteria ? 'files.list.filtered_empty' : (isCurrentFolderCompletelyEmpty ? 'files.list.folder_empty' : (listingScope|default('both') == 'owned' ? 'files.listing_scope.empty_owned' : 'files.list.empty')) %}{{ emptyMessageKey|trans({}, 'messages', currentLocale) }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

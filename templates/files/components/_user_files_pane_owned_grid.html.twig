@@ -1,0 +1,152 @@
+{# Owned folders + files grid for one admin user pane (`uf_{subject}` folder cursor). #}
+{% set folderRootLabel = 'files.folder.root'|trans({}, 'messages', currentLocale) %}
+{% set expirationActiveAria = 'files.share.expiration_active_aria'|trans({}, 'messages', currentLocale) %}
+{% set publicShareBadgeAria = 'files.grid.badge.public_aria'|trans({}, 'messages', currentLocale) %}
+{% set friendsShareBadgeAria = 'files.grid.badge.friends_aria'|trans({}, 'messages', currentLocale) %}
+{% if currentFolder is not null %}
+<nav aria-label="{{ 'files.folder.breadcrumb.aria'|trans({}, 'messages', currentLocale) }}" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (ufKey): null })) }}">{{ folderRootLabel }}</a>
+        </li>
+        {% for breadcrumbFolder in breadcrumbFolders %}
+            {% if loop.last %}
+                <li class="breadcrumb-item active" aria-current="page">{{ breadcrumbFolder.name }}</li>
+            {% else %}
+                <li class="breadcrumb-item">
+                    <a href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (ufKey): breadcrumbFolder.id })) }}">{{ breadcrumbFolder.name }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}
+<div class="mb-2">
+    <div class="form-check m-0">
+        <input class="form-check-input" type="checkbox" id="files-select-all-owned-grid-pane-{{ pane.subjectUserId }}" data-files-select-all data-files-select-all-scope="owned" data-files-select-all-pane="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_all'|trans({}, 'messages', currentLocale) }}">
+    </div>
+</div>
+<div class="row g-2 g-md-3 mb-0 files-listing-grid" data-files-selection-scope="owned" data-files-selection-group="owned" data-files-pane-scope="{{ pane.paneId }}">
+    {% for folder in folders %}
+        {% set folderState = folderShareStates[folder.id]|default({'publicActive': false, 'friendsActive': false, 'filesInSubtree': 0, 'hasPublicExpiration': false}) %}
+        <div class="col-6 col-sm-4 col-md-3 col-lg-2 col-xl-1" data-files-pane-row="{{ pane.paneId }}">
+            <div class="card border-0 h-100 files-grid-card files-grid-card-compact files-grid-card-compact--chrome-less position-relative">
+                <div class="form-check files-grid-card__select">
+                    <input class="form-check-input" type="checkbox" data-files-select-scope="owned" data-files-select-folder-id="{{ folder.id }}" data-files-pane-id="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': folder.name}, 'messages', currentLocale) }}">
+                </div>
+                <div class="card-body files-grid-card-compact__body d-flex flex-column" data-files-folder-open-url="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (ufKey): folder.id })) }}" tabindex="0" role="button" aria-label="{{ 'files.folder.open'|trans({'%name%': folder.name}, 'messages', currentLocale) }}">
+                    <div class="files-grid-card-compact__preview">
+                        <i class="bi bi-folder2-open fs-1 text-warning"></i>
+                    </div>
+                    {% if folderState.publicActive or folderState.friendsActive %}
+                        <span class="files-grid-card-compact__share-badges" aria-hidden="true">
+                            {% if folderState.publicActive %}
+                                <i class="bi bi-globe files-grid-card-compact__share-badge-icon" title="{{ publicShareBadgeAria }}" aria-label="{{ publicShareBadgeAria }}"></i>
+                            {% endif %}
+                            {% if folderState.friendsActive %}
+                                <i class="bi bi-people-fill files-grid-card-compact__share-badge-icon" title="{{ friendsShareBadgeAria }}" aria-label="{{ friendsShareBadgeAria }}"></i>
+                            {% endif %}
+                            {% if folderState.hasPublicExpiration|default(false) %}
+                                <i class="bi bi-clock-history files-grid-card-compact__share-badge-icon" title="{{ expirationActiveAria }}" aria-label="{{ expirationActiveAria }}"></i>
+                            {% endif %}
+                        </span>
+                    {% endif %}
+                    <p class="files-grid-card-compact__name small text-muted mb-0 text-truncate" title="{{ folder.name }}">{{ folder.name }}</p>
+                </div>
+                <div class="dropdown files-actions-dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-none" type="button" id="files-folder-actions-{{ pane.paneId }}-grid-{{ folder.id }}" data-bs-toggle="dropdown" aria-expanded="false">{{ 'files.action.label'|trans({}, 'messages', currentLocale) }}</button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="files-folder-actions-{{ pane.paneId }}-grid-{{ folder.id }}">
+                        {% include 'files/_files_actions_dropdown_scroll_open.html.twig' %}
+                        <li><a class="dropdown-item" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (ufKey): folder.id })) }}">{{ 'files.folder.action.open'|trans({}, 'messages', currentLocale) }}</a></li>
+                        <li><button type="button" class="dropdown-item" data-files-folder-action="properties" data-files-folder-id="{{ folder.id }}">{{ 'files.folder.action.properties'|trans({}, 'messages', currentLocale) }}</button></li>
+                        <li><button type="button" class="dropdown-item" data-files-folder-action="share-public" data-files-folder-id="{{ folder.id }}">{{ 'files.folder.action.share_public'|trans({}, 'messages', currentLocale) }}</button></li>
+                        <li><button type="button" class="dropdown-item" data-files-folder-action="share-friends" data-files-folder-id="{{ folder.id }}">{{ 'files.folder.action.share_friends'|trans({}, 'messages', currentLocale) }}</button></li>
+                        <li><button type="button" class="dropdown-item" data-files-folder-action="rename-open" data-files-folder-id="{{ folder.id }}" data-files-folder-name="{{ folder.name }}">{{ 'files.folder.action.rename'|trans({}, 'messages', currentLocale) }}</button></li>
+                        {% if folderLandingMap[folder.id] is defined and folderLandingMap[folder.id] != '' %}
+                        <li><button type="button" class="dropdown-item" data-files-row-action="copy-public-link" data-files-public-url="{{ folderLandingMap[folder.id] }}" aria-label="{{ 'files.action.copy_public_link_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}</button></li>
+                        {% if folder.publicPasswordGateActive %}
+                        <li><button type="button" class="dropdown-item" data-files-folder-action="copy-public-link-with-password" data-files-folder-id="{{ folder.id }}" data-files-public-url="{{ folderLandingMap[folder.id] }}" aria-label="{{ 'files.action.copy_public_link_with_password_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link_with_password'|trans({}, 'messages', currentLocale) }}</button></li>
+                        {% endif %}
+                        {% elseif folderState.publicActive and is_granted('ROLE_SHARE_PUBLIC') %}
+                        <li><button type="button" class="dropdown-item" data-files-folder-action="resolve-copy-public-link" data-files-folder-id="{{ folder.id }}" aria-label="{{ 'files.action.copy_public_link_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}</button></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{{ path('files_folder_download_zip', {id: folder.id}) }}">{{ 'files.folder.action.download_zip'|trans({}, 'messages', currentLocale) }}</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><button type="button" class="dropdown-item text-danger" data-files-folder-delete-open data-files-folder-id="{{ folder.id }}" data-files-folder-name="{{ folder.name }}" data-files-folder-delete-action="{{ path('files_folder_delete', {id: folder.id}) }}" data-files-folder-delete-csrf="{{ csrf_token(csrfFolderDelete) }}">{{ 'files.folder.action.delete'|trans({}, 'messages', currentLocale) }}</button></li>
+                        {% include 'files/_files_actions_dropdown_scroll_close.html.twig' %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    {% for file in files %}
+        {% set ext = file.fileExtension|default('')|lower %}
+        {% set isImage = ext in ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] %}
+        {% set isPdf = ext in ['pdf'] %}
+        {% set isVideo = ext in ['mp4', 'webm', 'ogv', 'mov'] %}
+        {% set isAudio = ext in ['mp3', 'mpeg', 'wav', 'ogg', 'm4a', 'aac'] %}
+        {% set isText = ext in ['txt', 'log', 'md', 'markdown', 'json', 'csv', 'tsv', 'xml', 'yml', 'yaml', 'ini', 'conf'] %}
+        {% set isPreviewStream = isPdf or isVideo or isAudio or isText %}
+        {% set isPreviewMedia = isImage or isPreviewStream %}
+        {% set publicActive = file.isPublicShareActive %}
+        {% set hasFriends = (grantMaps[file.id] ?? [])|length > 0 %}
+        <div class="col-6 col-sm-4 col-md-3 col-lg-2 col-xl-1" data-files-pane-row="{{ pane.paneId }}">
+            <div class="card border-0 h-100 files-grid-card files-grid-card-compact files-grid-card-compact--chrome-less position-relative">
+                <div class="form-check files-grid-card__select">
+                    <input class="form-check-input" type="checkbox" id="files-select-grid-pane-{{ pane.subjectUserId }}-{{ file.id }}" data-files-select-id="{{ file.id }}" data-files-select-scope="owned" data-files-pane-id="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': file.originalFileName}, 'messages', currentLocale) }}">
+                </div>
+                <div class="card-body files-grid-card-compact__body d-flex flex-column" data-files-row-target="{{ file.id }}" tabindex="0" role="button" aria-label="{{ 'files.grid.open_actions_aria'|trans({'%name%': file.originalFileName}, 'messages', currentLocale) }}">
+                    <div class="files-grid-card-compact__preview{% if isPreviewMedia %} files-grid-card-compact__preview--media-trigger{% endif %}">
+                        {% if isImage %}
+                            <img src="{{ path('files_download', { id: file.id }) }}" alt="{{ file.originalFileName }}" class="files-grid-card-compact__preview-image" loading="lazy" data-files-media-preview-trigger data-src="{{ path('files_download', { id: file.id }) }}" data-media-preview-type="image" data-title="{{ file.originalFileName }}" data-alt="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
+                        {% else %}
+                            {% if isPdf %}
+                                <div class="files-grid-card-compact__preview-pdf-trigger d-inline-flex align-items-center justify-content-center" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="pdf" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
+                                    <img src="{{ asset('images/files/pdf.svg') }}" alt="{{ ext != '' ? ext|upper : 'FILE' }}" class="files-grid-card-compact__preview-icon" loading="lazy">
+                                </div>
+                            {% elseif isVideo %}
+                                <div class="files-grid-card-compact__preview-stream-trigger d-inline-flex align-items-center justify-content-center" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="video" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
+                                    <i class="bi bi-film fs-2 text-secondary" aria-hidden="true"></i>
+                                </div>
+                            {% elseif isAudio %}
+                                <div class="files-grid-card-compact__preview-stream-trigger d-inline-flex align-items-center justify-content-center" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="audio" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
+                                    <i class="bi bi-music-note-beamed fs-2 text-secondary" aria-hidden="true"></i>
+                                </div>
+                            {% elseif isText %}
+                                <div class="files-grid-card-compact__preview-stream-trigger d-inline-flex align-items-center justify-content-center" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="text" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
+                                    <i class="bi bi-file-earmark-text fs-2 text-secondary" aria-hidden="true"></i>
+                                </div>
+                            {% else %}
+                                {% if ext in ['zip', 'rar', '7z', 'tar', 'gz'] %}
+                                    {% set iconName = 'archive' %}
+                                {% else %}
+                                    {% set iconName = 'file' %}
+                                {% endif %}
+                                <img src="{{ asset('images/files/' ~ iconName ~ '.svg') }}" alt="{{ ext != '' ? ext|upper : 'FILE' }}" class="files-grid-card-compact__preview-icon" loading="lazy">
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    {% if publicActive or hasFriends %}
+                        <span class="files-grid-card-compact__share-badges" aria-hidden="true">
+                            {% if publicActive %}
+                                <i class="bi bi-globe files-grid-card-compact__share-badge-icon" title="{{ publicShareBadgeAria }}" aria-label="{{ publicShareBadgeAria }}"></i>
+                            {% endif %}
+                            {% if hasFriends %}
+                                <i class="bi bi-people-fill files-grid-card-compact__share-badge-icon" title="{{ friendsShareBadgeAria }}" aria-label="{{ friendsShareBadgeAria }}"></i>
+                            {% endif %}
+                        </span>
+                    {% endif %}
+                    <p class="files-grid-card-compact__name small text-muted mb-0 text-truncate" title="{{ file.originalFileName }}">{{ file.originalFileName }}</p>
+                    {% include 'files/_file_actions_dropdown.html.twig' with { file: file } %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        {% if folders is empty %}
+            <div class="col-12">
+                {% set emptyMessageKey = hasActiveCriteria ? 'files.list.filtered_empty' : (isCurrentFolderCompletelyEmpty ? 'files.list.folder_empty' : (listingScope|default('both') == 'owned' ? 'files.listing_scope.empty_owned' : 'files.list.empty')) %}
+                <p class="text-muted">{{ emptyMessageKey|trans({}, 'messages', currentLocale) }}</p>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>

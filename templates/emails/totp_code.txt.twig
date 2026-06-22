@@ -1,0 +1,10 @@
+{{ plainBlocks.title|default('mail.totp.title'|trans({}, 'messages', locale|default('fr'))) }}
+
+{{ plainBlocks.intro|default('mail.totp.intro'|trans({}, 'messages', locale|default('fr'))) }}
+
+{{ labels.code_label|default('mail.totp.code_label'|trans({}, 'messages', locale|default('fr'))) }}: {{ totpCode }}
+
+{{ plainBlocks.expiry_hint|default('mail.totp.expiry_hint'|trans({}, 'messages', locale|default('fr'))) }}
+{{ plainBlocks.security_hint|default('mail.totp.security_hint'|trans({}, 'messages', locale|default('fr'))) }}
+
+{{ plainBlocks.footer|default('mail.totp.footer'|trans({}, 'messages', locale|default('fr'))) }}

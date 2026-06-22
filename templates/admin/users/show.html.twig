@@ -1,0 +1,159 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'admin.users.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+
+{% block top_navigation %}
+    {% include 'components/_storage_admin_nav.html.twig' %}
+{% endblock %}
+
+{% block main_container_class %}container py-4{% endblock %}
+
+{% block body %}
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h1 class="h4 mb-0">{{ 'admin.users.show.title'|trans({}, 'messages', currentLocale) }}</h1>
+        <a href="{{ path('admin_users_index') }}" class="btn btn-outline-secondary btn-sm">{{ 'admin.users.actions.back'|trans({}, 'messages', currentLocale) }}</a>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h2 class="h6">{{ 'admin.users.sections.profile'|trans({}, 'messages', currentLocale) }}</h2>
+            <form method="post" action="{{ path('admin_users_edit', {id: targetUser.id}) }}" class="row g-2">
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="email">{{ 'admin.users.fields.email'|trans({}, 'messages', currentLocale) }}</label>
+                    <input id="email" class="form-control" type="email" name="email" value="{{ targetUser.email }}" required>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="pseudonym">{{ 'admin.users.fields.pseudonym'|trans({}, 'messages', currentLocale) }}</label>
+                    <input id="pseudonym" class="form-control" type="text" name="pseudonym" value="{{ targetUser.pseudonym }}" required>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="storage_quota_gib">{{ 'admin.users.fields.storage_quota_gib'|trans({}, 'messages', currentLocale) }}</label>
+                    <input id="storage_quota_gib" class="form-control" type="text" name="storage_quota_gib" value="{{ storageQuotaGiB }}" inputmode="decimal" placeholder="{{ 'admin.users.fields.storage_quota_placeholder'|trans({}, 'messages', currentLocale) }}">
+                    <div class="form-text">{{ 'admin.users.help.storage_quota'|trans({}, 'messages', currentLocale) }}</div>
+                </div>
+                <div class="col-12">
+                    <div class="small text-body-secondary">
+                        {{ 'admin.users.storage.usage'|trans({'%used%': storageUsedBytes|files_size_format}, 'messages', currentLocale) }}
+                        {% if storageQuotaSource == 'unlimited' %}
+                            · {{ 'admin.users.storage.quota_unlimited'|trans({}, 'messages', currentLocale) }}
+                        {% else %}
+                            · {{ 'admin.users.storage.quota_effective'|trans({'%quota%': storageQuotaBytes|files_size_format}, 'messages', currentLocale) }}
+                            {% if storageQuotaSource == 'user' %}
+                                ({{ 'admin.users.storage.quota_personal'|trans({}, 'messages', currentLocale) }})
+                            {% else %}
+                                ({{ 'admin.users.storage.quota_default'|trans({}, 'messages', currentLocale) }})
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input id="active" class="form-check-input" type="checkbox" name="active" value="1" {{ targetUser.active ? 'checked' : '' }}>
+                        <label class="form-check-label" for="active">{{ 'admin.users.fields.active'|trans({}, 'messages', currentLocale) }}</label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary btn-sm" type="submit">{{ 'admin.users.actions.save_profile'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h2 class="h6">{{ 'admin.users.sections.roles'|trans({}, 'messages', currentLocale) }}</h2>
+            <form method="post" action="{{ path('admin_users_roles', {id: targetUser.id}) }}">
+                <div class="row g-2">
+                    {% for role in allowedRoles %}
+                        <div class="col-12 col-md-4">
+                            <div class="form-check">
+                                <input id="role_{{ role|lower }}" class="form-check-input" type="checkbox" name="roles[]" value="{{ role }}" {{ role in targetUser.roles ? 'checked' : '' }}>
+                                <label class="form-check-label" for="role_{{ role|lower }}">{{ ('admin.users.roles_labels.' ~ role)|trans({}, 'messages', currentLocale) }}</label>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="btn btn-primary btn-sm mt-3" type="submit">{{ 'admin.users.actions.save_roles'|trans({}, 'messages', currentLocale) }}</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h2 class="h6">{{ 'admin.users.sections.trusted_devices'|trans({}, 'messages', currentLocale) }}</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>{{ 'admin.users.fields.fingerprint'|trans({}, 'messages', currentLocale) }}</th>
+                        <th>{{ 'admin.users.fields.trusted_until'|trans({}, 'messages', currentLocale) }}</th>
+                        <th class="text-end">{{ 'admin.users.fields.actions'|trans({}, 'messages', currentLocale) }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for device in trustedDevices %}
+                        <tr>
+                            <td>{{ device.id }}</td>
+                            <td><code>{{ device.fingerprint }}</code></td>
+                            <td>{{ device.trustedUntil }}</td>
+                            <td class="text-end">
+                                <form class="d-inline" method="post" action="{{ path('admin_users_trusted_device_revoke', {id: targetUser.id}) }}">
+                                    <input type="hidden" name="device_id" value="{{ device.id }}">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">{{ 'admin.users.actions.revoke'|trans({}, 'messages', currentLocale) }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">{{ 'admin.users.devices.empty'|trans({}, 'messages', currentLocale) }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <form method="post" action="{{ path('admin_users_trusted_device_revoke_all', {id: targetUser.id}) }}">
+                <button class="btn btn-danger btn-sm" type="submit">{{ 'admin.users.actions.revoke_all_devices'|trans({}, 'messages', currentLocale) }}</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="h6">{{ 'admin.users.sections.security'|trans({}, 'messages', currentLocale) }}</h2>
+            <div class="d-flex gap-2 flex-wrap">
+                <form method="post" action="{{ path('admin_users_force_password_reset', {id: targetUser.id}) }}">
+                    <button class="btn btn-outline-warning btn-sm" type="submit">{{ 'admin.users.actions.force_password_reset'|trans({}, 'messages', currentLocale) }}</button>
+                </form>
+                <form method="post" action="{{ path('admin_users_invalidate_sessions', {id: targetUser.id}) }}">
+                    <button class="btn btn-outline-warning btn-sm" type="submit">{{ 'admin.users.actions.invalidate_sessions'|trans({}, 'messages', currentLocale) }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-3 border-danger">
+        <div class="card-body">
+            <h2 class="h6 text-danger">{{ 'admin.users.sections.danger_zone'|trans({}, 'messages', currentLocale) }}</h2>
+            <p class="text-muted small mb-3">{{ 'admin.users.help.hard_delete'|trans({}, 'messages', currentLocale) }}</p>
+            <form method="post" action="{{ path('admin_users_delete', {id: targetUser.id}) }}" class="row g-2">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_users_hard_delete') }}">
+                <div class="col-12">
+                    <label class="form-label" for="hard_delete_reason">{{ 'admin.users.fields.hard_delete_reason'|trans({}, 'messages', currentLocale) }}</label>
+                    <input id="hard_delete_reason" class="form-control" type="text" name="hard_delete_reason" maxlength="255">
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="confirm_phrase">{{ 'admin.users.fields.hard_delete_confirm'|trans({}, 'messages', currentLocale) }}</label>
+                    <input id="confirm_phrase" class="form-control" type="text" name="confirm_phrase" placeholder="{{ 'admin.users.fields.hard_delete_placeholder'|trans({}, 'messages', currentLocale) }}" required>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-danger btn-sm" type="submit">{{ 'admin.users.actions.hard_delete'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

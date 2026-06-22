@@ -1,0 +1,71 @@
+{% set fileExtPreview = file.fileExtension|default('')|lower %}
+{% set fileIsPreviewImage = fileExtPreview in ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] %}
+{% set fileIsPreviewPdf = fileExtPreview in ['pdf'] %}
+{% set fileIsPreviewVideo = fileExtPreview in ['mp4', 'webm', 'ogv', 'mov'] %}
+{% set fileIsPreviewAudio = fileExtPreview in ['mp3', 'mpeg', 'wav', 'ogg', 'm4a', 'aac'] %}
+{% set fileIsPreviewText = fileExtPreview in ['txt', 'log', 'md', 'markdown', 'json', 'csv', 'tsv', 'xml', 'yml', 'yaml', 'ini', 'conf'] %}
+{% set fileCanMediaPreview = fileIsPreviewImage or fileIsPreviewPdf or fileIsPreviewVideo or fileIsPreviewAudio or fileIsPreviewText %}
+<div class="dropdown files-actions-dropdown">
+    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="files-actions-{{ file.id }}" data-bs-toggle="dropdown" aria-expanded="false">{{ 'files.action.label'|trans({}, 'messages', currentLocale) }}</button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="files-actions-{{ file.id }}">
+        {% include 'files/_files_actions_dropdown_scroll_open.html.twig' %}
+        <li>
+            <button type="button" class="dropdown-item" data-files-row-action="properties" data-files-row-id="{{ file.id }}">{{ 'files.action.properties'|trans({}, 'messages', currentLocale) }}</button>
+        </li>
+        {% if fileCanMediaPreview %}
+        <li>
+            <button
+                type="button"
+                class="dropdown-item"
+                data-files-media-preview-trigger
+                {% if fileIsPreviewImage %}
+                data-src="{{ path('files_download', { id: file.id }) }}"
+                data-media-preview-type="image"
+                data-alt="{{ file.originalFileName }}"
+                {% else %}
+                data-src="{{ path('files_preview', { id: file.id }) }}"
+                data-media-preview-type="{% if fileIsPreviewPdf %}pdf{% elseif fileIsPreviewVideo %}video{% elseif fileIsPreviewAudio %}audio{% elseif fileIsPreviewText %}text{% else %}audio{% endif %}"
+                {% endif %}
+                data-title="{{ file.originalFileName }}"
+            >{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}</button>
+        </li>
+        {% endif %}
+        <li>
+            <a class="dropdown-item" href="{{ path('files_download', { id: file.id }) }}">{{ 'files.action.download'|trans({}, 'messages', currentLocale) }}</a>
+        </li>
+        <li>
+            <button type="button" class="dropdown-item" data-files-row-action="share-public" data-files-row-id="{{ file.id }}">{{ 'files.action.share_public'|trans({}, 'messages', currentLocale) }}</button>
+        </li>
+        <li>
+            <button type="button" class="dropdown-item" data-files-row-action="share-friends" data-files-row-id="{{ file.id }}">{{ 'files.action.share_friends'|trans({}, 'messages', currentLocale) }}</button>
+        </li>
+        <li>
+            <button type="button" class="dropdown-item" data-files-row-action="rename-open" data-files-row-id="{{ file.id }}" data-files-row-name="{{ file.originalFileName }}">{{ 'files.action.rename'|trans({}, 'messages', currentLocale) }}</button>
+        </li>
+        {% if file.isPublicShareActive %}
+        <li>
+            <button type="button" class="dropdown-item" data-files-row-action="copy-public-link" data-files-public-url="{{ url('file_public_landing', { publicToken: file.publicToken }) }}" aria-label="{{ 'files.action.copy_public_link_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}</button>
+        </li>
+        {% endif %}
+        {% if file.isPublicPasswordGateActive %}
+        <li>
+            <button type="button" class="dropdown-item" data-files-row-action="copy-public-link-with-password" data-files-row-id="{{ file.id }}" data-files-public-url="{{ url('file_public_landing', { publicToken: file.publicToken }) }}" aria-label="{{ 'files.action.copy_public_link_with_password_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link_with_password'|trans({}, 'messages', currentLocale) }}</button>
+        </li>
+        {% endif %}
+        <li><hr class="dropdown-divider"></li>
+        <li>
+            <button
+                type="button"
+                class="dropdown-item text-danger"
+                data-files-row-action="delete-open"
+                data-files-row-id="{{ file.id }}"
+                data-files-row-name="{{ file.originalFileName }}"
+                data-files-delete-action="{{ path('files_delete', { id: file.id }) }}"
+                data-files-delete-csrf="{{ csrf_token(csrfDelete) }}"
+            >
+                {{ 'files.action.delete'|trans({}, 'messages', currentLocale) }}
+            </button>
+        </li>
+        {% include 'files/_files_actions_dropdown_scroll_close.html.twig' %}
+    </ul>
+</div>

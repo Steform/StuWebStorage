@@ -1,0 +1,11 @@
+security:
+  providers:
+    test_user_provider:
+      id: App\Tests\Stub\TestUserProvider
+    chain_user_provider:
+      chain:
+        providers: ['test_user_provider', 'app_user_provider']
+
+  firewalls:
+    main:
+      provider: chain_user_provider

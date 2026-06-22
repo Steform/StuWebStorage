@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'admin.invite.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+
+{% block top_navigation %}
+    {% include 'components/_storage_admin_nav.html.twig' %}
+{% endblock %}
+
+{% block main_container_class %}container py-4{% endblock %}
+
+{% block body %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h1 class="h4 mb-0">{{ 'admin.invite.title'|trans({}, 'messages', currentLocale) }}</h1>
+                <a class="btn btn-outline-secondary btn-sm" href="{{ path('admin_users_index') }}">{{ 'admin.invite.back_users'|trans({}, 'messages', currentLocale) }}</a>
+            </div>
+            <p class="text-muted">{{ 'admin.invite.intro'|trans({}, 'messages', currentLocale) }}</p>
+            <form method="post" action="{{ path('admin_user_invite') }}" class="row g-3">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfInvite) }}">
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="invite_email">{{ 'admin.invite.email'|trans({}, 'messages', currentLocale) }}</label>
+                    <input id="invite_email" class="form-control" type="email" name="email" required autocomplete="email">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="invite_pseudonym">{{ 'admin.invite.pseudonym'|trans({}, 'messages', currentLocale) }}</label>
+                    <input id="invite_pseudonym" class="form-control" type="text" name="pseudonym" autocomplete="nickname">
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary" type="submit">{{ 'admin.invite.submit'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{# Shared (grantee) folders + files for one admin user pane (`sf_{subject}` folder cursor). #}
+{% set folderRootLabel = 'files.folder.root'|trans({}, 'messages', currentLocale) %}
+{% set typeState = currentSortField == 'ext' ? currentSortDirection : '' %}
+{% set typeCycle = sortCycle[typeState] %}
+{% set nameState = currentSortField == 'name' ? currentSortDirection : '' %}
+{% set nameCycle = sortCycle[nameState] %}
+{% set pseudoState = currentSortField == 'pseudo' ? currentSortDirection : '' %}
+{% set pseudoCycle = sortCycle[pseudoState] %}
+{% set sizeState = currentSortField == 'size' ? currentSortDirection : '' %}
+{% set sizeCycle = sortCycle[sizeState] %}
+{% if sharedForMeCurrentFolderId > 0 %}
+<nav aria-label="{{ 'files.folder.breadcrumb.aria'|trans({}, 'messages', currentLocale) }}" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (sfKey): null })) }}">{{ folderRootLabel }}</a>
+        </li>
+        {% for sharedFolder in sharedForMeFolders %}
+            {% if sharedFolder.id == sharedForMeCurrentFolderId %}
+                <li class="breadcrumb-item active" aria-current="page">{{ sharedFolder.name }}</li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}
+<div class="table-responsive mb-0 files-listing-table-wrap">
+    <table class="table table-striped table-hover align-middle files-shared-list-table" data-files-selection-scope="shared" data-files-selection-group="shared" data-files-pane-scope="{{ pane.paneId }}">
+        <thead class="files-table-head">
+            <tr>
+                <th scope="col" class="files-col-select text-start">
+                    <div class="form-check m-0">
+                        <input class="form-check-input" type="checkbox" id="files-select-all-shared-pane-{{ pane.subjectUserId }}" data-files-select-all data-files-select-all-scope="shared" data-files-select-all-pane="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_all'|trans({}, 'messages', currentLocale) }}">
+                    </div>
+                </th>
+                <th scope="col" class="files-col-icon text-start text-nowrap" data-files-col="type" aria-sort="{{ typeCycle.ariaSort }}">
+                    <a class="btn btn-link btn-sm p-0 text-decoration-none" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': typeCycle.dir == '' ? null : 'type', 'dir': typeCycle.dir == '' ? null : typeCycle.dir})) }}">
+                        {{ 'files.table.extension'|trans({}, 'messages', currentLocale) }}
+                        <i class="bi {{ typeCycle.icon }} ms-1" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ typeCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                    </a>
+                </th>
+                <th scope="col" class="text-start w-100" aria-sort="{{ nameCycle.ariaSort }}">
+                    <a class="btn btn-link btn-sm p-0 text-decoration-none" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': nameCycle.dir == '' ? null : 'name', 'dir': nameCycle.dir == '' ? null : nameCycle.dir})) }}">
+                        {{ 'files.table.name'|trans({}, 'messages', currentLocale) }}
+                        <i class="bi {{ nameCycle.icon }} ms-1" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ nameCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                    </a>
+                </th>
+                <th scope="col" class="text-start text-nowrap" data-files-col="owner-pseudo" aria-sort="{{ pseudoCycle.ariaSort }}">
+                    <a class="btn btn-link btn-sm p-0 text-decoration-none" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': pseudoCycle.dir == '' ? null : 'pseudo', 'dir': pseudoCycle.dir == '' ? null : pseudoCycle.dir})) }}">
+                        {{ 'files.table.pseudo'|trans({}, 'messages', currentLocale) }}
+                        <i class="bi {{ pseudoCycle.icon }} ms-1" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ pseudoCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                    </a>
+                </th>
+                <th scope="col" class="text-end text-nowrap" data-files-col="size" aria-sort="{{ sizeCycle.ariaSort }}">
+                    <a class="btn btn-link btn-sm p-0 text-decoration-none d-inline-flex align-items-center justify-content-end text-end" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': sizeCycle.dir == '' ? null : 'size', 'dir': sizeCycle.dir == '' ? null : sizeCycle.dir})) }}">
+                        {{ 'files.table.size'|trans({}, 'messages', currentLocale) }}
+                        <i class="bi {{ sizeCycle.icon }} ms-1" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ sizeCycle.labelKey|trans({}, 'messages', currentLocale) }}</span>
+                    </a>
+                </th>
+                <th scope="col" class="files-col-actions"><span class="visually-hidden">{{ 'files.table.actions'|trans({}, 'messages', currentLocale) }}</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if sharedForMeCurrentFolderId == 0 %}
+                {% for sharedFolder in sharedForMeFolders %}
+                    <tr data-files-shared-folder-id="{{ sharedFolder.id }}" data-files-pane-row="{{ pane.paneId }}">
+                        <td class="files-col-select text-start">
+                            <div class="form-check m-0">
+                                <input class="form-check-input" type="checkbox" data-files-select-scope="shared" data-files-select-folder-id="{{ sharedFolder.id }}" data-files-pane-id="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': sharedFolder.name}, 'messages', currentLocale) }}">
+                            </div>
+                        </td>
+                        <td class="files-col-icon files-row-clickable text-start" data-files-col="type" data-files-folder-open-url="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (sfKey): sharedFolder.id })) }}"><i class="bi bi-folder2-open text-warning"></i></td>
+                        <td class="text-break files-col-name files-row-clickable text-start w-100" data-files-folder-open-url="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (sfKey): sharedFolder.id })) }}" title="{{ sharedFolder.name }}">{{ sharedFolder.name }}</td>
+                        <td class="text-start text-nowrap" data-files-col="owner-pseudo" title="{{ sharedOwnerLabelsByFolderId[sharedFolder.id]|default('-') }}">{{ sharedOwnerLabelsByFolderId[sharedFolder.id]|default('-') }}</td>
+                        <td class="text-end text-nowrap" data-files-col="size">{{ (sharedFolderSizeBytes[sharedFolder.id]|default(0))|files_size_format }}</td>
+                        <td class="files-actions-anchor-cell">
+                            <div class="dropdown files-actions-dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="files-shared-folder-actions-{{ pane.paneId }}-{{ sharedFolder.id }}" data-bs-toggle="dropdown" aria-expanded="false">{{ 'files.action.label'|trans({}, 'messages', currentLocale) }}</button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="files-shared-folder-actions-{{ pane.paneId }}-{{ sharedFolder.id }}">
+                                    {% include 'files/_files_actions_dropdown_scroll_open.html.twig' %}
+                                    <li><a class="dropdown-item" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (sfKey): sharedFolder.id })) }}">{{ 'files.folder.action.open'|trans({}, 'messages', currentLocale) }}</a></li>
+                                    <li><button type="button" class="dropdown-item" data-files-folder-action="properties" data-files-folder-action-scope="shared" data-files-folder-id="{{ sharedFolder.id }}">{{ 'files.folder.action.properties'|trans({}, 'messages', currentLocale) }}</button></li>
+                                    <li><a class="dropdown-item" href="{{ path('files_shared_folder_download_zip', {id: sharedFolder.id}) }}">{{ 'files.folder.action.download_zip'|trans({}, 'messages', currentLocale) }}</a></li>
+                                    {% include 'files/_files_actions_dropdown_scroll_close.html.twig' %}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+            {% for file in sharedForMeFiles %}
+                {% set ext = file.fileExtension|default('')|lower %}
+                {% set isListImageShared = ext in ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] %}
+                {% set isListPdfShared = ext in ['pdf'] %}
+                {% set isListVideoShared = ext in ['mp4', 'webm', 'ogv', 'mov'] %}
+                {% set isListAudioShared = ext in ['mp3', 'mpeg', 'wav', 'ogg', 'm4a', 'aac'] %}
+                {% set isListTextShared = ext in ['txt', 'log', 'md', 'markdown', 'json', 'csv', 'tsv', 'xml', 'yml', 'yaml', 'ini', 'conf'] %}
+                {% set isListStreamShared = isListPdfShared or isListVideoShared or isListAudioShared or isListTextShared %}
+                {% set isListPreviewableShared = isListImageShared or isListStreamShared %}
+                <tr data-files-pane-row="{{ pane.paneId }}">
+                    <td class="files-col-select text-start">
+                        <div class="form-check m-0">
+                            <input class="form-check-input" type="checkbox" id="files-select-shared-pane-{{ pane.subjectUserId }}-{{ file.id }}" data-files-select-id="{{ file.id }}" data-files-select-scope="shared" data-files-pane-id="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': file.originalFileName}, 'messages', currentLocale) }}">
+                        </div>
+                    </td>
+                    <td class="files-col-icon files-row-clickable text-start{% if isListPreviewableShared %} files-col-icon--previewable{% endif %}" data-files-col="type" data-files-row-target="{{ file.id }}"{% if isListPreviewableShared %} data-files-media-preview-trigger{% if isListImageShared %} data-src="{{ path('files_download', { id: file.id }) }}" data-media-preview-type="image" data-title="{{ file.originalFileName }}" data-alt="{{ file.originalFileName }}"{% elseif isListPdfShared %} data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="pdf" data-title="{{ file.originalFileName }}"{% elseif isListVideoShared %} data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="video" data-title="{{ file.originalFileName }}"{% elseif isListAudioShared %} data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="audio" data-title="{{ file.originalFileName }}"{% elseif isListTextShared %} data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="text" data-title="{{ file.originalFileName }}"{% endif %}{% endif %}>
+                        {% if isListImageShared %}
+                            {% set iconNameShared = 'image' %}
+                        {% elseif ext in ['pdf'] %}
+                            {% set iconNameShared = 'pdf' %}
+                        {% elseif ext in ['zip', 'rar', '7z', 'tar', 'gz'] %}
+                            {% set iconNameShared = 'archive' %}
+                        {% else %}
+                            {% set iconNameShared = 'file' %}
+                        {% endif %}
+                        <img src="{{ asset('images/files/' ~ iconNameShared ~ '.svg') }}" alt="{{ isListImageShared ? '' : (ext != '' ? ext|upper : 'FILE') }}" class="files-file-type-icon" loading="lazy"{% if isListImageShared %} aria-hidden="true"{% endif %}>
+                    </td>
+                    <td class="text-break files-col-name files-row-clickable text-start w-100{% if isListPreviewableShared %} files-col-name--previewable{% endif %}" data-files-row-target="{{ file.id }}" title="{{ file.originalFileName }}"{% if isListPreviewableShared %} data-files-media-preview-trigger{% if isListImageShared %} data-src="{{ path('files_download', { id: file.id }) }}" data-media-preview-type="image" data-title="{{ file.originalFileName }}" data-alt="{{ file.originalFileName }}"{% elseif isListPdfShared %} data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="pdf" data-title="{{ file.originalFileName }}"{% elseif isListVideoShared %} data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="video" data-title="{{ file.originalFileName }}"{% elseif isListAudioShared %} data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="audio" data-title="{{ file.originalFileName }}"{% elseif isListTextShared %} data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="text" data-title="{{ file.originalFileName }}"{% endif %} tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}"{% endif %}>{{ file.originalFileName }}</td>
+                    <td class="text-start text-nowrap" data-files-col="owner-pseudo" title="{{ sharedOwnerLabelsByFileId[file.id]|default('-') }}">{{ sharedOwnerLabelsByFileId[file.id]|default('-') }}</td>
+                    <td class="files-row-clickable text-end text-nowrap" data-files-col="size" data-files-row-target="{{ file.id }}">{{ file.byteSize|files_size_format }}</td>
+                    <td class="files-actions-anchor-cell">{% include 'files/_file_actions_dropdown_shared_for_me.html.twig' with { file: file } %}</td>
+                </tr>
+            {% else %}
+                {% if sharedForMeCurrentFolderId > 0 or sharedForMeFolders is empty %}
+                    <tr>
+                        <td colspan="6" class="text-muted">{{ (listingScope|default('both') == 'shared' ? 'files.listing_scope.empty_shared' : 'files.section.shared_for_me_empty')|trans({}, 'messages', currentLocale) }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

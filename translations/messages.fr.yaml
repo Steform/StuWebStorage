@@ -1,0 +1,977 @@
+app:
+  close: Fermer
+  meta:
+    title: StuWebStorage
+  nav:
+    home: Accueil
+    my_profile: 'Mon profil'
+    logout: Deconnexion
+    language: Langue
+    files_user: 'Mes fichiers'
+    files_admin: 'Tous les fichiers (admin)'
+    security_users: 'Liste utilisateurs'
+    security_invite: 'Inviter un utilisateur'
+    settings: Configuration
+    dashboard: Dashboard
+    bug_reports: 'Tickets bug'
+profile:
+  meta:
+    title: 'Mon profil'
+  page:
+    title: 'Mon profil'
+    subtitle: 'Consultez les informations de votre compte.'
+  sections:
+    public_profile: 'Profil public'
+    email_change: 'Changer mon email'
+    password_change: 'Changer mon mot de passe'
+  fields:
+    email: Email
+    pseudonym: Pseudonyme
+    status: Statut
+    new_email: 'Nouvel email'
+    totp_code: 'Code TOTP'
+    current_password: 'Mot de passe actuel'
+    new_password: 'Nouveau mot de passe'
+  placeholders:
+    new_email: nouveau@example.com
+    totp_code: '123456'
+  actions:
+    update_pseudonym: 'Mettre a jour le pseudonyme'
+    request_email_change: 'Envoyer le code TOTP'
+    confirm_email_change: 'Valider le changement email'
+    send_password_totp: 'Envoyer le code TOTP mot de passe'
+    confirm_password_change: 'Changer le mot de passe'
+  status:
+    active: Actif
+    inactive: Inactif
+  success:
+    pseudonym_updated: 'Pseudonyme mis a jour.'
+    email_change_requested: 'Code TOTP envoye au nouvel''email.'
+    email_updated: 'Email mis a jour après validation.'
+    password_totp_sent: 'Code TOTP envoye pour le changement de mot de passe.'
+    password_updated: 'Mot de passe modifie.'
+  error:
+    pseudonym_required: 'Le pseudonyme est requis.'
+    pseudonym_too_long: 'Le pseudonyme est trop long.'
+    email_invalid: 'Nouvel email invalide.'
+    email_same_as_current: 'Le nouvel''email est identique à l''email actuel.'
+    email_already_used: 'Cet email est deja utilise.'
+    email_change_not_found: 'Aucun changement email en attente.'
+    totp_invalid: 'Code TOTP invalide ou expire.'
+    password_required: 'Le nouveau mot de passe est requis.'
+    current_password_invalid: 'Le mot de passe actuel est invalide.'
+security:
+  login:
+    meta:
+      title: Connexion
+    title: 'Connexion sécurisée'
+    subtitle: 'Identifiez-vous avec email et mot de passe.'
+    email: Email
+    email_placeholder: vous@example.com
+    password: 'Mot de passe'
+    password_placeholder: 'Votre mot de passe'
+    totp: 'Code TOTP'
+    totp_placeholder: '123456'
+    submit: Continuer
+    remember_me: 'Se souvenir de cet appareil'
+    error_invalid_credentials: 'Identifiants ou code TOTP invalide.'
+  totp:
+    meta:
+      title: 'Validation TOTP'
+    title: 'Validation en 2e etape'
+    subtitle: 'Saisissez le code TOTP recu par email pour finaliser la connexion.'
+    submit: 'Valider le code'
+    resend: 'Renvoyer le code par email'
+    resend_wait: 'Renvoyer dans %seconds% s'
+    resend_error: 'Impossible de renvoyer le code pour le moment.'
+auth:
+  totp:
+    challenge:
+      invalid_payload: 'Email requis pour envoyer un code TOTP.'
+      sent: 'Code TOTP envoyé par email.'
+      cooldown: 'Attendez un peu avant de redemander un code.'
+      rate_limited: 'Trop de renvois. Attendez avant de demander un nouveau code.'
+    invalid: 'Code TOTP invalide ou expiré.'
+    valid: 'Code TOTP validé.'
+mail:
+  invite:
+    subject: 'Votre invitation utilisateur'
+    title: 'Invitation a rejoindre la plateforme'
+    intro: 'Vous avez recu une invitation. Utilisez le lien ci-dessous pour activer votre compte et definir votre mot de passe.'
+    cta: 'Activer mon compte'
+    expiry_hint: 'Ce lien expire rapidement. Demandez une nouvelle invitation si necessaire.'
+    security_hint: 'Ne partagez jamais ce lien. Notre equipe ne vous le demandera jamais.'
+    footer: 'Email automatique d''invitation - merci de ne pas repondre.'
+  totp:
+    subject: 'Votre code de validation TOTP'
+    brand: StuWebStorage
+    title: 'Code de vérification'
+    intro: 'Utilisez le code ci-dessous pour finaliser la validation de votre session administrateur.'
+    code_label: 'Code TOTP'
+    expiry_hint: 'Ce code expire rapidement. Demandez un nouveau code si besoin.'
+    security_hint: 'Ne partagez jamais ce code. Notre équipe ne vous le demandera jamais.'
+    footer: 'Email automatique de sécurité - merci de ne pas répondre.'
+share:
+  file:
+    expired: 'Ce fichier partage a expire ou n''est plus disponible.'
+download:
+  challenge:
+    invalid_payload: 'L''e-mail et le jeton du fichier sont requis.'
+    resource_not_found: 'Ce fichier n''est pas disponible en telechargement public.'
+    cooldown: 'Attendez un peu avant de redemander un code.'
+    sent: 'Un code de verification a été envoye à votre e-mail.'
+    totp_required: 'Code de verification invalide ou expire.'
+  verify:
+    invalid_payload: 'L''identifiant de session et le code sont requis.'
+    challenge_not_found: 'Cette session de verification est introuvable.'
+  resource:
+    unreadable: 'Le fichier n''a pas pu etre lu.'
+  authorized: 'Vous pouvez maintenant telecharger le fichier.'
+  totp_ok_password_required: 'E-mail verifie. Saisissez le mot de passe d''accès pour continuer.'
+  share_password:
+    invalid: 'Acces refuse. Verifiez le mot de passe et reessayez.'
+    rate_limited: 'Trop de tentatives. Attendez environ cinq minutes avant de reessayer.'
+    preauth_invalid: 'Cette etape de verification a expire. Confirmez a nouveau le code e-mail.'
+  public_folder:
+    zip_empty: 'Aucun fichier en partage public actif dans ce dossier pour telechargement.'
+    zip_limit_files: 'Trop de fichiers pour un seul ZIP. Demandez au proprietaire de fractionner ou de reduire les fichiers partages publiquement.'
+    zip_limit_bytes: 'Le ZIP depasserait la taille totale autorisee.'
+    zip_limit_time: 'La generation du ZIP a pris trop de temps. Reessayez plus tard.'
+media:
+  preview:
+    title: 'Apercu du fichier'
+    close_aria: 'Fermer la fenetre d''aperçu'
+    close_button: Fermer
+    pdf_frame_title: 'Apercu du document PDF'
+    open_new_tab: 'Ouvrir dans un nouvel onglet'
+    video_label: 'Apercu video'
+    audio_label: 'Apercu audio'
+    fullscreen: 'Plein ecran'
+    playback_failed: 'Ce media n''a pas pu etre lu dans votre navigateur (format ou codec non pris en charge).'
+    text_label: 'Apercu du fichier texte'
+    text_load_failed: 'Impossible de charger le contenu du fichier.'
+files:
+  meta:
+    title: 'Mes fichiers'
+  section:
+    my_files: 'Mes fichiers'
+    shared_for_me: 'Partage pour moi'
+    shared_for_me_empty: 'Aucun fichier partage pour vous.'
+  listing_scope:
+    empty_owned: 'Aucun fichier dans ce perimetre.'
+    empty_shared: 'Aucun fichier partage correspondant.'
+  intro: 'Les depots sont chiffres au repos. Reglez la visibilite selon vos roles.'
+  admin:
+    mode_banner: 'Mode administration actif (scope : %owner%).'
+    owner_fallback_notice: "Aucun utilisateur cible dans l'URL. Affichage des fichiers du compte %label% (ID %id%)."
+    view_scope_owner: 'Un utilisateur'
+    view_scope_all: 'Tous les utilisateurs'
+    owner_filter_label: Utilisateur
+    owner_filter_apply: Appliquer
+    owner_badge: 'Proprietaire : %owner%'
+    target_owner_label: 'Utilisateur cible'
+    target_owner_hint: 'Saisissez un nom ou un courriel, choisissez une suggestion ou utilisez l''utilisateur pre-rempli depuis le volet actif.'
+    users_pagination:
+      nav_aria: 'Pagination de la liste utilisateurs'
+      summary: 'Utilisateurs %start%–%end% sur %total%'
+      per_page: 'Par page'
+      page_controls: 'Navigation de page'
+      prev: Précédent
+      next: Suivant
+    users_pane:
+      grid_fallback: 'Passez en affichage liste pour parcourir les dossiers dans cette vue.'
+  nav:
+    filter: Filtrer
+  toolbar:
+    send: Envoyer
+    columns_label: Colonnes
+    columns_aria: 'Choisir les colonnes affichees'
+    action_global: 'Action (%count%)'
+    heading: 'Recherche et filtres'
+    search_label: Rechercher
+    search_placeholder: Rechercher
+    filter_public_label: Publication
+    filter_public_all: Tous
+    filter_public_yes: 'Public uniquement'
+    filter_public_no: 'Prive uniquement'
+    extensions_label: Extensions
+    sort_label: Tri
+    sort_name: Nom
+    sort_size: Taille
+    sort_uploaded: 'Date de depot'
+    sort_modified: 'Modifie le'
+    sort_ext: Extension
+    dir_label: Ordre
+    dir_asc: Croissant
+    dir_desc: Decroissant
+    apply: Appliquer
+    reset: Reinitialiser
+    listing_scope_owned: 'Mes fichiers'
+    listing_scope_shared: 'Partages recus'
+    listing_scope_both: 'Les deux'
+    listing_scope_group_aria: 'Perimetre des fichiers affiches'
+    display_menu_label: Affichage
+    display_menu_aria: 'Perimetre et mise en page'
+    display_section_scope: Perimetre
+    display_section_layout: 'Mise en page'
+  search:
+    clear_aria: 'Effacer la recherche'
+  advanced:
+    open: 'Filtres avances'
+    title: 'Filtres avances'
+    close: Fermer
+    apply: 'Appliquer les filtres'
+    cancel: Annuler
+    reset_only: 'Reinitialiser les filtres avances'
+    reset_in_modal: 'Effacer filtres avances'
+    uploaded_after: 'Depose apres'
+    uploaded_before: 'Depose avant'
+    updated_after: 'Modifie apres'
+    updated_before: 'Modifie avant'
+    expires_after: 'Expire apres'
+    expires_before: 'Expire avant'
+    filter_has_grant: 'Partage a un utilisateur (grant)'
+    filter_has_grant_all: Indifferent
+    filter_has_grant_yes: 'Au moins un grant'
+    filter_has_grant_no: 'Aucun grant'
+    grantees_label: 'Destinataires du partage'
+    grantees_hint: 'Seuls les utilisateurs deja autorises sur vos fichiers apparaissent.'
+    extensions_dropdown_aria: 'Choisir les extensions de fichiers a filtrer'
+    extensions_button_all: 'Toutes les extensions'
+    extensions_button_count: '%count% extension(s) selectionnee(s)'
+    grantees_dropdown_aria: 'Choisir les destinataires pour filtrer'
+    grantees_button_all: 'Tous les destinataires'
+    grantees_button_count: '%count% destinataire(s) selectionne(s)'
+    filter_select_all: 'Tout selectionner'
+    filter_clear_selection: 'Tout effacer'
+    filters_owned_list_hint: 'Les filtres extension et destinataires s’appliquent à votre liste de fichiers. La section « Partages recus » ne suit que le tri defini ici.'
+    filters_shared_list_hint: 'Les filtres extension et destinataires ne restreignent pas la liste « Partages recus » ; seul le tri s’applique.'
+    view_layout: Presentation
+  chips:
+    search: 'Recherche : %value%'
+    filter_public_yes: 'Visibilite : public'
+    filter_public_no: 'Visibilite : prive'
+    extensions: 'Extensions : %list%'
+    filter_has_grant_yes: 'Au moins un partage utilisateur'
+    filter_has_grant_no: 'Sans partage utilisateur'
+    uploaded_after: 'Depose apres %date%'
+    uploaded_before: 'Depose avant %date%'
+    updated_after: 'Modifie apres %date%'
+    updated_before: 'Modifie avant %date%'
+    expires_after: 'Expire apres %date%'
+    expires_before: 'Expire avant %date%'
+    grantee: '%name% (#%id%)'
+  view:
+    list: Liste
+    grid: Grille
+    toggle_aria: 'Vue liste ou grille'
+  grid:
+    open_actions_aria: 'Ouvrir les actions du fichier %name%'
+    badge:
+      public_aria: 'Partage public actif'
+      friends_aria: 'Partage entre amis actif'
+  upload:
+    heading: 'Envoyer un fichier'
+    collapsed_heading: 'Afficher les options d''envoi (depot chiffre)'
+    modal_title: 'Envoyer un fichier'
+    modal_close: 'Fermer la fenetre d''envoi'
+    modal_cancel: Annuler
+    drop_hint: 'Glissez-deposez un fichier ici ou utilisez le champ ci-dessous.'
+    file_label: Fichier
+    visibility_label: Visibilite
+    visibility_private: Prive
+    visibility_public: Public
+    expires_label: 'Expire le (optionnel)'
+    grantees_label: 'Utilisateurs autorises (partage prive)'
+    grantee_search_placeholder: 'Tapez au moins deux lettres du pseudo'
+    grantee_search_hint: 'Choisissez jusqu''à cinq destinataires dans les suggestions (pseudo).'
+    grantees_selected_aria: 'Destinataires selectionnes pour le partage prive'
+    grantee_label_fallback: Utilisateur
+    grantee_fetch_error: 'La recherche de pseudonyme a echoue. Reessayez.'
+    grantee_live_none: 'Aucun utilisateur correspondant.'
+    grantee_live_results: '%count% suggestion(s).'
+    grantee_remove_aria: 'Retirer ce destinataire'
+    submit: Envoyer
+    bytes_hint: 'Taille maximale du fichier en clair : %formatted_size%.'
+    progress_sending: 'Envoi en cours'
+    progress_processing: 'Traitement sur le serveur'
+    progress_bar_aria: 'Progression de l''envoi du fichier'
+    xhr_network_error: 'Le serveur est injoignable. Verifiez votre connexion et reessayez.'
+    selected_byte_size_label: 'Taille :'
+  table:
+    name: Nom
+    extension: Type
+    pseudo: Pseudo
+    size: Taille
+    uploaded: 'Depose le'
+    modified: 'Modifie le'
+    expires: Expire
+    visibility: Visibilite
+    share_public: Public
+    share_friends: Partagé
+    token: 'Jeton public'
+    actions: Actions
+    sort:
+      state:
+        none: 'Non trie'
+        desc: 'Tri decroissant'
+        asc: 'Tri croissant'
+  boolean:
+    'yes': Oui
+    'no': Non
+  visibility:
+    public: Public
+    private: Prive
+  action:
+    label: Actions
+    create_folder: 'Créer un dossier'
+    download: Telecharger
+    delete: Supprimer
+    delete_selection: 'Supprimer la selection'
+    move_selection: 'Deplacer la selection'
+    download_selection: 'Telecharger la selection'
+    share: Partager
+    share_public: 'Partage public'
+    share_friends: 'Partage entre amis'
+    make_public: 'Rendre public'
+    make_private: 'Rendre prive'
+    add_grant: 'Ajouter une autorisation'
+    revoke_grant: Retirer
+    properties: Proprietes
+    preview: Apercu
+    rename: Renommer
+    copy_public_link: 'Copier le lien'
+    copy_public_link_with_password: 'Copier le lien avec mot de passe'
+    copy_public_link_aria: 'Copier le lien public dans le presse-papiers'
+    copy_public_link_with_password_aria: 'Copier le lien public et le mot de passe dans le presse-papiers'
+    copy_public_link_done: 'Lien public copie dans le presse-papiers.'
+    copy_public_link_failed: 'Impossible de copier le lien.'
+    copy_public_link_password_missing: 'Le mot de passe public est indisponible. Ouvrez le partage public et verifiez qu''un mot de passe est active.'
+    menu:
+      global_aria: 'Actions sur la selection'
+  folder:
+    root: 'Racine'
+    open: 'Ouvrir le dossier %name%'
+    breadcrumb:
+      aria: 'Fil d''arborescence des dossiers'
+    field:
+      name: 'Nom du dossier'
+    action:
+      create: 'Nouveau dossier'
+      open: Ouvrir
+      properties: Proprietes
+      share_public: 'Partager publiquement'
+      share_friends: 'Partager entre amis'
+      rename: Renommer
+      download_zip: 'Telecharger ZIP'
+      delete: 'Supprimer le dossier'
+    rename:
+      modal_title: 'Renommer le dossier'
+    modal:
+      create_title: 'Creer un dossier'
+      delete_title: 'Supprimer un dossier'
+      delete_recursive_message: 'Le dossier n''est pas vide, etes-vous sûr de vouloir le supprimer ?'
+    properties:
+      title: 'Proprietes du dossier'
+      total_size: 'Taille totale'
+      total_files: 'Nombre de fichiers'
+      total_subfolders: 'Nombre de sous-dossiers'
+      error: 'Impossible de charger les proprietes du dossier.'
+    share:
+      public:
+        modal_title_single: 'Partager publiquement un dossier'
+      friends:
+        modal_title_single: 'Partager un dossier entre amis'
+        friends_expiration_mixed: 'Les fichiers de ce dossier ont des expirations différentes pour ce destinataire.'
+        friends_grant_expired: Expire
+    flash:
+      name_required: 'Le nom du dossier est obligatoire.'
+      already_exists: 'Un dossier avec ce nom existe deja a cet emplacement.'
+      name_conflict_with_file: 'Un fichier avec ce nom existe deja a cet emplacement.'
+      parent_invalid: 'Le dossier parent selectionne est invalide.'
+      created: 'Dossier cree avec succes.'
+      deleted_recursive: 'Dossier supprime recursivement.'
+      share_empty: 'Ce dossier ne contient aucun fichier partageable pour le moment.'
+    public_link:
+      resolve_failed: 'Impossible de preparer le lien public. Verifiez le partage du dossier ou reessayez.'
+      no_files: "Aucun fichier adapté n'a été trouvé dans ce dossier pour un lien public."
+      copy_fallback_intro: 'Le lien public est pret. Copiez-le dans le champ ou avec le bouton.'
+  public_landing:
+    meta_title: 'Telecharger un fichier partage'
+    title: 'Fichier partage'
+    intro: 'Saisissez votre e-mail pour recevoir un code, confirmez pour previsualiser (si possible) et telecharger.'
+    preview_alt: 'Apercu : %name%'
+    file_name_label: 'Nom du fichier'
+    size_label: Taille
+    type_label: Type
+    type_unknown: Inconnu
+    uploaded_label: 'Envoye le'
+    public_expires_label: 'Expiration du lien public'
+    public_expires_never: 'Sans expiration'
+    section_email_title: 'Verification par e-mail'
+    email_hint: 'Nous envoyons un code court pour limiter l''abus de ce lien.'
+    email_label: E-mail
+    email_placeholder: vous@exemple.com
+    send_code: 'Envoyer le code'
+    code_label: 'Code recu'
+    code_placeholder: '6 chiffres'
+    verify_submit: 'Valider et telecharger'
+    download_file: 'Telecharger le fichier'
+    share_password_label: 'Mot de passe d''accès'
+    share_password_submit: 'Valider le mot de passe et telecharger'
+    share_password_hint: 'Inclure le mot de passe dans l''URL (?share_password=) est optionnel et peut figurer dans l''historique du navigateur.'
+    api_error: 'Une erreur s''est produite. Reessayez.'
+  public_folder_landing:
+    meta_title: 'Telecharger un dossier partage (ZIP)'
+    title: 'Dossier partage'
+    intro: 'Saisissez votre e-mail pour recevoir un code, puis confirmez pour telecharger un ZIP des fichiers ayant un lien public actif dans cette arborescence.'
+    folder_name_label: 'Nom du dossier'
+    public_files_label: 'Fichiers publics (sous-arbre)'
+    public_expires_label: 'Expiration du partage public'
+    public_expires_never: 'Sans expiration'
+    no_public_files_hint: 'Aucun fichier avec lien public actif dans cet arbre pour le moment. Apres verification, le ZIP peut echouer tant que des fichiers ne sont pas partages publiquement.'
+    section_email_title: 'Verification par e-mail'
+    email_hint: 'Nous envoyons un code court pour proteger ce lien dossier contre les abus.'
+    email_label: E-mail
+    email_placeholder: vous@exemple.com
+    send_code: 'Envoyer le code'
+    code_label: 'Code recu'
+    code_placeholder: '6 chiffres'
+    verify_submit: 'Valider et telecharger le ZIP'
+    download_zip: 'Telecharger le ZIP'
+    share_password_label: 'Mot de passe d''accès'
+    share_password_submit: 'Valider le mot de passe et telecharger le ZIP'
+    share_password_hint: 'Inclure le mot de passe dans l''URL est optionnel ; il peut figurer dans l''historique du navigateur.'
+    api_error: 'Une erreur s''est produite. Reessayez.'
+  grant:
+    label: 'ID utilisateur autorise'
+    submit: Accorder
+  selection:
+    aria_select_all: 'Tout selectionner / tout deselectionner'
+    aria_select_row: 'Selectionner le fichier %name%'
+    live_count: '%count% fichier(s) selectionne(s)'
+    multi_pane_error: 'Selectionnez des elements dans un seul panneau utilisateur pour cette action.'
+  share:
+    modal_title_single: 'Partager un fichier'
+    modal_title_bulk: 'Partager %count% fichiers'
+    public_label: Visibilite
+    expires_label: 'Expiration du partage (optionnel)'
+    expires_hint: 'L''expiration coupe le partage uniquement, le fichier reste.'
+    grants_label: 'Destinataires (pseudo)'
+    grant_expires_per_label: 'Expiration personnelle'
+    grant_expires_per_aria: 'Expiration de ce destinataire'
+    replace_existing_label: 'Remplacer les partages existants'
+    replace_existing_warning: 'Les partages actuels seront ecrases par cette saisie.'
+    apply: 'Appliquer le partage'
+    bulk_results:
+      ok: '%count% fichier(s) partage(s) avec succes.'
+      failed: '%count% fichier(s) en erreur.'
+    load_error: 'Impossible de charger l''état du partage.'
+    submit_error: 'Impossible d''appliquer le partage. Reessayez.'
+    target_summary_single: 'Fichier : %name%'
+    target_summary_bulk: 'Selection : %count% fichier(s)'
+    'yes': Oui
+    'no': Non
+    expiration_active_aria: 'Expiration configuree pour ce canal'
+    public:
+      modal_title_single: 'Lien public'
+      modal_title_bulk: 'Lien public pour la selection'
+      enable_label: 'Activer le lien public'
+      enable_hint: 'Toute personne avec le lien peut telecharger tant que le lien est actif.'
+      expires_label: 'Expiration du lien public (optionnel)'
+      expires_hint: 'Laisser vide pour aucune expiration. Apres expiration le lien public cesse de fonctionner.'
+      expires_relative_future: 'Environ ~M~ minute(s) avant expiration (heure de cet appareil).'
+      expires_relative_past: 'Cette date et heure sont environ ~M~ minute(s) dans le passe sur cet appareil : après enregistrement le lien sera inactif.'
+      expires_relative_soon: 'Moins d''une minute avant expiration.'
+      password_enable_label: 'Exiger un mot de passe d''accès (après vérification e-mail)'
+      password_enable_hint: 'Un mot de passe aleatoire est genere quand vous activez cette option. L''inclure dans l''URL est pratique mais un peu moins sur que l''envoyer separement.'
+      password_field_label: 'Mot de passe d''accès actuel'
+      password_copy: 'Copier le mot de passe'
+      password_copy_aria: 'Copier le mot de passe d''accès dans le presse-papiers'
+      password_copy_done: 'Mot de passe d''accès copie dans le presse-papiers.'
+      password_copy_unavailable_godview: 'Copie du mot de passe indisponible dans ce contexte administrateur.'
+    friends:
+      modal_title_single: 'Partager avec des amis'
+      modal_title_bulk: 'Partager avec des amis (selection)'
+      grants_label: 'Destinataires (pseudo)'
+      role_required: 'Vos roles ne permettent pas le partage entre amis.'
+  move_bulk:
+    title: 'Deplacer la selection'
+    message: 'Choisissez le dossier de destination, puis validez pour y deplacer les elements selectionnes.'
+    breadcrumb_root: Racine
+    empty_child_folders: 'Aucun sous-dossier. Vous pouvez deplacer ici ou remonter.'
+    open_child_aria: 'Entrer dans le dossier'
+    parent_up: 'Dossier parent'
+    go_root: 'Aller a la racine'
+    move_here: 'Deplacer ici'
+    cancel: Annuler
+    close_aria: 'Fermer la fenetre de deplacement'
+    toast_success: 'Deplacement termine : %count% element(s) deplace(s).'
+    toast_partial: 'Deplacement partiel : %ok% element(s) deplace(s), %failed% en echec.'
+    toast_error: 'Impossible de deplacer la selection. Reessayez.'
+  delete_bulk:
+    title: 'Confirmer la suppression'
+    message: 'Supprimer definitivement les elements selectionnes ?'
+    count_suffix: 'element(s) selectionne(s)'
+    more_template: '+%count% autre(s)'
+    toast_success: 'Suppression terminee : %count% element(s) supprime(s).'
+    toast_partial: 'Suppression partielle : %ok% element(s) supprime(s), %failed% en echec.'
+    toast_error: 'Impossible de supprimer la selection. Reessayez.'
+    cancel: Annuler
+    confirm: 'Confirmer la suppression'
+    close_aria: 'Fermer la fenetre de confirmation'
+  delete_confirm:
+    title: 'Confirmer la suppression'
+    close_aria: 'Fermer la fenetre de confirmation'
+    message: "Supprimer definitivement l'element suivant ?"
+    cancel: Annuler
+    confirm: Supprimer
+  properties:
+    title: 'Proprietes du fichier'
+    preview_alt: 'Apercu du fichier'
+    extension_fallback: FICHIER
+    loading: 'Chargement des proprietes...'
+    error: 'Impossible de charger les proprietes du fichier.'
+    never_expires: 'Sans expiration'
+    no_recipients: 'Aucun destinataire actif.'
+    recipients: Destinataires
+    recipient_until: 'Jusqu au %date%'
+    recipient_no_expiry: 'Sans expiration'
+    public_token: 'Jeton public'
+    public_validity: 'Validite du partage public'
+    public_no_expiry: 'Sans expiration'
+    public_status: 'Etat du lien public'
+    public_disabled: 'Le partage public est desactive.'
+    public_status_off: Desactive
+    public_status_active: Actif
+    public_status_expired: Expire
+    edit_public: 'Modifier le lien public'
+    edit_friends: 'Modifier les amis'
+    shared_by: 'Partage par'
+    section:
+      public: 'Partage public'
+      private: 'Partages prives'
+      friends: 'Partage entre amis'
+  rename:
+    modal_title: 'Renommer le fichier'
+    name_label: 'Nouveau nom'
+    submit: Renommer
+    cancel: Annuler
+    modal_error: 'Impossible de renommer le fichier.'
+  list:
+    empty: 'Aucun fichier pour le moment.'
+    filtered_empty: 'Aucun fichier ne correspond a ces criteres.'
+    folder_empty: 'Le dossier est vide.'
+  pagination:
+    nav_label: 'Pagination des fichiers'
+    previous: Precedent
+    next: Suivant
+    page: 'Page %page% / %pages% — %total% fichier(s)'
+  preferences:
+    invalid_payload: 'Charge utile de preferences invalide.'
+    invalid_device_id: 'Identifiant d''appareil invalide.'
+    save_failed: 'Impossible de sauvegarder les preferences d''interface.'
+  flash:
+    csrf_invalid: 'Jeton de securite invalide. Reessayez.'
+    target_owner_required: 'Selectionnez un utilisateur cible dans la vue tous les utilisateurs.'
+    target_owner_forbidden: 'Vous ne pouvez pas agir au nom d''un autre utilisateur.'
+    target_owner_context_invalid: 'La selection d''utilisateur cible n''est pas autorisée dans ce contexte de liste.'
+    target_owner_invalid: 'L''utilisateur selectionne est invalide ou ne peut pas recevoir de fichiers ici.'
+    target_folder_invalid: 'Le dossier cible selectionne est invalide pour cet utilisateur.'
+    target_owner_ambiguous: 'Plusieurs utilisateurs correspondent a ce pseudo. Choisissez une suggestion ou precisez.'
+    target_owner_not_found: 'Aucun utilisateur actif avec ce pseudo exact ne correspond a cette saisie.'
+    upload_invalid: 'Envoi echoue ou fichier illisible.'
+    upload_too_large: 'Fichier trop volumineux.'
+    quota_exceeded: 'Quota de stockage atteint pour cet utilisateur.'
+    public_not_allowed: 'Vos roles ne permettent pas la visibilite publique.'
+    storage_failed: 'Impossible d''enregistrer le fichier chiffre.'
+    uploaded: 'Fichier envoye avec succes.'
+    not_found: 'Fichier introuvable.'
+    deleted: 'Fichier supprime.'
+    visibility_updated: 'Visibilite mise a jour.'
+    grant_invalid: 'Impossible d''accomplir cette autorisation.'
+    grant_exists: 'Autorisation deja presente.'
+    grant_added: 'Autorisation ajoutee.'
+    grant_removed: 'Autorisation retiree.'
+    share_applied: 'Partage mis a jour.'
+    bulk_share_ok: 'Partage applique a la selection.'
+    bulk_share_partial: 'Certains fichiers n''ont pas pu etre partages.'
+    bulk_delete_ok: 'Suppression appliquee a la selection.'
+    bulk_delete_partial: 'Certains fichiers n''ont pas pu etre supprimes.'
+    move_target_invalid: 'Dossier de destination invalide.'
+    move_name_conflict: 'Un fichier avec ce nom existe deja dans le dossier cible.'
+    move_folder_into_self_or_descendant: 'Impossible de deplacer un dossier vers lui-meme ou vers un sous-dossier.'
+    move_folder_name_conflict: 'Un dossier avec ce nom existe deja dans le dossier cible.'
+    move_bulk_ok: 'Deplacement applique a la selection.'
+    move_bulk_partial: 'Certains elements n''ont pas pu etre deplaces.'
+    bulk_no_ids: 'Aucun fichier selectionne.'
+    rename_name_required: 'Le nom du fichier est obligatoire.'
+    rename_name_too_long: 'Le nom du fichier est trop long.'
+    rename_unchanged: 'Aucune modification detectee.'
+    renamed: 'Fichier renomme avec succes.'
+    upload_name_conflict: 'Un fichier ou un dossier avec ce nom existe deja a cet emplacement.'
+    name_conflict_same_level: 'Un fichier ou un dossier avec ce nom existe deja a cet emplacement.'
+    folder_rename_name_required: 'Le nom du dossier est obligatoire.'
+    folder_rename_name_too_long: 'Le nom du dossier est trop long.'
+    folder_rename_unchanged: 'Aucune modification detectee.'
+    folder_rename_name_conflict: 'Un dossier avec ce nom existe deja a cet emplacement.'
+    folder_renamed: 'Dossier renomme avec succes.'
+    not_owner: 'Acces refuse sur ce fichier.'
+    godview_subject_invalid: 'Utilisateur cible invalide pour cette action.'
+    expired: 'Ce fichier a expire.'
+    download_failed: 'Impossible de dechiffrer le fichier stocke.'
+admin:
+  invite:
+    meta:
+      title: 'Inviter un utilisateur'
+    title: 'Inviter un utilisateur'
+    intro: 'Envoyez une invitation par email. Un lien d''activation sera fourni.'
+    email: Email
+    pseudonym: Pseudonyme
+    submit: 'Envoyer l''invitation'
+    back_users: 'Retour a la liste'
+    flash:
+      sent: 'Invitation envoyee.'
+  users:
+    meta:
+      title: 'Administration utilisateurs'
+    list:
+      title: 'Gestion des utilisateurs'
+      search_placeholder: 'Rechercher par email ou pseudonyme'
+      search_submit: Rechercher
+      empty: 'Aucun utilisateur trouve.'
+      total: '%count% utilisateur(s)'
+    show:
+      title: 'Détail utilisateur'
+    roles_labels:
+      ROLE_USER: Utilisateur
+      ROLE_ADMIN: Administrateur
+      ROLE_CV_CONSULT: 'Consultant CV'
+      ROLE_TUILE: 'Gestion des tuiles accueil'
+      ROLE_SHARE: 'Partage fichiers (base)'
+      ROLE_SHARE_SEND: 'Envoi de partages'
+      ROLE_SHARE_PUBLIC: 'Partage public'
+      ROLE_SHARE_FRIENDS: 'Partage entre amis'
+    sections:
+      profile: Profil
+      roles: Roles
+      trusted_devices: 'Peripheriques de confiance'
+      security: Securite
+      danger_zone: 'Zone sensible'
+    fields:
+      email: Email
+      pseudonym: Pseudonyme
+      roles: Roles
+      active: Actif
+      actions: Actions
+      fingerprint: Empreinte
+      trusted_until: 'Confiance jusqu''au'
+      hard_delete_reason: 'Raison de suppression'
+      hard_delete_confirm: 'Tapez DELETE pour confirmer'
+      hard_delete_placeholder: DELETE
+      storage_quota_gib: 'Quota stockage (GiB)'
+      storage_quota_placeholder: 'Defaut plateforme'
+    storage:
+      usage: 'Utilise : %used%'
+      quota_effective: 'Quota : %quota%'
+      quota_personal: 'quota personnel'
+      quota_default: 'quota par defaut'
+      quota_unlimited: 'Quota illimite'
+    actions:
+      manage: Gerer
+      back: Retour
+      save_profile: 'Enregistrer le profil'
+      save_roles: 'Enregistrer les roles'
+      revoke: Revoquer
+      revoke_all_devices: 'Revoquer tous les appareils'
+      force_password_reset: 'Forcer reset mot de passe'
+      invalidate_sessions: 'Invalider sessions actives'
+      hard_delete: 'Suppression definitive'
+    help:
+      hard_delete: 'Cette action supprime definitivement les donnees fonctionnelles, avec snapshot chiffre pour rollback admin.'
+      storage_quota: 'Vide = quota plateforme. 0 = illimite. Exemple : 10 pour 10 GiB.'
+    status:
+      active: Actif
+      inactive: Inactif
+    devices:
+      empty: 'Aucun appareil de confiance.'
+    success:
+      profile_updated: 'Profil utilisateur mis a jour.'
+      roles_updated: 'Roles utilisateur mis a jour.'
+      device_revoked: 'Appareil de confiance revoque.'
+      devices_revoked: 'Appareils de confiance revoques.'
+      password_reset_forced: 'Reset mot de passe force.'
+      sessions_invalidated: 'Sessions actives invalidees.'
+      hard_deleted: 'Utilisateur supprime definitivement.'
+    error:
+      invalid_payload: 'Donnees invalides.'
+      invalid_storage_quota: 'Quota de stockage invalide.'
+      invalid_role: 'Role invalide.'
+      self_role_change_forbidden: 'Vous ne pouvez pas modifier vos propres roles.'
+      self_soft_delete_forbidden: 'Vous ne pouvez pas vous desactiver vous-meme.'
+      self_hard_delete_forbidden: 'Vous ne pouvez pas vous supprimer vous-meme.'
+      hard_delete_confirmation_invalid: 'Confirmation de suppression invalide.'
+      hard_delete_unavailable: 'Suppression definitive temporairement indisponible.'
+      vault_key_missing: 'Cle de coffre de suppression manquante.'
+      snapshot_encode_failed: 'Creation du snapshot impossible.'
+      snapshot_cipher_invalid: 'Algorithme de chiffrement snapshot invalide.'
+      snapshot_encrypt_failed: 'Chiffrement du snapshot impossible.'
+      snapshot_signature_invalid: 'Signature du snapshot invalide.'
+      snapshot_decode_failed: 'Lecture du snapshot impossible.'
+      snapshot_decrypt_failed: 'Dechiffrement du snapshot impossible.'
+      last_admin_protected: 'Impossible de modifier le dernier administrateur actif.'
+      device_not_found: 'Appareil introuvable.'
+      already_inactive: 'Ce compte est deja inactif.'
+      account_inactive: 'Compte utilisateur desactive.'
+      share_requires_base: 'ROLE_SHARE_PUBLIC et ROLE_SHARE_FRIENDS exigent ROLE_SHARE.'
+      share_public_friends_requires_send: 'ROLE_SHARE_PUBLIC et ROLE_SHARE_FRIENDS exigent ROLE_SHARE_SEND.'
+  settings:
+    meta:
+      title: 'Configuration plateforme'
+    page:
+      title: 'Configuration de la plateforme'
+      subtitle: 'Parametres globaux du site, antibot et quotas par defaut.'
+    summary:
+      access_gate: 'Antibot visiteurs'
+      access_gate_active_help: 'Les visiteurs non admin passent une verification automatique (captcha si echec).'
+      access_gate_inactive_help: 'Le site est accessible sans verification antibot.'
+      maintenance: Maintenance
+      maintenance_active_help: 'Le bouton Connexion est masque. Seuls les admins peuvent se connecter via /login.'
+      maintenance_inactive_help: 'La connexion publique reste disponible.'
+      default_quota: 'Quota stockage par defaut'
+      default_quota_help: 'Valeur appliquee aux comptes sans quota personnel (variable APP_USER_STORAGE_QUOTA_BYTES).'
+    access_gate:
+      title: 'Antibot visiteurs'
+      subtitle: 'Activez la verification automatique et reglez le seuil de score (0-100).'
+      status_active: 'Antibot actif'
+      status_inactive: 'Antibot inactif'
+    maintenance:
+      title: Maintenance
+      subtitle: 'Masquez la connexion publique et reservez /login aux administrateurs.'
+      status_active: 'Maintenance active'
+      status_inactive: 'Maintenance inactive'
+    storage:
+      title: 'Stockage'
+      default_quota_label: 'Quota par defaut'
+      per_user_label: 'Quota par utilisateur'
+      per_user_help: 'Definissez un quota personnel sur la fiche de chaque utilisateur.'
+      manage_users: 'Gerer les utilisateurs'
+    shortcuts:
+      title: 'Raccourcis admin'
+      preview_gate: 'Previsualiser la page antibot'
+  bug_reports:
+    meta:
+      title: 'Tickets bug'
+    list:
+      title: 'Tickets bug'
+      empty: 'Aucun ticket bug pour ces filtres.'
+    detail:
+      title: 'Ticket #%id%'
+      context_title: 'Contexte capture'
+      timeline_title: 'Timeline actions'
+    filters:
+      status_all: 'Tous les statuts'
+      severity_all: 'Toutes les severites'
+      route_placeholder: 'Filtrer par route'
+      include_archived: 'Inclure archives'
+      apply: 'Filtrer'
+    fields:
+      created_at: 'Date'
+      reporter: 'Utilisateur'
+      path: 'URL'
+      status: 'Statut'
+      severity: 'Severite'
+      archived: 'Archive'
+      actions: 'Actions'
+      route_name: 'Route'
+      query: 'Query'
+      locale: 'Langue'
+      theme: 'Theme'
+      user_agent: 'Navigateur'
+      viewport: 'Viewport'
+      referrer: 'Referrer'
+      correlation_id: 'Request ID'
+      app_version: 'Version app'
+      archive_reason: 'Raison archivage'
+    archived:
+      yes: 'Oui'
+      no: 'Non'
+    actions:
+      open: 'Ouvrir'
+      back: 'Retour liste'
+      mark_in_progress: 'Passer en cours'
+      mark_resolved: 'Marquer resolu'
+      reopen: 'Reouvrir'
+      archive: 'Archiver'
+      unarchive: 'Desarchiver'
+setup:
+  meta:
+    title: 'Initialisation administrateur'
+  title: 'Configurer le premier administrateur'
+  subtitle: 'Créez le premier compte administrateur pour déverrouiller la plateforme.'
+  email: 'Email administrateur'
+  pseudonym: Pseudonyme
+  password: 'Mot de passe'
+  submit: 'Créer le premier administrateur'
+  invalid_payload: 'Tous les champs sont requis.'
+  email_already_used: 'Cet email est déjà utilisé.'
+  totp_sent: 'Compte administrateur créé en attente. Un code TOTP a été envoyé par email.'
+  pending_confirmation: 'Votre compte administrateur est en attente de validation TOTP.'
+invite:
+  invalid_payload: 'Données d’invitation invalides.'
+  unauthorized: 'Action non autorisée.'
+  created: 'Invitation créée.'
+  user_already_exists: 'Un utilisateur existe déjà avec cet email.'
+  user_persist_failed: 'Impossible de créer le compte invité.'
+  email_send_failed: 'Impossible d''envoyer l''invitation par email.'
+  rate_limited: 'Trop de tentatives. Veuillez reessayer plus tard.'
+  activate:
+    success: 'Activation terminée. Vous pouvez vous connecter.'
+    invalid_or_expired: 'Le lien est invalide, expiré, ou déjà utilisé.'
+    password_required: 'Le mot de passe est requis.'
+    meta:
+      title: 'Activation du compte invité'
+    title: 'Activer votre compte'
+    subtitle: 'Définissez votre mot de passe pour finaliser l’activation.'
+    password: 'Nouveau mot de passe'
+    submit: 'Activer mon compte'
+locale:
+  invalid: 'Langue non supportée.'
+  name:
+    fr: Francais
+    en: Anglais
+    de: Allemand
+    lt: Lituanien
+    'no': Norvegien
+  bubble:
+    aria_toggle: 'Changer la langue du site'
+    aria_switch: 'Passer la langue en %locale%'
+theme:
+  invalid: 'Theme non supporte.'
+  mode:
+    light: Clair
+    dark: Sombre
+  bubble:
+    aria_toggle: 'Changer le theme du site'
+    aria_switch: 'Passer le theme en %theme%'
+floating:
+  actions:
+    toolbar_aria: 'Actions rapides : langue, theme et compte'
+    locale:
+      aria: 'Ouvrir le selecteur de langue'
+      title: Langue
+    theme:
+      aria: 'Basculer le theme vers %theme%'
+      title: 'Basculer vers %theme%'
+    account:
+      aria: 'Ouvrir les informations de compte'
+      title: 'Compte et score'
+    logout:
+      aria: 'Se deconnecter du site'
+    bug:
+      aria: 'Declarer un bug'
+      title: 'Signaler un bug'
+bug_report:
+  flash:
+    invalid_csrf: 'Soumission invalide. Veuillez réessayer.'
+    missing_required: 'Merci de decrire votre action et le resultat observe.'
+    created: 'Ticket bug cree avec succes.'
+  modal:
+    title: 'Declarer un bug'
+    action_description_label: 'Ce que j''ai fait'
+    observed_result_label: 'Ce qui s''est passé'
+    expected_result_label: 'Resultat attendu (optionnel)'
+    severity_label: 'Severite'
+    cancel: 'Annuler'
+    submit: 'Envoyer'
+  severity:
+    minor: 'Mineur'
+    major: 'Majeur'
+    critical: 'Critique'
+  status:
+    new: 'Nouveau'
+    in_progress: 'En cours'
+    resolved: 'Resolu'
+    reopened: 'Reouvert'
+storage:
+  home:
+    meta_title: 'Stockage cloud'
+    title: 'Votre espace cloud chiffré'
+    subtitle: 'Stockez, organisez et partagez vos fichiers en toute sécurité.'
+    cta_files: 'Accéder à mes fichiers'
+    cta_login: Connexion
+    no_share_role: 'Accès stockage non activé pour votre compte'
+    stats_aria: 'Vos statistiques de stockage'
+    stats_title: 'Vue d''ensemble de votre espace'
+    stats_subtitle: 'Synthese en temps reel de votre stockage personnel.'
+    stat_files: Fichiers
+    stat_space: 'Espace utilise'
+    stat_remaining: 'Espace restant'
+    stat_quota: 'Quota alloue : %quota%'
+    stat_space_unlimited: Illimite
+    stat_files_help: 'Fichiers chiffres stockes dans votre espace personnel.'
+    stat_space_help: 'Volume total occupe par l''ensemble de vos fichiers.'
+    stat_remaining_help_user: 'Capacite restante dans votre quota personnel (%quota%).'
+    stat_remaining_help_default: 'Capacite restante dans le quota par defaut (%quota%).'
+    stat_remaining_help_unlimited: 'Aucune limite de volume n''est appliquée à votre compte.'
+    stat_folders_help: 'Dossiers crees pour structurer votre arborescence.'
+    stat_shares_help: 'Liens publics et acces amis encore valides aujourd''hui.'
+    stat_folders: Dossiers
+    stat_shares: 'Partages actifs'
+    feature_encrypt_title: 'Chiffrement au repos'
+    feature_encrypt_text: 'Les fichiers sont chiffrés en AES-256 avant écriture sur disque.'
+    feature_folders_title: Arborescence
+    feature_folders_text: 'Organisez vos fichiers en dossiers avec renommage et déplacement.'
+    feature_share_title: 'Partage public et amis'
+    feature_share_text: 'Liens de partage avec mot de passe et vérification e-mail optionnels.'
+    feature_upload_title: 'Envoi par morceaux'
+    feature_upload_text: 'Les gros fichiers sont envoyes de maniere fiable par morceaux.'
+    features_title: 'Fonctionnalites de la plateforme'
+    features_subtitle: 'Stockage securise, partage controle et suivi de quota par utilisateur.'
+    feature_quota_title: 'Quota par utilisateur'
+    feature_quota_text: 'Visualisez l''espace utilise et le volume restant selon votre quota personnel ou celui de la plateforme.'
+  access_gate:
+    meta:
+      title: 'Verification antibot'
+    title: 'Verification antibot'
+    verifying: 'Veuillez patienter, nous verifions que vous n''etes pas un robot…'
+    redirecting: 'Verification reussie, redirection en cours…'
+    captcha_required: 'La verification automatique n''a pas abouti. Saisissez le code affiche pour continuer.'
+    dev_score: 'Score technique apres verification : %score% / %threshold% (environnement de developpement).'
+    captcha_label: 'Code de verification'
+    captcha_image_alt: 'Image captcha'
+    captcha_refresh: 'Nouvelle image'
+    submit: 'Continuer'
+    flash:
+      denied: 'Acces refuse. Saisissez le captcha ou reessayez dans quelques secondes.'
+      invalid_csrf: 'Soumission invalide. Veuillez reessayer.'
+    error:
+      csrf_invalid: 'Jeton de securite invalide.'
+      invalid_threshold: 'Seuil antibot invalide (0 a 100).'
+    success:
+      settings_updated: 'Parametres antibot mis a jour.'
+    admin:
+      enabled_label: 'Activer l''antibot pour les visiteurs'
+      threshold_label: 'Seuil de score antibot (0-100)'
+      threshold_help: 'Plus le seuil est eleve, plus la verification est stricte. Defaut : 50.'
+      save: 'Enregistrer l''antibot'
+maintenance:
+  meta:
+    title: Maintenance
+  title: 'Maintenance en cours'
+  description: 'La plateforme est temporairement indisponible pour les connexions publiques.'
+  banner:
+    title: 'Maintenance en cours'
+    default_message: 'Les connexions sont temporairement suspendues. Revenez plus tard.'
+  login:
+    notice: 'Mode maintenance actif : seuls les comptes administrateur peuvent se connecter.'
+  error:
+    login_forbidden: 'Connexion refusee : seuls les administrateurs peuvent se connecter pendant la maintenance.'
+  success:
+    settings_updated: 'Parametres de maintenance mis a jour.'
+  admin:
+    enabled_label: 'Activer le mode maintenance'
+    message_label: 'Message affiche sur l''accueil'
+    message_placeholder: 'Exemple : maintenance planifiee ce soir de 22h a minuit.'
+    message_help: 'Optionnel. Affiche sur l''accueil lorsque la maintenance est active.'
+    save: 'Enregistrer la maintenance'

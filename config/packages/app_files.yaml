@@ -1,0 +1,5 @@
+parameters:
+  env(APP_FILES_STORAGE_ENABLED): '1'
+  env(APP_USER_STORAGE_QUOTA_BYTES): '107374182400'
+  app.files_storage_enabled: '%env(bool:APP_FILES_STORAGE_ENABLED)%'
+  app.user_storage_quota_bytes: '%env(int:APP_USER_STORAGE_QUOTA_BYTES)%'

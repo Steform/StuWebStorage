@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="tests/bootstrap.php" colors="true" cacheDirectory=".phpunit.cache">
+    <php>
+        <server name="APP_ENV" value="test"/>
+        <server name="APP_DEBUG" value="1"/>
+        <server name="KERNEL_CLASS" value="App\Kernel"/>
+        <server name="DEFAULT_URI" value="http://localhost"/>
+    </php>
+    <testsuites>
+        <testsuite name="Project Test Suite">
+            <directory>tests/Functional/Home</directory>
+            <directory>tests/Functional/Infrastructure</directory>
+            <directory>tests/Functional/Files</directory>
+            <directory>tests/Functional/Share</directory>
+            <directory>tests/Functional/Admin</directory>
+            <directory>tests/Unit/Service/File</directory>
+            <directory>tests/Unit/Service/Share</directory>
+            <directory>tests/Unit/EventSubscriber</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

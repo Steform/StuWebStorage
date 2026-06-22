@@ -1,0 +1,47 @@
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+{% set localeMeta = {
+    fr: { label: 'locale.name.fr'|trans({}, 'messages', currentLocale) },
+    en: { label: 'locale.name.en'|trans({}, 'messages', currentLocale) },
+    de: { label: 'locale.name.de'|trans({}, 'messages', currentLocale) },
+    lt: { label: 'locale.name.lt'|trans({}, 'messages', currentLocale) },
+    no: { label: 'locale.name.no'|trans({}, 'messages', currentLocale) }
+} %}
+{% set activeLocales = app.request.attributes.get('active_locales', ['fr', 'en', 'de', 'lt', 'no']) %}
+{% set localeItems = [] %}
+{% for localeCode in activeLocales %}
+    {% if localeMeta[localeCode] is defined %}
+        {% set localeItems = localeItems|merge([{ code: localeCode, label: localeMeta[localeCode].label }]) %}
+    {% endif %}
+{% endfor %}
+
+<li class="nav-item dropdown">
+    <button
+        class="btn btn-outline-secondary btn-sm dropdown-toggle"
+        type="button"
+        id="storage-nav-locale-toggle"
+        data-bs-toggle="dropdown"
+        data-bs-auto-close="outside"
+        aria-expanded="false"
+        aria-label="{{ 'floating.actions.locale.aria'|trans({}, 'messages', currentLocale) }}"
+        title="{{ 'floating.actions.locale.title'|trans({}, 'messages', currentLocale) }}"
+    >
+        <i class="bi bi-globe2" aria-hidden="true"></i>
+        <span class="text-uppercase ms-1">{{ currentLocale }}</span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="storage-nav-locale-toggle">
+        {% for item in localeItems %}
+            <li>
+                <a
+                    class="dropdown-item d-flex justify-content-between align-items-center{% if currentLocale == item.code %} active{% endif %}"
+                    href="{{ path('locale_switch', { locale: item.code }) }}"
+                    aria-label="{{ 'locale.bubble.aria_switch'|trans({'%locale%': item.label}, 'messages', currentLocale) }}"
+                >
+                    <span class="small text-uppercase">{{ item.code }}</span>
+                    {% if currentLocale == item.code %}
+                        <i class="bi bi-check2" aria-hidden="true"></i>
+                    {% endif %}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</li>

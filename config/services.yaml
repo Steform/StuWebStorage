@@ -1,0 +1,166 @@
+parameters:
+  app.remember_me_lifetime: 2592000
+  app.totp_challenge_ttl_seconds: '%env(int:APP_TOTP_CHALLENGE_TTL_SECONDS)%'
+  app.invitation_token_ttl_seconds: '%env(int:APP_INVITATION_TOKEN_TTL_SECONDS)%'
+  app.totp_email_from: '%env(APP_TOTP_EMAIL_FROM)%'
+  app.public_download_challenge_ttl_seconds: '%env(int:APP_PUBLIC_DOWNLOAD_CHALLENGE_TTL_SECONDS)%'
+  app.public_download_challenge_cooldown_seconds: '%env(int:APP_PUBLIC_DOWNLOAD_CHALLENGE_COOLDOWN_SECONDS)%'
+  app.public_download_challenge_max_resend_count: '%env(int:APP_PUBLIC_DOWNLOAD_CHALLENGE_MAX_RESEND_COUNT)%'
+  app.file_encryption_key: '%env(APP_FILE_ENCRYPTION_KEY)%'
+  app.supported_locales: ['fr', 'en', 'de', 'lt', 'no']
+  app.default_locale: 'en'
+  app.fallback_locale: 'fr'
+  app.default_theme: 'light'
+  app.fallback_theme: 'light'
+  app.allowed_assignable_roles: ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_SHARE', 'ROLE_SHARE_SEND', 'ROLE_SHARE_PUBLIC', 'ROLE_SHARE_FRIENDS']
+  app.public_download_inline_max_bytes: 3145728
+  app.public_download_ticket_ttl_seconds: 900
+  app.public_folder_zip_max_total_bytes: 524288000
+  app.public_folder_zip_max_file_count: 2000
+  app.public_folder_zip_max_build_seconds: 120
+  app.upload_chunk_bytes: 8388608
+  app.version: ''
+  app.site_title: 'StuWebStorage'
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  App\:
+    resource: '../src/'
+
+  App\Service\Auth\RememberMePolicyService:
+    arguments:
+      $lifetimeSeconds: '%app.remember_me_lifetime%'
+
+  App\Service\Auth\TotpChallengeService:
+    arguments:
+      $defaultTtlSeconds: '%app.totp_challenge_ttl_seconds%'
+      $resendCooldownSeconds: '%app.public_download_challenge_cooldown_seconds%'
+      $maxResendCount: '%app.public_download_challenge_max_resend_count%'
+
+  App\Service\Auth\UserInvitationService:
+    arguments:
+      $tokenTtlSeconds: '%app.invitation_token_ttl_seconds%'
+      $supportedLocales: '%app.supported_locales%'
+      $defaultLocale: '%app.default_locale%'
+      $fallbackLocale: '%app.fallback_locale%'
+
+  App\Service\Notification\InvitationEmailNotificationService:
+    arguments:
+      $supportedLocales: '%app.supported_locales%'
+      $defaultLocale: '%app.default_locale%'
+      $fallbackLocale: '%app.fallback_locale%'
+
+  App\Service\Site\SiteMailTemplateResolverService:
+    arguments:
+      $envFromEmail: '%app.totp_email_from%'
+      $envToEmail: ''
+      $supportedLocales: '%app.supported_locales%'
+      $fallbackLocale: '%app.fallback_locale%'
+
+  App\Service\Share\PublicDownloadTotpService:
+    arguments:
+      $challengeTtlSeconds: '%app.public_download_challenge_ttl_seconds%'
+      $resendCooldownSeconds: '%app.public_download_challenge_cooldown_seconds%'
+      $maxResendCount: '%app.public_download_challenge_max_resend_count%'
+
+  App\Service\File\FileEncryptionService:
+    arguments:
+      $encryptionKey: '%app.file_encryption_key%'
+
+  App\Service\Admin\UserHardDeleteVaultService:
+    arguments:
+      $vaultKey: '%app.file_encryption_key%'
+
+  App\Controller\Admin\UserInvitationController:
+    arguments:
+      $adminInviteLimiter: '@limiter.admin_invite'
+
+  App\Controller\InvitationActivationController:
+    arguments:
+      $inviteActivationLimiter: '@limiter.invite_activation'
+
+  App\EventSubscriber\LocaleSubscriber:
+    arguments:
+      $supportedLocales: '%app.supported_locales%'
+      $defaultLocale: '%app.default_locale%'
+      $fallbackLocale: '%app.fallback_locale%'
+
+  App\Controller\LocaleController:
+    arguments:
+      $supportedLocales: '%app.supported_locales%'
+
+  App\Service\Locale\LocaleConfigurationService:
+    arguments:
+      $supportedLocales: '%app.supported_locales%'
+      $defaultLocale: '%app.default_locale%'
+      $projectDir: '%kernel.project_dir%'
+
+  App\EventSubscriber\ThemeSubscriber:
+    arguments:
+      $defaultTheme: '%app.default_theme%'
+      $fallbackTheme: '%app.fallback_theme%'
+
+  App\Service\Admin\RoleGovernanceService:
+    arguments:
+      $allowedRoles: '%app.allowed_assignable_roles%'
+
+  App\Service\File\FilesStorageFeatureService:
+    arguments:
+      $enabled: '%app.files_storage_enabled%'
+
+  App\Service\File\UserStorageQuotaService:
+    arguments:
+      $defaultQuotaBytes: '%app.user_storage_quota_bytes%'
+
+  App\Controller\Admin\SettingsController:
+    arguments:
+      $defaultQuotaBytes: '%app.user_storage_quota_bytes%'
+
+  App\Controller\FilesController:
+    arguments:
+      $projectDir: '%kernel.project_dir%'
+
+  App\Service\File\ChunkedUploadService:
+    arguments:
+      $chunkBytesDefault: '%app.upload_chunk_bytes%'
+      $projectDir: '%kernel.project_dir%'
+
+  App\Controller\PublicDownloadController:
+    arguments:
+      $publicDownloadTicketCache: '@cache.app'
+      $publicDownloadInlineMaxBytes: '%app.public_download_inline_max_bytes%'
+      $publicDownloadTicketTtlSeconds: '%app.public_download_ticket_ttl_seconds%'
+
+  App\Service\Share\PublicSharePasswordVault:
+    arguments:
+      $secretMaterial: '%kernel.secret%'
+
+  App\Service\Share\PublicSharePreAuthTokenService:
+    arguments:
+      $signingSecret: '%kernel.secret%'
+      $ttlSeconds: 900
+
+  App\Service\Share\PublicSharePasswordRateLimiterService:
+    arguments:
+      $cache: '@cache.app'
+
+  App\Service\Share\PublicFolderZipService:
+    arguments:
+      $maxTotalBytes: '%app.public_folder_zip_max_total_bytes%'
+      $maxFileCount: '%app.public_folder_zip_max_file_count%'
+      $maxBuildSeconds: '%app.public_folder_zip_max_build_seconds%'
+
+  App\Controller\BugReportController:
+    arguments:
+      $appVersion: '%app.version%'
+
+  App\Twig\StorageSiteExtension:
+    arguments:
+      $siteTitle: '%app.site_title%'
+
+  App\Monolog\RequestContextProcessor:
+    tags:
+      - { name: monolog.processor }

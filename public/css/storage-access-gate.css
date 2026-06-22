@@ -1,0 +1,29 @@
+.storage-access-gate__root {
+    min-height: 12rem;
+}
+
+.storage-access-gate__phase {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.storage-access-gate__phase--active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.storage-access-gate__phase.d-none {
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.storage-access-gate__phase--captcha .storage-access-gate__captcha-image {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.25rem;
+}
+
+.storage-access-gate__dev-score {
+    margin-bottom: 1rem;
+}

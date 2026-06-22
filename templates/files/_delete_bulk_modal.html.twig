@@ -1,0 +1,30 @@
+<div class="modal fade" id="filesDeleteBulkModal" tabindex="-1" aria-labelledby="filesDeleteBulkModalTitle" aria-describedby="filesDeleteBulkModalMessage" aria-hidden="true" data-files-delete-bulk-more-template="{{ 'files.delete_bulk.more_template'|trans({'%count%':'%count%'}, 'messages', currentLocale) }}">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="filesDeleteBulkModalTitle">{{ 'files.delete_bulk.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'files.delete_bulk.close_aria'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <form id="files-delete-bulk-form" action="{{ path('files_delete_bulk') }}" method="post" data-files-delete-bulk-form>
+                <div class="modal-body">
+                    <p id="filesDeleteBulkModalMessage" class="mb-2">{{ 'files.delete_bulk.message'|trans({}, 'messages', currentLocale) }}</p>
+                    <p class="small text-muted mb-2">
+                        <span data-files-delete-bulk-count>0</span>
+                        {{ 'files.delete_bulk.count_suffix'|trans({}, 'messages', currentLocale) }}
+                    </p>
+                    <ul class="list-group list-group-flush small mb-2" data-files-delete-bulk-preview></ul>
+                    <p class="small text-muted mb-0 d-none" data-files-delete-bulk-more></p>
+                    <div data-files-delete-bulk-ids></div>
+                    <div data-files-delete-bulk-folder-ids></div>
+                    <input type="hidden" name="subject_user" value="" id="files-delete-bulk-subject-user">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('files_delete_bulk') }}">
+                    {% include 'files/_listing_retain.html.twig' %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.delete_bulk.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                    <button type="submit" class="btn btn-danger" data-files-delete-bulk-submit>{{ 'files.delete_bulk.confirm'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

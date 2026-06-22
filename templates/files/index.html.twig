@@ -1,0 +1,570 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block stylesheets %}
+    <link href="{{ asset('css/files-space.css') }}?v=20260504-pane-accordion" rel="stylesheet">
+{% endblock %}
+
+{% block title %}{{ 'files.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block main_container_class %}container-fluid p-0{% endblock %}
+
+{% block flash_messages %}
+    {% if not adminContext|default(false) %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block top_navigation %}
+    {% if adminContext|default(false) %}
+        {% include 'components/_storage_admin_nav.html.twig' %}
+    {% endif %}
+    <nav class="navbar navbar-expand bg-body-tertiary border-bottom files-top-nav shadow-sm">
+        <div class="container-fluid px-3 py-2">
+            <div class="d-flex flex-column align-items-stretch gap-2 gap-md-3 w-100 files-top-nav__stack">
+                <div class="input-group input-group-sm files-nav-search flex-grow-1 min-w-0 w-100 files-top-nav__search files-toolbar-slot files-toolbar-slot--search">
+                    <span class="input-group-text files-search-prefix">
+                        <img src="{{ asset('images/files/loupe.svg') }}" alt="" class="files-search-prefix__icon" aria-hidden="true">
+                        <span class="visually-hidden">{{ 'files.toolbar.search_label'|trans({}, 'messages', currentLocale) }}</span>
+                    </span>
+                    <input class="form-control" id="files-search-q" type="text" name="files_search_ui" value="{{ searchQueryValue }}" autocomplete="off" placeholder="{{ 'files.toolbar.search_placeholder'|trans({}, 'messages', currentLocale) }}" aria-label="{{ 'files.toolbar.search_label'|trans({}, 'messages', currentLocale) }}" inputmode="search">
+                    {% set searchHasGlob = (searchQueryValue is defined and searchQueryValue is not null) and (searchQueryValue matches '/[*?]/') %}
+                    {% set showSearchClear = searchQueryValue|length > 3 or (searchHasGlob and searchQueryValue|length >= 2) %}
+                    <button type="button" id="files-search-clear" class="btn btn-outline-secondary files-search-clear{% if not showSearchClear %} d-none{% endif %}" aria-label="{{ 'files.search.clear_aria'|trans({}, 'messages', currentLocale) }}">&times;</button>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center w-100 files-top-nav__toolbar-tools">
+                    <div class="files-toolbar-mobile-line files-toolbar-md-contents d-flex flex-wrap w-100 align-items-center gap-2 files-toolbar-second-row">
+                    <div class="files-toolbar-lead-cluster d-flex align-items-center gap-2 flex-shrink-0">
+                    <button type="button" class="btn btn-outline-secondary btn-sm files-toolbar-slot files-toolbar-slot--filter" data-bs-toggle="modal" data-bs-target="#filesAdvancedFiltersModal">{{ 'files.nav.filter'|trans({}, 'messages', currentLocale) }}</button>
+                    {% if is_granted('ROLE_SHARE_SEND') %}
+                    <div class="dropdown files-toolbar-slot files-toolbar-slot--action">
+                        <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" id="files-action-global-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'files.action.menu.global_aria'|trans({}, 'messages', currentLocale) }}">
+                            <span data-files-action-global-label data-msg-template="{{ 'files.toolbar.action_global'|trans({ '%count%': '%count%' }, 'messages', currentLocale) }}">{{ 'files.toolbar.action_global'|trans({'%count%': '0'}, 'messages', currentLocale) }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="files-action-global-toggle">
+                            <li>
+                                <button type="button" class="dropdown-item" id="files-open-upload-modal" data-bs-toggle="modal" data-bs-target="#filesUploadModal">{{ 'files.toolbar.send'|trans({}, 'messages', currentLocale) }}</button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button type="button" class="dropdown-item" data-files-action-global="create-folder" data-files-action-scope="owned">{{ 'files.action.create_folder'|trans({}, 'messages', currentLocale) }}</button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item" data-files-action-global="download-selection" data-files-action-scope="both" data-files-action-requires-selection="1">{{ 'files.action.download_selection'|trans({}, 'messages', currentLocale) }}</button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item" data-files-action-global="move-selection" data-files-action-scope="owned" data-files-action-requires-selection="1">{{ 'files.action.move_selection'|trans({}, 'messages', currentLocale) }}</button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button type="button" class="dropdown-item text-danger" data-files-action-global="delete" data-files-action-scope="owned" data-files-action-requires-selection="1">{{ 'files.action.delete_selection'|trans({}, 'messages', currentLocale) }}</button>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                    </div>
+                    <div class="dropdown files-toolbar-slot files-toolbar-slot--display files-toolbar-slot--view flex-shrink-0">
+                        {# data-bs-auto-close must live on the toggle: Bootstrap reads Dropdown config from the toggle only; "outside" keeps the panel open for clicks inside the menu (required for nested dropend submenus). #}
+                        <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" id="files-display-menu-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="{{ 'files.toolbar.display_menu_aria'|trans({}, 'messages', currentLocale) }}">
+                            {{ 'files.toolbar.display_menu_label'|trans({}, 'messages', currentLocale) }}
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="files-display-menu-toggle">
+                            <li class="dropend files-display-submenu files-display-submenu--scope">
+                                <button type="button" class="dropdown-toggle files-display-submenu-trigger d-flex align-items-center justify-content-between w-100 text-start" id="files-display-submenu-scope-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="{{ 'files.toolbar.listing_scope_group_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.toolbar.display_section_scope'|trans({}, 'messages', currentLocale) }}</button>
+                                <ul class="dropdown-menu" aria-labelledby="files-display-submenu-scope-toggle">
+                                    {% if adminContext|default(false) %}
+                                    <li>
+                                        <a class="dropdown-item{% if adminViewScope|default('owner') == 'owner' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'admin_context': '1', 'admin_view_scope': 'owner'})) }}" data-files-admin-view-scope="owner">{{ 'files.admin.view_scope_owner'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item{% if adminViewScope|default('owner') == 'all' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'admin_context': '1', 'admin_view_scope': 'all', 'owner': null, 'view_scope': 'all', 'subject_user': null})) }}" data-files-admin-view-scope="all">{{ 'files.admin.view_scope_all'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                    {% if is_granted('ROLE_SHARE_SEND') %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item{% if listingScope|default('both') == 'owned' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'admin_context': '1', 'listing_scope': 'owned'})) }}" data-files-listing-scope="owned">{{ 'files.toolbar.listing_scope_owned'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                    {% endif %}
+                                    <li>
+                                        <a class="dropdown-item{% if listingScope|default('both') == 'shared' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'admin_context': '1', 'listing_scope': 'shared'})) }}" data-files-listing-scope="shared">{{ 'files.toolbar.listing_scope_shared'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                    {% if is_granted('ROLE_SHARE_SEND') %}
+                                    <li>
+                                        <a class="dropdown-item{% if listingScope|default('both') == 'both' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'admin_context': '1', 'listing_scope': 'both'})) }}" data-files-listing-scope="both">{{ 'files.toolbar.listing_scope_both'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% elseif is_granted('ROLE_SHARE_SEND') %}
+                                    <li>
+                                        <a class="dropdown-item{% if listingScope|default('both') == 'owned' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'listing_scope': 'owned'})) }}" data-files-listing-scope="owned">{{ 'files.toolbar.listing_scope_owned'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% if not adminContext|default(false) %}
+                                    <li>
+                                        <a class="dropdown-item{% if listingScope|default('both') == 'shared' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'listing_scope': 'shared'})) }}" data-files-listing-scope="shared">{{ 'files.toolbar.listing_scope_shared'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                    {% if is_granted('ROLE_SHARE_SEND') %}
+                                    <li>
+                                        <a class="dropdown-item{% if listingScope|default('both') == 'both' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'listing_scope': 'both'})) }}" data-files-listing-scope="both">{{ 'files.toolbar.listing_scope_both'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% endif %}
+                                </ul>
+                            </li>
+                            <li class="dropend files-display-submenu files-display-submenu--layout">
+                                <button type="button" class="dropdown-toggle files-display-submenu-trigger d-flex align-items-center justify-content-between w-100 text-start" id="files-display-submenu-layout-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="{{ 'files.view.toggle_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.toolbar.display_section_layout'|trans({}, 'messages', currentLocale) }}</button>
+                                <ul class="dropdown-menu" aria-labelledby="files-display-submenu-layout-toggle">
+                                    <li>
+                                        <a class="dropdown-item{% if layoutView == 'list' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'view': 'list'})) }}" data-files-view-toggle="list">{{ 'files.view.list'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item{% if layoutView == 'grid' %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'view': 'grid'})) }}" data-files-view-toggle="grid">{{ 'files.view.grid'|trans({}, 'messages', currentLocale) }}</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    {% if adminContext|default(false) %}
+                    <form method="get" action="{{ path(filesIndexRoute|default('files_index')) }}" class="d-flex flex-wrap align-items-center gap-2{% if adminViewScope|default('owner') != 'owner' %} d-none{% endif %}" data-files-admin-owner-filter-block{% if adminViewScope|default('owner') != 'owner' %} aria-hidden="true"{% endif %}>
+                        <input type="hidden" name="admin_context" value="1">
+                        <input type="hidden" name="admin_view_scope" value="owner">
+                        {% if listingScope is defined and listingScope != 'both' %}
+                        <input type="hidden" name="listing_scope" value="{{ listingScope }}">
+                        {% endif %}
+                        <input type="hidden" id="files-admin-owner-hidden" name="owner" value="{{ adminOwnerFilterValue|default('') }}">
+                        <label class="form-label mb-0 small text-nowrap" for="files-admin-owner-search">{{ 'files.admin.owner_filter_label'|trans({}, 'messages', currentLocale) }}</label>
+                        <input type="text" class="form-control form-control-sm files-admin-owner-filter-input" id="files-admin-owner-search" name="owner_query" value="{{ adminOwnerQueryValue|default('') }}" autocomplete="off" list="files-admin-owner-suggest-list" data-files-admin-owner-search data-files-admin-owner-filter-control{% if adminViewScope|default('owner') != 'owner' %} disabled{% endif %}>
+                        <datalist id="files-admin-owner-suggest-list"></datalist>
+                        <button type="submit" class="btn btn-outline-secondary btn-sm" data-files-admin-owner-filter-control{% if adminViewScope|default('owner') != 'owner' %} disabled{% endif %}>{{ 'files.admin.owner_filter_apply'|trans({}, 'messages', currentLocale) }}</button>
+                    </form>
+                    {% endif %}
+                    {% if layoutView == 'list' %}
+                        <div class="dropdown files-toolbar-slot files-toolbar-slot--columns d-none d-md-block" data-files-columns-dropdown>
+                            <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                    id="files-columns-toggle"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
+                                    aria-expanded="false"
+                                    aria-label="{{ 'files.toolbar.columns_aria'|trans({}, 'messages', currentLocale) }}">
+                                {{ 'files.toolbar.columns_label'|trans({}, 'messages', currentLocale) }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="files-columns-toggle">
+                                <li>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="files-col-toggle-type"
+                                               data-files-col-toggle="type">
+                                        <label class="form-check-label" for="files-col-toggle-type">
+                                            {{ 'files.table.extension'|trans({}, 'messages', currentLocale) }}
+                                        </label>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="files-col-toggle-size"
+                                               data-files-col-toggle="size">
+                                        <label class="form-check-label" for="files-col-toggle-size">
+                                            {{ 'files.table.size'|trans({}, 'messages', currentLocale) }}
+                                        </label>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="files-col-toggle-share-public"
+                                               data-files-col-toggle="share_public">
+                                        <label class="form-check-label" for="files-col-toggle-share-public">
+                                            {{ 'files.table.share_public'|trans({}, 'messages', currentLocale) }}
+                                        </label>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="files-col-toggle-share-friends"
+                                               data-files-col-toggle="share_friends">
+                                        <label class="form-check-label" for="files-col-toggle-share-friends">
+                                            {{ 'files.table.share_friends'|trans({}, 'messages', currentLocale) }}
+                                        </label>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="files-col-toggle-uploaded"
+                                               data-files-col-toggle="uploaded">
+                                        <label class="form-check-label" for="files-col-toggle-uploaded">
+                                            {{ 'files.table.uploaded'|trans({}, 'messages', currentLocale) }}
+                                        </label>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="files-col-toggle-modified"
+                                               data-files-col-toggle="modified">
+                                        <label class="form-check-label" for="files-col-toggle-modified">
+                                            {{ 'files.table.modified'|trans({}, 'messages', currentLocale) }}
+                                        </label>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                    {% if adminContext|default(false) %}
+                    <div class="files-admin-scope-badge ms-md-auto" data-files-admin-scope-badge data-msg-scope-all="{{ 'files.admin.view_scope_all'|trans({}, 'messages', currentLocale)|e('html_attr') }}">
+                        <span class="text-body-secondary">{{ 'files.toolbar.display_section_scope'|trans({}, 'messages', currentLocale) }} :</span>
+                        <strong data-files-admin-scope-badge-label>{{ adminScopeBannerLabel|default('') }}</strong>
+                    </div>
+                    {% endif %}
+                    <div class="files-toolbar-cluster-view-home d-none d-md-flex align-items-center gap-2 flex-shrink-0{% if not adminContext|default(false) %} ms-auto{% endif %}">
+                        <a class="btn btn-outline-secondary btn-sm files-toolbar-slot files-toolbar-slot--home" href="{{ path('app_home') }}">{{ 'app.nav.home'|trans({}, 'messages', currentLocale) }}</a>
+                    </div>
+                    <a class="btn btn-outline-secondary btn-sm files-toolbar-slot files-toolbar-slot--home files-toolbar-home-mobile d-md-none ms-md-auto flex-shrink-0" href="{{ path('app_home') }}">{{ 'app.nav.home'|trans({}, 'messages', currentLocale) }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+{% endblock %}
+
+{% block body %}
+<div class="files-space-page{% if app.request.attributes.get('_route') == 'admin_files_index' %} files-space-page--admin-files-route{% endif %}">
+    {% if adminContext|default(false) and adminOwnerFallbackApplied|default(false) and adminOwnerFallbackNotice|default('') != '' %}
+    <div class="alert alert-info mb-3 mx-3" role="status">
+        {{ adminOwnerFallbackNotice }}
+    </div>
+    {% endif %}
+    <div class="modal fade" id="filesAdvancedFiltersModal" tabindex="-1" aria-labelledby="filesAdvancedFiltersTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="filesAdvancedFiltersTitle">{{ 'files.advanced.title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'files.advanced.close'|trans({}, 'messages', currentLocale) }}"></button>
+                </div>
+                <form method="get" action="{{ path(filesIndexRoute|default('files_index')) }}" id="files-modal-filters-form">
+                    <div class="modal-body">
+                        {% if adminContext|default(false) %}
+                            <input type="hidden" name="admin_context" value="1">
+                            <input type="hidden" name="owner" value="{{ adminOwnerFilterValue|default('') }}">
+                        {% endif %}
+                        <input type="hidden" name="q" id="files-modal-field-q" value="{{ listingCriteria.searchQuery }}">
+                        {% if listingScope is defined and listingScope != 'both' %}
+                            <input type="hidden" name="listing_scope" value="{{ listingScope }}">
+                        {% endif %}
+                        <div id="files-advanced-filters-i18n" class="d-none" aria-hidden="true"
+                            data-msg-ext-all="{{ 'files.advanced.extensions_button_all'|trans({}, 'messages', currentLocale) }}"
+                            data-msg-ext-count="{{ 'files.advanced.extensions_button_count'|trans({}, 'messages', currentLocale) }}"
+                            data-msg-grantee-all="{{ 'files.advanced.grantees_button_all'|trans({}, 'messages', currentLocale) }}"
+                            data-msg-grantee-count="{{ 'files.advanced.grantees_button_count'|trans({}, 'messages', currentLocale) }}"
+                            data-msg-select-all="{{ 'files.advanced.filter_select_all'|trans({}, 'messages', currentLocale) }}"
+                            data-msg-clear="{{ 'files.advanced.filter_clear_selection'|trans({}, 'messages', currentLocale) }}"></div>
+                        {% if listingScope is defined and listingScope in ['both', 'owned'] %}
+                            <p class="form-text border-start border-3 border-secondary ps-2 mb-3">{{ 'files.advanced.filters_owned_list_hint'|trans({}, 'messages', currentLocale) }}</p>
+                        {% elseif listingScope is defined and listingScope == 'shared' %}
+                            <p class="form-text border-start border-3 border-secondary ps-2 mb-3">{{ 'files.advanced.filters_shared_list_hint'|trans({}, 'messages', currentLocale) }}</p>
+                        {% endif %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-filter-public">{{ 'files.toolbar.filter_public_label'|trans({}, 'messages', currentLocale) }}</label>
+                                <select class="form-select" id="adv-filter-public" name="filter_public">
+                                    <option value="" {% if filterPublicValue == '' %}selected{% endif %}>{{ 'files.toolbar.filter_public_all'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="yes" {% if filterPublicValue == 'yes' %}selected{% endif %}>{{ 'files.toolbar.filter_public_yes'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="no" {% if filterPublicValue == 'no' %}selected{% endif %}>{{ 'files.toolbar.filter_public_no'|trans({}, 'messages', currentLocale) }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-view">{{ 'files.advanced.view_layout'|trans({}, 'messages', currentLocale) }}</label>
+                                <select class="form-select" id="adv-view" name="view">
+                                    <option value="list" {% if layoutView == 'list' %}selected{% endif %}>{{ 'files.view.list'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="grid" {% if layoutView == 'grid' %}selected{% endif %}>{{ 'files.view.grid'|trans({}, 'messages', currentLocale) }}</option>
+                                </select>
+                            </div>
+                            {% if allowedExtensions is not empty %}
+                                <div class="col-12 files-adv-filter" data-files-adv-filter="extensions">
+                                    <span class="form-label d-block" id="adv-extensions-heading">{{ 'files.toolbar.extensions_label'|trans({}, 'messages', currentLocale) }}</span>
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" type="button" id="adv-ext-dropdown-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-labelledby="adv-extensions-heading" aria-controls="adv-ext-dropdown-panel" title="{{ 'files.advanced.extensions_dropdown_aria'|trans({}, 'messages', currentLocale) }}">
+                                            <span data-files-adv-filter-label>{% set extPick = listingCriteria.extensionFilters|default([])|length %}{{ extPick > 0 ? 'files.advanced.extensions_button_count'|trans({'%count%': extPick}, 'messages', currentLocale) : 'files.advanced.extensions_button_all'|trans({}, 'messages', currentLocale) }}</span>
+                                        </button>
+                                        <div class="dropdown-menu w-100 p-2 shadow files-filter-dropdown-panel" id="adv-ext-dropdown-panel" aria-labelledby="adv-ext-dropdown-btn">
+                                            <div class="d-flex flex-wrap gap-2 mb-2 px-1">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" data-files-adv-filter-action="all" data-files-adv-filter-target="extensions">{{ 'files.advanced.filter_select_all'|trans({}, 'messages', currentLocale) }}</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-files-adv-filter-action="none" data-files-adv-filter-target="extensions">{{ 'files.advanced.filter_clear_selection'|trans({}, 'messages', currentLocale) }}</button>
+                                            </div>
+                                            <div class="files-filter-dropdown-scroll px-1">
+                                                {% for ext in allowedExtensions %}
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="ext[]" value="{{ ext }}" id="adv-ext-{{ ext }}" {% if ext in listingRetain.extensions|default([]) %}checked{% endif %}>
+                                                        <label class="form-check-label" for="adv-ext-{{ ext }}">.{{ ext }}</label>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-sort">{{ 'files.toolbar.sort_label'|trans({}, 'messages', currentLocale) }}</label>
+                                <select class="form-select" id="adv-sort" name="sort">
+                                    <option value="" {% if sortField == '' %}selected{% endif %}>{{ 'files.table.sort.state.none'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="name" {% if sortField == 'name' %}selected{% endif %}>{{ 'files.toolbar.sort_name'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="size" {% if sortField == 'size' %}selected{% endif %}>{{ 'files.toolbar.sort_size'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="uploaded" {% if sortField == 'uploaded' %}selected{% endif %}>{{ 'files.toolbar.sort_uploaded'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="modified" {% if sortField == 'modified' %}selected{% endif %}>{{ 'files.toolbar.sort_modified'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="type" {% if sortField == 'ext' %}selected{% endif %}>{{ 'files.toolbar.sort_ext'|trans({}, 'messages', currentLocale) }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-dir">{{ 'files.toolbar.dir_label'|trans({}, 'messages', currentLocale) }}</label>
+                                <select class="form-select" id="adv-dir" name="dir">
+                                    <option value="" {% if sortDirection == '' %}selected{% endif %}>{{ 'files.table.sort.state.none'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="asc" {% if sortDirection == 'asc' %}selected{% endif %}>{{ 'files.toolbar.dir_asc'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="desc" {% if sortDirection == 'desc' %}selected{% endif %}>{{ 'files.toolbar.dir_desc'|trans({}, 'messages', currentLocale) }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-uploaded-after">{{ 'files.advanced.uploaded_after'|trans({}, 'messages', currentLocale) }}</label>
+                                <input class="form-control" id="adv-uploaded-after" type="datetime-local" name="uploaded_after" value="{{ listingCriteria.uploadedAfter ? listingCriteria.uploadedAfter|date('Y-m-d\\TH:i') : '' }}" autocomplete="off">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-uploaded-before">{{ 'files.advanced.uploaded_before'|trans({}, 'messages', currentLocale) }}</label>
+                                <input class="form-control" id="adv-uploaded-before" type="datetime-local" name="uploaded_before" value="{{ listingCriteria.uploadedBefore ? listingCriteria.uploadedBefore|date('Y-m-d\\TH:i') : '' }}" autocomplete="off">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-updated-after">{{ 'files.advanced.updated_after'|trans({}, 'messages', currentLocale) }}</label>
+                                <input class="form-control" id="adv-updated-after" type="datetime-local" name="updated_after" value="{{ listingCriteria.updatedAfter ? listingCriteria.updatedAfter|date('Y-m-d\\TH:i') : '' }}" autocomplete="off">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-updated-before">{{ 'files.advanced.updated_before'|trans({}, 'messages', currentLocale) }}</label>
+                                <input class="form-control" id="adv-updated-before" type="datetime-local" name="updated_before" value="{{ listingCriteria.updatedBefore ? listingCriteria.updatedBefore|date('Y-m-d\\TH:i') : '' }}" autocomplete="off">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-expires-after">{{ 'files.advanced.expires_after'|trans({}, 'messages', currentLocale) }}</label>
+                                <input class="form-control" id="adv-expires-after" type="datetime-local" name="expires_after" value="{{ listingCriteria.expiresAfter ? listingCriteria.expiresAfter|date('Y-m-d\\TH:i') : '' }}" autocomplete="off">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="adv-expires-before">{{ 'files.advanced.expires_before'|trans({}, 'messages', currentLocale) }}</label>
+                                <input class="form-control" id="adv-expires-before" type="datetime-local" name="expires_before" value="{{ listingCriteria.expiresBefore ? listingCriteria.expiresBefore|date('Y-m-d\\TH:i') : '' }}" autocomplete="off">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="adv-filter-has-grant">{{ 'files.advanced.filter_has_grant'|trans({}, 'messages', currentLocale) }}</label>
+                                <select class="form-select" id="adv-filter-has-grant" name="filter_has_grant">
+                                    <option value="" {% if listingCriteria.filterHasGrant == '' %}selected{% endif %}>{{ 'files.advanced.filter_has_grant_all'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="yes" {% if listingCriteria.filterHasGrant == 'yes' %}selected{% endif %}>{{ 'files.advanced.filter_has_grant_yes'|trans({}, 'messages', currentLocale) }}</option>
+                                    <option value="no" {% if listingCriteria.filterHasGrant == 'no' %}selected{% endif %}>{{ 'files.advanced.filter_has_grant_no'|trans({}, 'messages', currentLocale) }}</option>
+                                </select>
+                            </div>
+                            {% if is_granted('ROLE_SHARE_SEND') and is_granted('ROLE_SHARE_FRIENDS') and eligibleGrantees is not empty and (listingScope is not defined or listingScope != 'shared') %}
+                                <div class="col-12 files-adv-filter" data-files-adv-filter="grantees">
+                                    <span class="form-label d-block" id="adv-grantees-heading">{{ 'files.advanced.grantees_label'|trans({}, 'messages', currentLocale) }}</span>
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" type="button" id="adv-grantees-dropdown-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-labelledby="adv-grantees-heading" aria-controls="adv-grantees-dropdown-panel" title="{{ 'files.advanced.grantees_dropdown_aria'|trans({}, 'messages', currentLocale) }}">
+                                            <span data-files-adv-filter-label>{% set gPick = listingCriteria.granteeUserIds|default([])|length %}{{ gPick > 0 ? 'files.advanced.grantees_button_count'|trans({'%count%': gPick}, 'messages', currentLocale) : 'files.advanced.grantees_button_all'|trans({}, 'messages', currentLocale) }}</span>
+                                        </button>
+                                        <div class="dropdown-menu w-100 p-2 shadow files-filter-dropdown-panel" id="adv-grantees-dropdown-panel" aria-labelledby="adv-grantees-dropdown-btn">
+                                            <div class="d-flex flex-wrap gap-2 mb-2 px-1">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" data-files-adv-filter-action="all" data-files-adv-filter-target="grantees">{{ 'files.advanced.filter_select_all'|trans({}, 'messages', currentLocale) }}</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-files-adv-filter-action="none" data-files-adv-filter-target="grantees">{{ 'files.advanced.filter_clear_selection'|trans({}, 'messages', currentLocale) }}</button>
+                                            </div>
+                                            <div class="files-filter-dropdown-scroll px-1">
+                                                {% for row in eligibleGrantees %}
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="grantee[]" value="{{ row.id }}" id="adv-grantee-{{ row.id }}" {% if row.id in listingCriteria.granteeUserIds %}checked{% endif %}>
+                                                        <label class="form-check-label" for="adv-grantee-{{ row.id }}">{{ row.label }} (#{{ row.id }})</label>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="form-text">{{ 'files.advanced.grantees_hint'|trans({}, 'messages', currentLocale) }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.advanced.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                    <a class="btn btn-outline-danger" href="{{ path(filesIndexRoute|default('files_index'), listingQueryResetAdvanced) }}">{{ 'files.advanced.reset_in_modal'|trans({}, 'messages', currentLocale) }}</a>
+                    <button type="submit" class="btn btn-primary" form="files-modal-filters-form">{{ 'files.advanced.apply'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if is_granted('ROLE_SHARE_SEND') %}
+    <div
+        class="modal fade"
+        id="filesUploadModal"
+        tabindex="-1"
+        aria-labelledby="filesUploadModalTitle"
+        aria-hidden="true"
+        data-require-target-owner="{{ requireAdminTargetOwner|default(false) ? '1' : '0' }}"
+        data-files-admin-owner-suggest-url="{{ path('admin_files_owner_suggest') }}"
+        data-msg-progress-sending="{{ 'files.upload.progress_sending'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-progress-processing="{{ 'files.upload.progress_processing'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-progress-bar-aria="{{ 'files.upload.progress_bar_aria'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-xhr-network-error="{{ 'files.upload.xhr_network_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-files-upload-session-url="{{ path('files_upload_session') }}"
+        data-files-upload-chunk-url="{{ path('files_upload_chunk') }}"
+        data-files-upload-finalize-url="{{ path('files_upload_finalize') }}"
+    >
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="filesUploadModalTitle">{{ 'files.upload.modal_title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" data-files-upload-dismiss aria-label="{{ 'files.upload.modal_close'|trans({}, 'messages', currentLocale) }}"></button>
+                </div>
+                <form id="files-upload-form" action="{{ path('files_upload') }}" method="post" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfUpload) }}">
+                        <input type="hidden" name="target_folder_id" id="files-upload-target-folder-id" value="">
+                        {% include 'files/_listing_retain.html.twig' %}
+                        <div class="mb-3{% if not requireAdminTargetOwner|default(false) %} d-none{% endif %}" data-files-target-owner-block>
+                            <label class="form-label" for="files-upload-target-owner-search">{{ 'files.admin.target_owner_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <input type="text" class="form-control" id="files-upload-target-owner-search" list="files-upload-target-owner-datalist" data-files-target-owner-search autocomplete="off" aria-required="true">
+                            <datalist id="files-upload-target-owner-datalist"></datalist>
+                            <input type="hidden" name="target_owner_user_id" id="files-upload-target-owner-id" value="">
+                            <p class="form-text small mb-0">{{ 'files.admin.target_owner_hint'|trans({}, 'messages', currentLocale) }}</p>
+                        </div>
+                        <div id="files-upload-error" class="alert alert-danger d-none" role="alert" aria-live="assertive"></div>
+                        <p id="files-upload-selected-meta" class="small text-muted mb-2 d-none">
+                            <span id="files-upload-selected-size-label">{{ 'files.upload.selected_byte_size_label'|trans({}, 'messages', currentLocale) }}</span>
+                            <span id="files-upload-selected-size-value"></span>
+                        </p>
+                        <p class="text-muted small files-drop-hint mb-3">{{ 'files.upload.drop_hint'|trans({}, 'messages', currentLocale) }}</p>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label" for="file-upload">{{ 'files.upload.file_label'|trans({}, 'messages', currentLocale) }}</label>
+                                <input class="form-control" id="file-upload" type="file" name="file" required autocomplete="off">
+                            </div>
+                        </div>
+                        <p class="text-muted small mt-2 mb-0">{{ 'files.upload.bytes_hint'|trans({'%formatted_size%': maxUploadBytes|files_size_format}, 'messages', currentLocale) }}</p>
+                        <div id="files-upload-progress-wrap" class="d-none mt-3">
+                            <p class="small text-muted mb-1" id="files-upload-phase" aria-live="polite"></p>
+                            <div id="files-upload-progress-determinate" class="progress d-none" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                <div id="files-upload-progress-bar" class="progress-bar"></div>
+                            </div>
+                            <div id="files-upload-progress-indeterminate" class="progress d-none" role="progressbar">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div>
+                            </div>
+                            <p class="small text-muted mb-0 mt-1 d-none" id="files-upload-percent" aria-hidden="true"></p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-files-upload-dismiss>{{ 'files.upload.modal_cancel'|trans({}, 'messages', currentLocale) }}</button>
+                        <button type="submit" class="btn btn-primary" data-files-upload-submit{% if adminContext|default(false) %} data-files-target-owner-submit{% endif %}{% if requireAdminTargetOwner|default(false) %} disabled{% endif %}>{{ 'files.upload.submit'|trans({}, 'messages', currentLocale) }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% include 'files/_share_public_modal.html.twig' %}
+    {% include 'files/_share_friends_modal.html.twig' %}
+    {% include 'files/_properties_modal.html.twig' %}
+    {% include 'files/_folder_properties_modal.html.twig' %}
+    {% include 'files/_delete_bulk_modal.html.twig' %}
+    {% include 'files/_delete_confirm_modal.html.twig' %}
+    {% include 'files/_move_bulk_modal.html.twig' %}
+    {% include 'files/_rename_modal.html.twig' %}
+    <div class="modal fade" id="filesCreateFolderModal" tabindex="-1" aria-labelledby="filesCreateFolderModalTitle" aria-hidden="true" data-require-target-owner="{{ requireAdminTargetOwner|default(false) ? '1' : '0' }}" data-files-admin-owner-suggest-url="{{ path('admin_files_owner_suggest') }}">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="{{ path('files_folder_create') }}">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="filesCreateFolderModalTitle">{{ 'files.folder.modal.create_title'|trans({}, 'messages', currentLocale) }}</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'app.close'|trans({}, 'messages', currentLocale) }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfFolderCreate) }}">
+                        <input type="hidden" name="parent_folder_id" value="{{ currentFolder ? currentFolder.id : '' }}">
+                        {% include 'files/_listing_retain.html.twig' %}
+                        <div class="mb-3{% if not requireAdminTargetOwner|default(false) %} d-none{% endif %}" data-files-target-owner-block>
+                            <label class="form-label" for="files-create-folder-target-owner-search">{{ 'files.admin.target_owner_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <input type="text" class="form-control" id="files-create-folder-target-owner-search" list="files-create-folder-target-owner-datalist" data-files-target-owner-search autocomplete="off" aria-required="true">
+                            <datalist id="files-create-folder-target-owner-datalist"></datalist>
+                            <input type="hidden" name="target_owner_user_id" id="files-create-folder-target-owner-id" value="">
+                            <p class="form-text small mb-0">{{ 'files.admin.target_owner_hint'|trans({}, 'messages', currentLocale) }}</p>
+                        </div>
+                        <label class="form-label" for="files-folder-name">{{ 'files.folder.field.name'|trans({}, 'messages', currentLocale) }}</label>
+                        <input type="text" class="form-control" id="files-folder-name" name="folder_name" maxlength="190" required autocomplete="off">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.upload.modal_cancel'|trans({}, 'messages', currentLocale) }}</button>
+                        <button type="submit" class="btn btn-primary"{% if adminContext|default(false) %} data-files-target-owner-submit{% endif %}{% if requireAdminTargetOwner|default(false) %} disabled{% endif %}>{{ 'files.folder.action.create'|trans({}, 'messages', currentLocale) }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="filesDeleteFolderModal" tabindex="-1" aria-labelledby="filesDeleteFolderModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" id="files-delete-folder-form" action="#">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="filesDeleteFolderModalTitle">{{ 'files.folder.modal.delete_title'|trans({}, 'messages', currentLocale) }}</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'app.close'|trans({}, 'messages', currentLocale) }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="_csrf_token" id="files-delete-folder-csrf" value="">
+                        <input type="hidden" name="subject_user" value="" id="files-delete-folder-subject-user">
+                        {% include 'files/_listing_retain.html.twig' %}
+                        <p class="mb-0">{{ 'files.folder.modal.delete_recursive_message'|trans({}, 'messages', currentLocale) }} <strong id="files-delete-folder-name"></strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.upload.modal_cancel'|trans({}, 'messages', currentLocale) }}</button>
+                        <button type="submit" class="btn btn-danger">{{ 'files.folder.action.delete'|trans({}, 'messages', currentLocale) }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="files-target-owner-i18n" class="d-none" aria-hidden="true"
+        data-msg-target-owner-ambiguous="{{ 'files.flash.target_owner_ambiguous'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-target-owner-not-found="{{ 'files.flash.target_owner_not_found'|trans({}, 'messages', currentLocale)|e('html_attr') }}"></div>
+    <p id="files-copy-live" class="visually-hidden" aria-live="polite" data-msg-copied="{{ 'files.action.copy_public_link_done'|trans({}, 'messages', currentLocale) }}" data-msg-password-copied="{{ 'files.share.public.password_copy_done'|trans({}, 'messages', currentLocale) }}" data-msg-failed="{{ 'files.action.copy_public_link_failed'|trans({}, 'messages', currentLocale) }}" data-msg-copy-password-missing="{{ 'files.action.copy_public_link_password_missing'|trans({}, 'messages', currentLocale) }}" data-msg-password-unavailable="{{ 'files.share.public.password_copy_unavailable_godview'|trans({}, 'messages', currentLocale) }}" data-msg-public-link-resolve-failed="{{ 'files.folder.public_link.resolve_failed'|trans({}, 'messages', currentLocale) }}" data-msg-public-link-no-files="{{ 'files.folder.public_link.no_files'|trans({}, 'messages', currentLocale) }}" data-files-copy-url-modal-title="{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}" data-files-copy-url-modal-copy="{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}" data-files-copy-url-modal-intro="{{ 'files.folder.public_link.copy_fallback_intro'|trans({}, 'messages', currentLocale) }}"></p>
+    <div class="files-listing-shell files-drop-zone rounded" id="files-listing-shell" data-files-listing-root="1" data-files-drop-zone>
+        <div
+            id="files-live-region"
+            class="files-live-region"
+            data-files-msg-selection-multi-pane="{{ 'files.selection.multi_pane_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+            data-files-list-endpoint="{{ path(filesIndexRoute|default('files_index')) }}"
+            data-files-admin-session-user-id="{{ app.user ? app.user.id : '' }}"
+            data-files-listing-query="{{ listingQuery|json_encode|e('html_attr') }}"
+            data-files-toast-close-label="{{ 'app.close'|trans({}, 'messages', currentLocale) }}"
+            data-files-delete-toast-success-template="{{ 'files.delete_bulk.toast_success'|trans({'%count%':'%count%'}, 'messages', currentLocale) }}"
+            data-files-delete-toast-partial-template="{{ 'files.delete_bulk.toast_partial'|trans({'%ok%':'%ok%', '%failed%':'%failed%'}, 'messages', currentLocale) }}"
+            data-files-delete-toast-error="{{ 'files.delete_bulk.toast_error'|trans({}, 'messages', currentLocale) }}"
+            data-files-move-toast-success-template="{{ 'files.move_bulk.toast_success'|trans({'%count%':'%count%'}, 'messages', currentLocale) }}"
+            data-files-move-toast-partial-template="{{ 'files.move_bulk.toast_partial'|trans({'%ok%':'%ok%', '%failed%':'%failed%'}, 'messages', currentLocale) }}"
+            data-files-move-toast-error="{{ 'files.move_bulk.toast_error'|trans({}, 'messages', currentLocale) }}"
+            data-files-download-url-template="{{ path('files_download', {id: 999999}) }}"
+            data-files-download-zip-url="{{ path('files_download_selection_zip') }}"
+            data-files-shared-folder-download-zip-url-template="{{ path('files_shared_folder_download_zip', {id: 999999}) }}"
+            data-files-folder-public-landing-url-template="{{ path('files_folder_public_landing_url', { id: 999999 }) }}"
+            data-files-folder-public-landing-csrf="{{ csrf_token(csrfFolderSharePublic) }}"
+            data-files-ui-pref-get-url="{{ path('files_ui_preferences_get') }}"
+            data-files-ui-pref-save-url="{{ path('files_ui_preferences_save') }}"
+            data-files-ui-pref-csrf="{{ csrf_token('files_ui_preferences') }}"
+            data-files-ui-pref-authenticated="{{ app.user ? '1' : '0' }}"
+            data-files-admin-owner-suggest-url="{{ path('admin_files_owner_suggest') }}"
+            data-files-admin-owner-resolve-url="{{ path('admin_files_owner_resolve') }}"
+            aria-live="polite"
+            aria-busy="false"
+        >
+            {% include 'files/_listing_fragment.html.twig' %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+        <script src="{{ asset('js/godview-rightclick-bridge.js') }}?v={{ 'now'|date('U') }}" defer></script>
+        <script src="{{ asset('js/files-space.js') }}?v={{ 'now'|date('U') }}" defer></script>
+        <script src="{{ asset('js/files-godview-contextmenu-hotfix.js') }}?v={{ 'now'|date('U') }}" defer></script>
+        <script src="{{ asset('js/files-ui-preferences.js') }}?v=20260503-device-prefs" defer></script>
+{% endblock %}

@@ -1,0 +1,19 @@
+/* Public file landing (/p/{token}): preview + metadata layout */
+.public-landing__preview {
+    min-height: 12rem;
+}
+
+.public-landing__preview-img {
+    max-height: 50vh;
+    object-fit: contain;
+}
+
+.public-landing__type-icon {
+    max-width: 8rem;
+    height: auto;
+    opacity: 0.85;
+}
+
+.public-landing__dl dt {
+    font-weight: 600;
+}

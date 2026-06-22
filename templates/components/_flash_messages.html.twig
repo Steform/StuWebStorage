@@ -1,0 +1,49 @@
+{% set flashMessages = flashMessages is defined ? flashMessages : app.flashes %}
+{% set toastStyleMap = {
+    success: 'text-bg-success',
+    info: 'text-bg-info',
+    warning: 'text-bg-warning',
+    danger: 'text-bg-danger',
+    error: 'text-bg-danger'
+} %}
+{% set criticalFlashTypes = ['danger', 'error', 'warning'] %}
+
+{% if flashMessages is not empty %}
+    <div class="toast-container position-fixed bottom-0 end-0 p-3 flash-toast-container">
+        {% for type, messages in flashMessages %}
+            {% set toastStyle = toastStyleMap[type]|default('text-bg-secondary') %}
+            {% set normalizedMessages = messages is iterable ? messages : [messages] %}
+            {% set isCritical = type in criticalFlashTypes %}
+            {% set toastRole = isCritical ? 'alert' : 'status' %}
+            {% set toastLive = isCritical ? 'assertive' : 'polite' %}
+            {% set toastDelay = isCritical ? 8000 : 5000 %}
+            {% for message in normalizedMessages %}
+                {% set flashKey = message %}
+                {% set flashParams = {} %}
+                {% if message is iterable and message.message is defined %}
+                    {% set flashKey = message.message %}
+                    {% set flashParams = message.parameters is defined ? message.parameters : {} %}
+                {% elseif message.parameters is defined and message.message is defined %}
+                    {% set flashKey = message.message %}
+                    {% set flashParams = message.parameters %}
+                {% endif %}
+                <div
+                    class="toast fade show {{ toastStyle }} border-0 mb-2"
+                    role="{{ toastRole }}"
+                    aria-live="{{ toastLive }}"
+                    aria-atomic="true"
+                    data-flash-toast
+                    data-bs-autohide="true"
+                    data-bs-delay="{{ toastDelay }}"
+                >
+                    <div class="d-flex align-items-start w-100 flash-toast-content">
+                        <div class="toast-body flex-grow-1 flash-toast-body">
+                            {{ flashKey|trans(flashParams, 'messages', app.request.locale|default('fr')) }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white ms-auto flex-shrink-0 flash-toast-close" data-bs-dismiss="toast" aria-label="{{ 'app.close'|trans({}, 'messages', app.request.locale|default('fr')) }}"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+{% endif %}

@@ -1,0 +1,43 @@
+<div
+    class="modal fade"
+    id="filesMoveBulkModal"
+    tabindex="-1"
+    aria-labelledby="filesMoveBulkModalTitle"
+    aria-hidden="true"
+    data-files-folder-children-url="{{ path('files_folder_children') }}"
+    data-files-move-breadcrumb-root-label="{{ 'files.move_bulk.breadcrumb_root'|trans({}, 'messages', currentLocale) }}"
+    data-files-open-child-aria="{{ 'files.move_bulk.open_child_aria'|trans({}, 'messages', currentLocale) }}"
+>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="filesMoveBulkModalTitle">{{ 'files.move_bulk.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'files.move_bulk.close_aria'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <form id="files-move-bulk-form" method="post" action="{{ path('files_move_bulk') }}" data-files-move-bulk-form>
+                <div class="modal-body">
+                    <p class="mb-2">{{ 'files.move_bulk.message'|trans({}, 'messages', currentLocale) }}</p>
+                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-files-move-go-root>{{ 'files.move_bulk.go_root'|trans({}, 'messages', currentLocale) }}</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-files-move-parent-up disabled>{{ 'files.move_bulk.parent_up'|trans({}, 'messages', currentLocale) }}</button>
+                    </div>
+                    <nav class="mb-2 small text-muted" aria-label="{{ 'files.folder.breadcrumb.aria'|trans({}, 'messages', currentLocale) }}">
+                        <ol class="breadcrumb mb-0 py-1" data-files-move-breadcrumb></ol>
+                    </nav>
+                    <input type="hidden" name="target_folder_id" id="files-move-bulk-target-folder-id" value="0" data-files-move-target-input>
+                    <p class="small text-muted mb-2 d-none" data-files-move-empty-hint>{{ 'files.move_bulk.empty_child_folders'|trans({}, 'messages', currentLocale) }}</p>
+                    <ul class="list-group list-group-flush small mb-2" data-files-move-folder-list></ul>
+                    <div data-files-move-bulk-ids></div>
+                    <div data-files-move-bulk-folder-ids></div>
+                    <input type="hidden" name="subject_user" value="" id="files-move-bulk-subject-user">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('files_move_bulk') }}">
+                    {% include 'files/_listing_retain.html.twig' %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.move_bulk.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                    <button type="submit" class="btn btn-primary" data-files-move-bulk-submit>{{ 'files.move_bulk.move_here'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

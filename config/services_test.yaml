@@ -1,0 +1,10 @@
+services:
+  App\Service\Setup\SetupStateService:
+    class: App\Tests\Stub\ConfirmedSetupStateService
+
+  App\EventSubscriber\SetupBootstrapSubscriber:
+    autoconfigure: false
+    tags: []
+
+  App\Tests\Stub\TestUserProvider:
+    public: true

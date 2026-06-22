@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'security.totp.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h4 mb-3">{{ 'security.totp.title'|trans({}, 'messages', currentLocale) }}</h1>
+                    <p class="text-muted">{{ 'security.totp.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+
+                    {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error|trans({}, 'messages', currentLocale) }}
+                        </div>
+                    {% endif %}
+
+                    <div id="login-totp-alert" class="alert d-none" role="alert"></div>
+
+                    <form method="post" action="{{ path('app_login_totp_submit') }}">
+                        <div class="mb-3">
+                            <label for="totp" class="form-label">{{ 'security.login.totp'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="totp" name="totp" type="text" class="form-control" placeholder="{{ 'security.login.totp_placeholder'|trans({}, 'messages', currentLocale) }}" required autocomplete="one-time-code" inputmode="numeric">
+                        </div>
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate_totp') }}">
+                        <button type="submit" class="btn btn-primary w-100 mb-3">{{ 'security.totp.submit'|trans({}, 'messages', currentLocale) }}</button>
+                    </form>
+
+                    <div
+                        id="login-totp-resend-root"
+                        data-endpoint-resend="{{ path('app_login_totp_resend') }}"
+                        data-csrf-token="{{ csrf_token('login_totp_resend') }}"
+                        data-retry-after-seconds="{{ resendState.retryAfterSeconds|default(0) }}"
+                        data-can-resend="{{ resendState.canResend ? '1' : '0' }}"
+                        data-rate-limited="{{ resendState.rateLimited ? '1' : '0' }}"
+                        data-msg-sent="{{ 'auth.totp.challenge.sent'|trans({}, 'messages', currentLocale) }}"
+                        data-msg-cooldown="{{ 'auth.totp.challenge.cooldown'|trans({}, 'messages', currentLocale) }}"
+                        data-msg-rate-limited="{{ 'auth.totp.challenge.rate_limited'|trans({}, 'messages', currentLocale) }}"
+                        data-msg-fallback="{{ 'security.totp.resend_error'|trans({}, 'messages', currentLocale) }}"
+                        data-label-resend="{{ 'security.totp.resend'|trans({}, 'messages', currentLocale) }}"
+                        data-label-resend-wait="{{ 'security.totp.resend_wait'|trans({}, 'messages', currentLocale) }}"
+                    >
+                        <button
+                            type="button"
+                            id="login-totp-resend-btn"
+                            class="btn btn-outline-secondary w-100"
+                            {% if not resendState.canResend %}disabled{% endif %}
+                        >
+                            {{ 'security.totp.resend'|trans({}, 'messages', currentLocale) }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{{ asset('js/login-totp.js') }}" defer></script>
+{% endblock %}

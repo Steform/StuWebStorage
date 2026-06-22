@@ -1,0 +1,948 @@
+app:
+  close: Uzdaryti
+  meta:
+    title: 'CV ir dalinimosi platforma'
+  nav:
+    home: Pagrindinis
+    my_profile: 'Mano profilis'
+    logout: Atsijungti
+    language: Kalba
+    files_user: 'Mano failai'
+    files_admin: 'Visi failai (admin)'
+    security_users: 'Naudotoju sarasas'
+    security_invite: 'Kviesti naudotoja'
+    settings: Konfiguracija
+    dashboard: Valdymo skydas
+    bug_reports: 'Bug tiketai'
+profile:
+  meta:
+    title: 'Mano profilis'
+  page:
+    title: 'Mano profilis'
+    subtitle: 'Perziurekite savo paskyros informacija.'
+  sections:
+    public_profile: 'Viešas profilis'
+    email_change: 'Keisti mano el. pasta'
+    password_change: 'Keisti mano slaptazodi'
+  fields:
+    email: 'El. pastas'
+    pseudonym: Pseudonimas
+    status: Busena
+    new_email: 'Naujas el. pastas'
+    totp_code: 'TOTP kodas'
+    current_password: 'Dabartinis slaptazodis'
+    new_password: 'Naujas slaptazodis'
+  placeholders:
+    new_email: naujas@example.com
+    totp_code: '123456'
+  actions:
+    update_pseudonym: 'Atnaujinti pseudonima'
+    request_email_change: 'Siusti TOTP koda'
+    confirm_email_change: 'Patvirtinti el. pasto pakeitima'
+    send_password_totp: 'Siusti slaptazodzio TOTP koda'
+    confirm_password_change: 'Pakeisti slaptazodi'
+  status:
+    active: Aktyvus
+    inactive: Neaktyvus
+  success:
+    pseudonym_updated: 'Pseudonimas atnaujintas.'
+    email_change_requested: 'TOTP kodas issiustas i nauja el. pasta.'
+    email_updated: 'El. pastas atnaujintas po patvirtinimo.'
+    password_totp_sent: 'TOTP kodas issiustas slaptazodzio keitimui.'
+    password_updated: 'Slaptazodis pakeistas.'
+  error:
+    pseudonym_required: 'Pseudonimas privalomas.'
+    pseudonym_too_long: 'Pseudonimas per ilgas.'
+    email_invalid: 'Neteisingas naujas el. pastas.'
+    email_same_as_current: 'Naujas el. pastas sutampa su esamu.'
+    email_already_used: 'Sis el. pastas jau naudojamas.'
+    email_change_not_found: 'Nera laukiancio el. pasto pakeitimo.'
+    totp_invalid: 'Neteisingas arba pasibaiges TOTP kodas.'
+    password_required: 'Naujas slaptazodis privalomas.'
+    current_password_invalid: 'Dabartinis slaptazodis neteisingas.'
+security:
+  login:
+    meta:
+      title: Prisijungimas
+    title: 'Saugus prisijungimas'
+    subtitle: 'Prisijunkite naudodami el. pasta ir slaptazodi.'
+    email: 'El. pastas'
+    email_placeholder: jus@example.com
+    password: Slaptazodis
+    password_placeholder: 'Jusu slaptazodis'
+    totp: 'TOTP kodas'
+    totp_placeholder: '123456'
+    submit: Testi
+    remember_me: 'Pasitiketi siuo irenginiu 6 menesius'
+    error_invalid_credentials: 'Neteisingi prisijungimo duomenys arba TOTP kodas.'
+  totp:
+    meta:
+      title: 'TOTP patvirtinimas'
+    title: 'Antro zingsnio patvirtinimas'
+    subtitle: 'Įveskite TOTP koda, atsiusta el. pastu.'
+    submit: 'Patvirtinti koda'
+    resend: 'Siusti koda el. pastu dar karta'
+    resend_wait: 'Siusti dar karta po %seconds% s'
+    resend_error: 'Siuo metu nepavyko issiusti kodo dar karta.'
+auth:
+  totp:
+    challenge:
+      invalid_payload: 'Norint issiusti TOTP koda, butinas el. pastas.'
+      sent: 'TOTP kodas issiustas el. pastu.'
+      cooldown: 'Palaukite pries prasydami kito kodo.'
+      rate_limited: 'Per daug kartotiniu siuntimu. Palaukite pries prasydami naujo kodo.'
+    invalid: 'Neteisingas arba pasibaiges TOTP kodas.'
+    valid: 'TOTP kodas patvirtintas.'
+mail:
+  invite:
+    subject: 'Jusu naudotojo kvietimas'
+    title: 'Kvietimas prisijungti prie platformos'
+    intro: 'Gavote kvietima. Naudokite zemiau esancia nuoroda, kad aktyvuotumete paskyra ir nustatytumete slaptazodi.'
+    cta: 'Aktyvuoti mano paskyra'
+    expiry_hint: 'Si nuoroda greitai nustoja galioti. Jei reikia, paprasykite naujo kvietimo.'
+    security_hint: 'Niekada nesidalykite sia nuoroda. Musu komanda jos niekada neprasys.'
+    footer: 'Automatinis kvietimo laiskas - prasome neatsakyti.'
+  totp:
+    subject: 'Jusu TOTP patvirtinimo kodas'
+    brand: StuWebStorage
+    title: 'Patvirtinimo kodas'
+    intro: 'Naudokite zemiau esanti koda, kad uzbaigtumete administratoriaus sesijos patvirtinima.'
+    code_label: 'TOTP kodas'
+    expiry_hint: 'Sis kodas greitai nustoja galioti. Prireikus paprasykite naujo kodo.'
+    security_hint: 'Niekada nesidalykite siuo kodu. Musu komanda jo niekada neprasys.'
+    footer: 'Automatinis saugumo laiskas - prasome neatsakyti.'
+share:
+  file:
+    expired: 'Šis bendrinamas failas nebegalioja arba nebeprieinamas.'
+download:
+  challenge:
+    invalid_payload: 'Reikalingas el. paštas ir failo žetonas.'
+    resource_not_found: 'Šis failas viešai neprieinamas.'
+    cooldown: 'Palaukite prieš prašydami kito kodo.'
+    sent: 'Patvirtinimo kodas išsiųstas jūsų el. paštu.'
+    totp_required: 'Neteisingas arba nebegaliojantis patvirtinimo kodas.'
+  verify:
+    invalid_payload: 'Reikalingas sesijos identifikatorius ir kodas.'
+    challenge_not_found: 'Ši patvirtinimo sesija nerasta.'
+  resource:
+    unreadable: 'Failo perskaityti nepavyko.'
+  authorized: 'Dabar galite atsisiųsti failą.'
+  totp_ok_password_required: 'El. paštas patvirtintas. Įveskite prieigos slaptažodį, kad tęstumėte.'
+  share_password:
+    invalid: 'Prieiga atmesta. Patikrinkite slaptažodį ir bandykite dar kartą.'
+    rate_limited: 'Per daug bandymų. Palaukite maždaug penkias minutes ir bandykite dar kartą.'
+    preauth_invalid: 'Šis patvirtinimo žingsnis pasibaigė. Dar kartą patvirtinkite el. pašto kodą.'
+  public_folder:
+    zip_empty: 'Šiame aplanke nėra viešai bendrinamų failų atsisiuntimui.'
+    zip_limit_files: 'Per daug failų vienam ZIP. Paprašykite savininko padalinti aplanką ar sumažinti viešai bendrinamus failus.'
+    zip_limit_bytes: 'ZIP viršytų leistiną bendrą dydį.'
+    zip_limit_time: 'ZIP generavimas užtruko per ilgai. Bandykite vėliau.'
+media:
+  preview:
+    title: 'Failo peržiūra'
+    close_aria: 'Užverti peržiūros langą'
+    close_button: Užverti
+    pdf_frame_title: 'PDF dokumento peržiūra'
+    open_new_tab: 'Atidaryti naujame skirtuke'
+    video_label: 'Vaizdo peržiūra'
+    audio_label: 'Garso peržiūra'
+    fullscreen: 'Visas ekranas'
+    playback_failed: 'Šios medijos naršyklėje paleisti nepavyko (nepalaikomas formatas arba kodekas).'
+    text_label: 'Tekstinio failo peržiūra'
+    text_load_failed: 'Nepavyko įkelti failo turinio.'
+files:
+  meta:
+    title: 'Mano failai'
+  section:
+    my_files: 'Mano failai'
+    shared_for_me: 'Bendrinta man'
+    shared_for_me_empty: 'Šiuo metu su jumis nėra bendrintų failų.'
+  listing_scope:
+    empty_owned: 'Šioje apimtyje failų nėra.'
+    empty_shared: 'Šioje apimtyje gautų bendrinimų nėra.'
+  intro: 'Įkeliami failai yra užšifruoti vietoje. Matomumą valdykite pagal roles.'
+  admin:
+    mode_banner: 'Administratoriaus rezimas aktyvus (sritis: %owner%).'
+    owner_fallback_notice: 'URL nera tikslinio naudotojo. Rodomi %label% (ID %id%) paskyros failai.'
+    view_scope_owner: 'Vienas naudotojas'
+    view_scope_all: 'Visi naudotojai'
+    owner_filter_label: Naudotojas
+    owner_filter_apply: Taikyti
+    owner_badge: 'Savininkas: %owner%'
+    target_owner_label: 'Tikslinis naudotojas'
+    target_owner_hint: 'Įveskite vardą ar el. paštą, pasirinkite pasiūlymą arba naudokite iš anksto užpildytą naudotoją iš aktyvaus skydelio.'
+    users_pagination:
+      nav_aria: 'Naudotojų sąrašo puslapiavimas'
+      summary: 'Naudotojai %start%–%end% iš %total%'
+      per_page: Puslapyje
+      page_controls: 'Puslapio navigacija'
+      prev: Ankstesnis
+      next: Kitas
+    users_pane:
+      grid_fallback: 'Perjunkite į sąrašo rodinį, kad šiame rodinyje naršytumėte aplankus.'
+  nav:
+    filter: Filtruoti
+  toolbar:
+    send: Siųsti
+    columns_label: Stulpeliai
+    columns_aria: 'Pasirinkti rodomus stulpelius'
+    action_global: 'Veiksmas (%count%)'
+    heading: 'Paieška ir filtrai'
+    search_label: Ieškoti
+    search_placeholder: Ieškoti
+    filter_public_label: Skelbimas
+    filter_public_all: Visi
+    filter_public_yes: 'Tik vieši'
+    filter_public_no: 'Tik privatūs'
+    extensions_label: Plėtiniai
+    sort_label: Rūšiavimas
+    sort_name: Pavadinimas
+    sort_size: Dydis
+    sort_uploaded: 'Įkėlimo data'
+    sort_modified: 'Keitimo data'
+    sort_ext: Plėtinys
+    dir_label: Kryptis
+    dir_asc: Didėjančia
+    dir_desc: Mažėjančia
+    apply: Taikyti
+    reset: Atstatyti
+    listing_scope_owned: 'Mano failai'
+    listing_scope_shared: 'Bendrinta man'
+    listing_scope_both: Abu
+    listing_scope_group_aria: 'Rodomų failų apimtis'
+    display_menu_label: Rodinys
+    display_menu_aria: 'Apimtis ir išdėstymas'
+    display_section_scope: Apimtis
+    display_section_layout: Išdėstymas
+  search:
+    clear_aria: 'Išvalyti paiešką'
+  advanced:
+    open: 'Išplėstiniai filtrai'
+    title: 'Išplėstiniai filtrai'
+    close: Užverti
+    apply: 'Taikyti filtrus'
+    cancel: Atšaukti
+    reset_only: 'Išvalyti išplėstinius filtrus'
+    reset_in_modal: 'Išvalyti išplėstinius filtrus'
+    uploaded_after: 'Įkelta po'
+    uploaded_before: 'Įkelta iki'
+    updated_after: 'Keista po'
+    updated_before: 'Keista iki'
+    expires_after: 'Galioja po'
+    expires_before: 'Galioja iki'
+    filter_has_grant: 'Bendrinimas su bent vienu naudotoju'
+    filter_has_grant_all: Nesvarbu
+    filter_has_grant_yes: 'Yra bent vienas leidimas'
+    filter_has_grant_no: 'Nėra leidimų'
+    grantees_label: 'Bendrinimo gavėjai'
+    grantees_hint: 'Rodomi tik naudotojai, kuriems jau suteikta prieiga.'
+    extensions_dropdown_aria: 'Pasirinkite filtruojamus failų plėtinius'
+    extensions_button_all: 'Visi plėtiniai'
+    extensions_button_count: 'Pasirinkta plėtinių: %count%'
+    grantees_dropdown_aria: 'Pasirinkite gavėjus filtravimui'
+    grantees_button_all: 'Visi gavėjai'
+    grantees_button_count: 'Pasirinkta gavėjų: %count%'
+    filter_select_all: 'Pasirinkti viską'
+    filter_clear_selection: 'Išvalyti pasirinkimą'
+    filters_owned_list_hint: 'Plėtinių ir gavėjų filtrai taikomi jūsų failų sąrašui. Skiltyje „Man bendinta“ taikomas tik čia nurodytas rūšiavimas.'
+    filters_shared_list_hint: 'Plėtinių ir gavėjų filtrai neriboja sąrašo „Man bendinta“; taikomas tik rūšiavimas.'
+    view_layout: Išdėstymas
+  chips:
+    search: 'Paieška: %value%'
+    filter_public_yes: 'Matomumas: vieša'
+    filter_public_no: 'Matomumas: privatu'
+    extensions: 'Plėtiniai: %list%'
+    filter_has_grant_yes: 'Yra naudotojo bendrinimas'
+    filter_has_grant_no: 'Be naudotojo bendrinimo'
+    uploaded_after: 'Įkelta po %date%'
+    uploaded_before: 'Įkelta iki %date%'
+    updated_after: 'Keista po %date%'
+    updated_before: 'Keista iki %date%'
+    expires_after: 'Galioja po %date%'
+    expires_before: 'Galioja iki %date%'
+    grantee: '%name% (#%id%)'
+  view:
+    list: Sąrašas
+    grid: Tinklelis
+    toggle_aria: 'Sąrašo arba tinklelio rodinys'
+  grid:
+    open_actions_aria: 'Atverti failo %name% veiksmus'
+    badge:
+      public_aria: 'Viešas bendrinimas aktyvus'
+      friends_aria: 'Bendrinimas su draugais aktyvus'
+  upload:
+    heading: 'Įkelti failą'
+    collapsed_heading: 'Rodyti įkėlimo parinktis (užšifruotas įkėlimas)'
+    modal_title: 'Įkelti failą'
+    modal_close: 'Užverti įkėlimo langą'
+    modal_cancel: Atšaukti
+    drop_hint: 'Vilkite ir numeskite failą čia arba naudokite lauką žemiau.'
+    file_label: Failas
+    visibility_label: Matomumas
+    visibility_private: Privatu
+    visibility_public: Vieša
+    expires_label: 'Galioja iki (nebūtina)'
+    grantees_label: 'Įgalioti naudotojai (privatus bendrinimas)'
+    grantee_search_placeholder: 'Įveskite bent dvi slapyvardžio raides'
+    grantee_search_hint: 'Pasirinkite gavėjus iš pasiūlymų (iki penkių pagal slapyvardį).'
+    grantees_selected_aria: 'Pasirinkti gavėjai privačiam bendrinimui'
+    grantee_label_fallback: Naudotojas
+    grantee_fetch_error: 'Slapyvardžio paieška nepavyko. Bandykite dar kartą.'
+    grantee_live_none: 'Atitinkančių naudotojų nėra.'
+    grantee_live_results: '%count% pasiūlymas (-ai).'
+    grantee_remove_aria: 'Pašalinti šį gavėją'
+    submit: Įkelti
+    bytes_hint: 'Didžiausias leistinas švarus dydis: %formatted_size%.'
+    progress_sending: Siunčiama
+    progress_processing: 'Apdorojama serveryje'
+    progress_bar_aria: 'Failo įkėlimo eiga'
+    xhr_network_error: 'Serveris nepasiekiamas. Patikrinkite ryšį ir bandykite dar kartą.'
+    selected_byte_size_label: 'Dydis:'
+  table:
+    name: Pavadinimas
+    extension: Tipas
+    pseudo: Slapyvardis
+    size: Dydis
+    uploaded: Įkelta
+    modified: Keista
+    expires: 'Galioja iki'
+    visibility: Matomumas
+    share_public: Vieša
+    share_friends: Bendrinta
+    token: 'Viešasis žetonas'
+    actions: Veiksmai
+    sort:
+      state:
+        none: Nerikiuota
+        desc: 'Rikiuota mazejanciai'
+        asc: 'Rikiuota didejanciai'
+  boolean:
+    'yes': Taip
+    'no': Ne
+  visibility:
+    public: Vieša
+    private: Privatu
+  action:
+    label: Veiksmai
+    create_folder: 'Sukurti aplanką'
+    download: Atsisiųsti
+    delete: Šalinti
+    delete_selection: 'Šalinti pasirinkimą'
+    move_selection: 'Perkelti pasirinkimą'
+    download_selection: 'Atsisiųsti pasirinkimą'
+    share: Bendrinti
+    share_public: 'Viešas bendrinimas'
+    share_friends: 'Bendrinimas su draugais'
+    make_public: 'Padaryti vieša'
+    make_private: 'Padaryti privatų'
+    add_grant: 'Pridėti leidimą'
+    revoke_grant: Atšaukti
+    properties: Savybes
+    preview: Peržiūra
+    rename: Pervadinti
+    copy_public_link: 'Kopijuoti nuorodą'
+    copy_public_link_with_password: 'Kopijuoti nuorodą su slaptažodžiu'
+    copy_public_link_aria: 'Kopijuoti viešą nuorodą į iškarpinę'
+    copy_public_link_with_password_aria: 'Kopijuoti viešą nuorodą ir slaptažodį į iškarpinę'
+    copy_public_link_done: 'Vieša nuoroda nukopijuota.'
+    copy_public_link_failed: 'Nepavyko nukopijuoti nuorodos.'
+    copy_public_link_password_missing: 'Viešas slaptažodis nepasiekiamas. Atidarykite viešą bendrinimą ir patikrinkite, ar slaptažodis įjungtas.'
+    menu:
+      global_aria: 'Veiksmai pasirinktiems'
+  folder:
+    root: 'Šaknis'
+    open: 'Atidaryti aplanką %name%'
+    breadcrumb:
+      aria: 'Aplankų kelias'
+    field:
+      name: 'Aplanko pavadinimas'
+    action:
+      create: 'Naujas aplankas'
+      open: Atidaryti
+      properties: Savybes
+      share_public: 'Bendrinti viešai'
+      share_friends: 'Bendrinti su draugais'
+      rename: Pervadinti
+      download_zip: 'Atsisiųsti ZIP'
+      delete: 'Šalinti aplanką'
+    rename:
+      modal_title: 'Pervadinti aplanką'
+    modal:
+      create_title: 'Sukurti aplanką'
+      delete_title: 'Šalinti aplanką'
+      delete_recursive_message: 'Aplankas nėra tuščias. Ar tikrai norite jį pašalinti?'
+    properties:
+      title: 'Aplanko savybes'
+      total_size: 'Bendras dydis'
+      total_files: 'Failų skaičius'
+      total_subfolders: 'Poaplankių skaičius'
+      error: 'Nepavyko įkelti aplanko savybių.'
+    share:
+      public:
+        modal_title_single: 'Bendrinti aplanką viešai'
+      friends:
+        modal_title_single: 'Bendrinti aplanką su draugais'
+        friends_expiration_mixed: 'Šio aplanko failai turi skirtingas galiojimo datas šiam gavėjui.'
+        friends_grant_expired: Pasibaigė
+    flash:
+      name_required: 'Aplanko pavadinimas yra privalomas.'
+      already_exists: 'Tokio pavadinimo aplankas čia jau yra.'
+      name_conflict_with_file: 'Failas tokiu pavadinimu šioje vietoje jau yra.'
+      parent_invalid: 'Pasirinktas tėvinis aplankas yra neteisingas.'
+      created: 'Aplankas sėkmingai sukurtas.'
+      deleted_recursive: 'Aplankas pašalintas rekursyviai.'
+      share_empty: 'Šiame aplanke šiuo metu nėra bendrinamų failų.'
+    public_link:
+      resolve_failed: 'Nepavyko paruošti viešos nuorodos. Patikrinkite aplanko bendrinimo nustatymus arba bandykite dar kartą.'
+      no_files: 'Šiame aplanke nerasta tinkamo failo viešai nuorodai.'
+      copy_fallback_intro: 'Jūsų vieša nuoroda paruošta. Nukopijuokite iš lauko arba naudokite mygtuką.'
+  public_landing:
+    meta_title: 'Atsisiųsti bendrinamą failą'
+    title: 'Bendrinamas failas'
+    intro: 'Įveskite el. paštą, gausite kodą, patvirtinkite – peržiūra (jei galima) ir atsisiuntimas.'
+    preview_alt: 'Peržiūra: %name%'
+    file_name_label: 'Failo pavadinimas'
+    size_label: Dydis
+    type_label: Tipas
+    type_unknown: Nežinoma
+    uploaded_label: Įkelta
+    public_expires_label: 'Viešo ryšio pabaiga'
+    public_expires_never: 'Be galiojimo pabaigos'
+    section_email_title: 'Patvirtinimas el. paštu'
+    email_hint: 'Siunčiame trumpą kodą, kad sumažintume piktnaudžiavimą nuoroda.'
+    email_label: 'El. paštas'
+    email_placeholder: jus@pavyzdys.lt
+    send_code: 'Siųsti kodą'
+    code_label: 'Kodas iš laiško'
+    code_placeholder: '6 skaitmenys'
+    verify_submit: 'Patvirtinti ir atsisiųsti'
+    download_file: 'Atsisiųsti failą'
+    share_password_label: 'Prieigos slaptažodis'
+    share_password_submit: 'Patvirtinti slaptažodį ir atsisiųsti'
+    share_password_hint: 'Įtraukti slaptažodį į URL (?share_password=) neprivaloma; jis gali atsirasti naršyklės istorijoje.'
+    api_error: 'Įvyko klaida. Bandykite dar kartą.'
+  public_folder_landing:
+    meta_title: 'Bendrinamo aplanko atsisiuntimas (ZIP)'
+    title: 'Bendrinamas aplankas'
+    intro: 'Įveskite el. paštą, gaukite kodą ir patvirtinkite ZIP su failais, kurie šiame medyje turi aktyvią viešą nuorodą.'
+    folder_name_label: 'Aplanko pavadinimas'
+    public_files_label: 'Vieši failai (pomedis)'
+    public_expires_label: 'Viešo bendrinimo galiojimas'
+    public_expires_never: 'Be galiojimo pabaigos'
+    no_public_files_hint: 'Šiuo metu šiame medyje nėra failų su aktyvia vieša nuoroda. Po patvirtinimo ZIP gali nepavykti, kol failai nebus viešai bendrinami.'
+    section_email_title: 'El. pašto patvirtinimas'
+    email_hint: 'Siunčiame trumpą kodą, kad apsaugotume aplanko nuorodą nuo piktnaudžiavimo.'
+    email_label: 'El. paštas'
+    email_placeholder: jus@pavyzdys.lt
+    send_code: 'Siųsti kodą'
+    code_label: 'Kodas iš laiško'
+    code_placeholder: '6 skaitmenys'
+    verify_submit: 'Patvirtinti ir atsisiųsti ZIP'
+    download_zip: 'Atsisiųsti ZIP'
+    share_password_label: 'Prieigos slaptažodis'
+    share_password_submit: 'Patvirtinti slaptažodį ir atsisiųsti ZIP'
+    share_password_hint: 'Slaptažodį URL įtraukti neprivaloma; jis gali atsirasti naršyklės istorijoje.'
+    api_error: 'Įvyko klaida. Bandykite dar kartą.'
+  grant:
+    label: 'Naudotojo ID'
+    submit: 'Suteikti prieigą'
+  selection:
+    aria_select_all: 'Pažymėti / atžymėti viską'
+    aria_select_row: 'Pažymėti failą %name%'
+    live_count: 'Pasirinkta %count% failas (-ai)'
+    multi_pane_error: 'Šiam veiksmui žymėkite elementus tik viename naudotojo skydelyje.'
+  share:
+    modal_title_single: 'Bendrinti failą'
+    modal_title_bulk: 'Bendrinti %count% failus'
+    public_label: Matomumas
+    expires_label: 'Bendrinimo galiojimas (nebūtinas)'
+    expires_hint: 'Galiojimo pabaiga nutraukia tik bendrinimą, failas lieka.'
+    grants_label: 'Gavėjai (slapyvardis)'
+    grant_expires_per_label: 'Asmeninis galiojimas'
+    grant_expires_per_aria: 'Šio gavėjo galiojimas'
+    replace_existing_label: 'Pakeisti esamus bendrinimus'
+    replace_existing_warning: 'Esami bendrinimai bus perrašyti šiuo įvedimu.'
+    apply: 'Taikyti bendrinimą'
+    bulk_results:
+      ok: 'Sėkmingai pasidalinta %count% failas (-ai).'
+      failed: 'Nepavyko %count% failas (-ai).'
+    load_error: 'Nepavyko įkelti bendrinimo būsenos.'
+    submit_error: 'Nepavyko taikyti bendrinimo. Bandykite dar kartą.'
+    target_summary_single: 'Failas: %name%'
+    target_summary_bulk: 'Pasirinkimas: %count% failas (-ai)'
+    'yes': Taip
+    'no': Ne
+    expiration_active_aria: 'Galiojimas sukonfigūruotas šiam kanalui'
+    public:
+      modal_title_single: 'Vieša nuoroda'
+      modal_title_bulk: 'Vieša nuoroda pasirinkimui'
+      enable_label: 'Įjungti viešą nuorodą'
+      enable_hint: 'Kas turi nuorodą gali atsisiųsti, kol nuoroda aktyvi.'
+      expires_label: 'Viešos nuorodos pabaiga (nebūtina)'
+      expires_hint: 'Palikite tuščią be galiojimo. Pasibaigus galiojimui vieša nuoroda neveiks.'
+      expires_relative_future: 'Maždaug ~M~ min. iki galiojimo pabaigos (šio įrenginio laikas).'
+      expires_relative_past: 'Ši data ir laikas yra maždaug ~M~ min. praeityje šiame įrenginyje: išsaugojus nuoroda bus neaktyvi.'
+      expires_relative_soon: 'Mažiau nei minutė iki galiojimo pabaigos.'
+      password_enable_label: 'Reikalauti prieigos slaptažodžio (po el. pašto patvirtinimo)'
+      password_enable_hint: 'Įjungus sugeneruojamas atsitiktinis slaptažodis. Įtraukti jį į URL patogu, bet šiek tiek mažiau saugu nei siųsti atskirai.'
+      password_field_label: 'Dabartinis prieigos slaptažodis'
+      password_copy: 'Kopijuoti slaptažodį'
+      password_copy_aria: 'Kopijuoti prieigos slaptažodį į iškarpinę'
+      password_copy_done: 'Prieigos slaptažodis nukopijuotas.'
+      password_copy_unavailable_godview: 'Slaptažodžio kopijavimas šiame administratoriaus kontekste nepasiekiamas.'
+    friends:
+      modal_title_single: 'Bendrinti su draugais'
+      modal_title_bulk: 'Bendrinti su draugais (pasirinkimas)'
+      grants_label: 'Gavėjai (slapyvardis)'
+      role_required: 'Jūsų rolės neleidžia draugų bendrinimo.'
+  move_bulk:
+    title: 'Perkelti pasirinkimą'
+    message: 'Pasirinkite paskirties aplanką, tada patvirtinkite.'
+    breadcrumb_root: Šaknis
+    empty_child_folders: 'Nėra subaplankų. Galite perkelti čia arba eiti aukštyn.'
+    open_child_aria: 'Atidaryti aplanką'
+    parent_up: 'Tėvinis aplankas'
+    go_root: 'Į šaknį'
+    move_here: 'Perkelti čia'
+    cancel: Atšaukti
+    close_aria: 'Uždaryti perkėlimo langą'
+    toast_success: 'Perkelta: %count% elementas(-ai).'
+    toast_partial: 'Dalinis perkėlimas: %ok% pavyko, %failed% nepavyko.'
+    toast_error: 'Nepavyko perkelti. Bandykite dar kartą.'
+  delete_bulk:
+    title: 'Patvirtinti šalinimą'
+    message: 'Visam laikui pašalinti pasirinktus elementus?'
+    count_suffix: 'elementas (-ai) pasirinkta'
+    more_template: '+dar %count%'
+    toast_success: 'Šalinimas baigtas: pašalinta %count% elementas (-ai).'
+    toast_partial: 'Dalinis šalinimas: pašalinta %ok% elementas (-ai), nepavyko %failed%.'
+    toast_error: 'Nepavyko pašalinti pasirinkimo. Bandykite dar kartą.'
+    cancel: Atšaukti
+    confirm: 'Patvirtinti šalinimą'
+    close_aria: 'Uždaryti patvirtinimo langą'
+  delete_confirm:
+    title: 'Patvirtinti šalinimą'
+    close_aria: 'Uždaryti patvirtinimo langą'
+    message: 'Negriztamai pasalinti si elementa?'
+    cancel: Atšaukti
+    confirm: Šalinti
+  properties:
+    title: 'Failo savybes'
+    preview_alt: 'Failo peržiura'
+    extension_fallback: FAILAS
+    loading: 'Kraunamos savybes...'
+    error: 'Nepavyko ikelti failo savybiu.'
+    never_expires: 'Be galiojimo pabaigos'
+    no_recipients: 'Aktyviu gaveju nera.'
+    recipients: Gavejai
+    recipient_until: 'Iki %date%'
+    recipient_no_expiry: 'Be galiojimo pabaigos'
+    public_token: 'Vieša žymena'
+    public_validity: 'Viešo bendrinimo galiojimas'
+    public_no_expiry: 'Be galiojimo pabaigos'
+    public_status: 'Viešos nuorodos būsena'
+    public_disabled: 'Viešas bendrinimas išjungtas.'
+    public_status_off: Išjungta
+    public_status_active: Aktyvi
+    public_status_expired: Pasibaigė
+    edit_public: 'Redaguoti viešą nuorodą'
+    edit_friends: 'Redaguoti draugus'
+    shared_by: Pasidalijo
+    section:
+      public: 'Viešas bendrinimas'
+      private: 'Privatus bendrinimai'
+      friends: 'Bendrinimas su draugais'
+  rename:
+    modal_title: 'Pervadinti failą'
+    name_label: 'Naujas pavadinimas'
+    submit: Pervadinti
+    cancel: Atšaukti
+    modal_error: 'Nepavyko pervadinti failo.'
+  list:
+    empty: 'Failų dar nėra.'
+    filtered_empty: 'Nė vienas failas neatitinka šių kriterijų.'
+    folder_empty: 'Aplankas yra tuščias.'
+  pagination:
+    nav_label: 'Failų puslapių navigacija'
+    previous: Atgal
+    next: Kitas
+    page: 'Psl. %page% / %pages% — failų: %total%'
+  preferences:
+    invalid_payload: 'Netinkamas nustatymu payload.'
+    invalid_device_id: 'Netinkamas irenginio identifikatorius.'
+    save_failed: 'Nepavyko issaugoti sasajos nustatymu.'
+  flash:
+    csrf_invalid: 'Netinkamas saugos žetonas. Bandykite iš naujo.'
+    target_owner_required: 'Visų naudotojų rodinyje pasirinkite tikslinį naudotoją šiam veiksmui.'
+    target_owner_forbidden: 'Negalite veikti kito naudotojo vardu.'
+    target_owner_context_invalid: 'Tikslinio naudotojo pasirinkimas šiame sąrašo kontekste neleidžiamas.'
+    target_owner_invalid: 'Pasirinktas naudotojas neleistinas arba negali čia gauti failų.'
+    target_folder_invalid: 'Pasirinktas tikslinis aplankas šiam naudotojui negalioja.'
+    target_owner_ambiguous: 'Kelios paskyros atitinka šį slapyvardį. Pasirinkite pasiūlymą arba patikslinkite įvestį.'
+    target_owner_not_found: 'Nėra aktyvaus naudotojo su tiksliai tokiu slapyvardžiu, atitinkančio šią įvestį.'
+    upload_invalid: 'Įkėlimas nepavyko arba failas neperskaitomas.'
+    upload_too_large: 'Failas viršija didžiausią leidžiamą dydį.'
+    quota_exceeded: 'Saugyklos kvota šiam naudotojui pasiekta.'
+    public_not_allowed: 'Jūsų rolės neleidžia viešo matomumo.'
+    storage_failed: 'Nepavyko išsaugoti užšifruoto failo.'
+    uploaded: 'Failas sėkmingai įkeltas.'
+    not_found: 'Failas nerastas.'
+    deleted: 'Failas pašalintas.'
+    visibility_updated: 'Matomumas atnaujintas.'
+    grant_invalid: 'Leidimo operacija nepavyko.'
+    grant_exists: 'Leidimas jau yra.'
+    grant_added: 'Leidimas pridėtas.'
+    grant_removed: 'Leidimas pašalintas.'
+    share_applied: 'Bendrinimas atnaujintas.'
+    bulk_share_ok: 'Bendrinimas pritaikytas pasirinkimui.'
+    bulk_share_partial: 'Kai kurių failų nepavyko bendrinti.'
+    bulk_delete_ok: 'Šalinimas pritaikytas pasirinkimui.'
+    bulk_delete_partial: 'Kai kurių failų nepavyko pašalinti.'
+    move_target_invalid: 'Netinkamas paskirties aplankas.'
+    move_name_conflict: 'Tokio pavadinimo failas jau yra paskirties aplanke.'
+    move_folder_into_self_or_descendant: 'Negalima perkelti aplanko į save ar į palikuonį.'
+    move_folder_name_conflict: 'Tokio pavadinimo aplankas jau yra paskirties aplanke.'
+    move_bulk_ok: 'Perkėlimas pritaikytas pasirinkimui.'
+    move_bulk_partial: 'Kai kurių elementų nepavyko perkelti.'
+    bulk_no_ids: 'Nepasirinkta nė vieno failo.'
+    rename_name_required: 'Failo pavadinimas yra privalomas.'
+    rename_name_too_long: 'Failo pavadinimas per ilgas.'
+    rename_unchanged: 'Pakeitimų neaptikta.'
+    renamed: 'Failas sėkmingai pervadintas.'
+    upload_name_conflict: 'Failas ar aplankas tokiu pavadinimu šioje vietoje jau yra.'
+    name_conflict_same_level: 'Failas ar aplankas tokiu pavadinimu šioje vietoje jau yra.'
+    folder_rename_name_required: 'Reikalingas aplanko pavadinimas.'
+    folder_rename_name_too_long: 'Aplanko pavadinimas per ilgas.'
+    folder_rename_unchanged: 'Pakeitimų neaptikta.'
+    folder_rename_name_conflict: 'Aplankas tokiu pavadinimu čia jau yra.'
+    folder_renamed: 'Aplankas sėkmingai pervadintas.'
+    not_owner: 'Prieiga prie šio failo uždrausta.'
+    godview_subject_invalid: 'Netinkamas tikslinis naudotojas šiai veiksmui.'
+    expired: 'Šis failas nebegalioja.'
+    download_failed: 'Nepavyko iššifruoti saugomo failo.'
+admin:
+  invite:
+    meta:
+      title: 'Kviesti naudotoja'
+    title: 'Kviesti naudotoja'
+    intro: 'Issiuskite pakvietima el. pastu. Bus pateikta aktyvavimo nuoroda.'
+    email: 'El. pastas'
+    pseudonym: Pseudonimas
+    submit: 'Siųsti pakvietima'
+    back_users: 'Grizti i sarasa'
+    flash:
+      sent: 'Pakvietimas issiustas.'
+  users:
+    meta:
+      title: 'Naudotoju administravimas'
+    list:
+      title: 'Naudotoju valdymas'
+      search_placeholder: 'Paieska pagal el. pasta arba pseudonima'
+      search_submit: Ieskoti
+      empty: 'Naudotoju nerasta.'
+      total: '%count% naudotojas(-ai)'
+    show:
+      title: 'Naudotojo informacija'
+    roles_labels:
+      ROLE_USER: Naudotojas
+      ROLE_ADMIN: Administratorius
+      ROLE_CV_CONSULT: 'CV konsultantas'
+      ROLE_TUILE: 'Pradinio puslapio plyteliu valdymas'
+      ROLE_SHARE: 'Failu bendrinimas (baze)'
+      ROLE_SHARE_SEND: 'Bendrinimo siuntimas'
+      ROLE_SHARE_PUBLIC: 'Viesas bendrinimas'
+      ROLE_SHARE_FRIENDS: 'Bendrinimas su draugais'
+    sections:
+      profile: Profilis
+      roles: Roles
+      trusted_devices: 'Patikimi irenginiai'
+      security: Saugumas
+      danger_zone: 'Pavojinga zona'
+    fields:
+      email: 'El. pastas'
+      pseudonym: Pseudonimas
+      roles: Roles
+      active: Aktyvus
+      actions: Veiksmai
+      fingerprint: 'Pirsto antspaudas'
+      trusted_until: 'Patikimas iki'
+      hard_delete_reason: 'Salinimo priezastis'
+      hard_delete_confirm: 'Įveskite DELETE patvirtinimui'
+      hard_delete_placeholder: DELETE
+      storage_quota_gib: 'Saugyklos kvota (GiB)'
+      storage_quota_placeholder: 'Platformos numatytasis'
+    storage:
+      usage: 'Naudojama: %used%'
+      quota_effective: 'Kvota: %quota%'
+      quota_personal: 'asmenine kvota'
+      quota_default: 'numatytoji kvota'
+      quota_unlimited: 'Neribota kvota'
+    actions:
+      manage: Valdyti
+      back: Atgal
+      save_profile: 'Išsaugoti profili'
+      save_roles: 'Išsaugoti roles'
+      revoke: Panaikinti
+      revoke_all_devices: 'Panaikinti visus irenginius'
+      force_password_reset: 'Priverstinis slaptazodzio atkurimas'
+      invalidate_sessions: 'Atjungti aktyvias sesijas'
+      hard_delete: 'Negriztamai salinti'
+    help:
+      hard_delete: 'Sis veiksmas negriztamai pasalina funkcinius duomenis; uzkoduotas snapshot leidzia admin rollback.'
+      storage_quota: 'Tuscia = platformos kvota. 0 = neribota. Pavyzdys: 10 = 10 GiB.'
+    status:
+      active: Aktyvus
+      inactive: Neaktyvus
+    devices:
+      empty: 'Patikimu irenginiu nera.'
+    success:
+      profile_updated: 'Naudotojo profilis atnaujintas.'
+      roles_updated: 'Naudotojo roles atnaujintos.'
+      device_revoked: 'Patikimas irenginys panaikintas.'
+      devices_revoked: 'Patikimi irenginiai panaikinti.'
+      password_reset_forced: 'Slaptazodzio atkurimas priverstinis.'
+      sessions_invalidated: 'Aktyvios sesijos nutrauktos.'
+      hard_deleted: 'Naudotojas negriztamai pasalintas.'
+    error:
+      invalid_payload: 'Neteisingi duomenys.'
+      invalid_storage_quota: 'Netinkama saugyklos kvota.'
+      invalid_role: 'Neteisinga role.'
+      self_role_change_forbidden: 'Negalite keisti savo roles.'
+      self_soft_delete_forbidden: 'Negalite deaktyvuoti savo paskyros.'
+      self_hard_delete_forbidden: 'Negalite pasalinti savo paskyros.'
+      hard_delete_confirmation_invalid: 'Neteisingas salinimo patvirtinimas.'
+      hard_delete_unavailable: 'Negriztamas salinimas laikinai nepasiekiamas.'
+      vault_key_missing: 'Truksta salinimo saugyklos rakto.'
+      snapshot_encode_failed: 'Nepavyko sukurti salinimo snapshot.'
+      snapshot_cipher_invalid: 'Netinkama snapshot sifravimo konfiguratija.'
+      snapshot_encrypt_failed: 'Nepavyko uzkoduoti salinimo snapshot.'
+      snapshot_signature_invalid: 'Snapshot parasas neteisingas.'
+      snapshot_decode_failed: 'Nepavyko nuskaityti snapshot.'
+      snapshot_decrypt_failed: 'Nepavyko issifruoti snapshot.'
+      last_admin_protected: 'Paskutinio aktyvaus administratoriaus keisti negalima.'
+      device_not_found: 'Irenginys nerastas.'
+      already_inactive: 'Si paskyra jau neaktyvi.'
+      account_inactive: 'Naudotojo paskyra isjungta.'
+      share_requires_base: 'ROLE_SHARE_PUBLIC ir ROLE_SHARE_FRIENDS reikalauja ROLE_SHARE.'
+      share_public_friends_requires_send: 'ROLE_SHARE_PUBLIC ir ROLE_SHARE_FRIENDS reikalauja ROLE_SHARE_SEND.'
+  settings:
+    meta:
+      title: 'Platformos nustatymai'
+    page:
+      title: 'Platformos konfiguracija'
+      subtitle: 'Globalus svetaines nustatymai, prieigos vartai ir numatytos kvotos.'
+    summary:
+      access_gate: 'Prieigos vartai'
+      access_gate_active_help: 'Ne admin lankytojai turi ivesti praleidimo pastaba.'
+      access_gate_inactive_help: 'Svetaine prieinama be praleidimo pastabos.'
+      default_quota: 'Numatyta saugyklos kvota'
+      default_quota_help: 'Taikoma paskyroms be asmenines kvotos (APP_USER_STORAGE_QUOTA_BYTES).'
+    access_gate:
+      title: 'Viesieji prieigos vartai'
+      subtitle: 'Uzdarykite svetaine ir leiskite praleisti slapta pastaba.'
+      status_active: 'Vartai aktyvus'
+      status_inactive: 'Vartai neaktyvus'
+    storage:
+      title: Saugykla
+      default_quota_label: 'Numatyta kvota'
+      per_user_label: 'Naudotojo kvota'
+      per_user_help: 'Asmenine kvota nustatoma naudotojo profilyje.'
+      manage_users: 'Tvarkyti naudotojus'
+    shortcuts:
+      title: 'Admin nuorodos'
+      preview_gate: 'Perziureti vartu puslapi'
+  bug_reports:
+    meta:
+      title: 'Bug tiketai'
+    list:
+      title: 'Bug tiketai'
+      empty: 'Pagal siuos filtrus bug tiketu nera.'
+    detail:
+      title: 'Tiketas #%id%'
+      context_title: 'Surinktas kontekstas'
+      timeline_title: 'Veiksmu laiko juosta'
+    filters:
+      status_all: 'Visi statusai'
+      severity_all: 'Visi svarbumai'
+      route_placeholder: 'Filtruoti pagal route'
+      include_archived: 'Rodyti archyvuotus'
+      apply: 'Filtruoti'
+    fields:
+      created_at: 'Data'
+      reporter: 'Naudotojas'
+      path: 'URL'
+      status: 'Busena'
+      severity: 'Svarbumas'
+      archived: 'Archyvuotas'
+      actions: 'Veiksmai'
+      route_name: 'Route'
+      query: 'Query'
+      locale: 'Kalba'
+      theme: 'Tema'
+      user_agent: 'Naršykle'
+      viewport: 'Viewport'
+      referrer: 'Referrer'
+      correlation_id: 'Request ID'
+      app_version: 'App versija'
+      archive_reason: 'Archyvavimo priezastis'
+    archived:
+      yes: 'Taip'
+      no: 'Ne'
+    actions:
+      open: 'Atidaryti'
+      back: 'Atgal i sarasa'
+      mark_in_progress: 'Pazymeti kaip vykdoma'
+      mark_resolved: 'Pazymeti kaip isspręsta'
+      reopen: 'Atidaryti is naujo'
+      archive: 'Archyvuoti'
+      unarchive: 'Isarchyvuoti'
+setup:
+  meta:
+    title: 'Administratoriaus paleidimas'
+  title: 'Sukonfiguruoti pirmaji administratoriu'
+  subtitle: 'Sukurkite pirmaji administratoriaus naudotoja, kad atrakintumete platforma.'
+  email: 'Administratoriaus el. pastas'
+  pseudonym: Pseudonimas
+  password: Slaptazodis
+  submit: 'Sukurti pirmaji administratoriu'
+  invalid_payload: 'Visi laukai yra privalomi.'
+  email_already_used: 'Sis el. pastas jau naudojamas.'
+  totp_sent: 'Administratoriaus paskyra sukurta kaip laukianti. TOTP kodas issiustas el. pastu.'
+  pending_confirmation: 'Jusu administratoriaus paskyra laukia TOTP patvirtinimo.'
+invite:
+  invalid_payload: 'Neteisingi kvietimo duomenys.'
+  unauthorized: 'Veiksmas neleidziamas.'
+  created: 'Kvietimas sukurtas.'
+  user_already_exists: 'Naudotojas su siuo el. pastu jau egzistuoja.'
+  user_persist_failed: 'Nepavyko sukurti pakviestos paskyros.'
+  email_send_failed: 'Nepavyko issiusti kvietimo el. laisko.'
+  rate_limited: 'Per daug bandymu. Bandykite veliau.'
+  activate:
+    success: 'Aktyvacija baigta. Dabar galite prisijungti.'
+    invalid_or_expired: 'Nuoroda negalioja, pasibaigusi, arba jau panaudota.'
+    password_required: 'Slaptazodis yra privalomas.'
+    meta:
+      title: 'Pakviestos paskyros aktyvavimas'
+    title: 'Aktyvuokite savo paskyra'
+    subtitle: 'Nustatykite slaptazodi, kad uzbaigtumete aktyvavima.'
+    password: 'Naujas slaptazodis'
+    submit: 'Aktyvuoti mano paskyra'
+locale:
+  invalid: 'Nepalaikoma kalba.'
+  name:
+    fr: Prancuzu
+    en: Anglu
+    de: Vokieciu
+    lt: Lietuviu
+    'no': Norvegu
+  bubble:
+    aria_toggle: 'Keisti svetaines kalba'
+    aria_switch: 'Pakeisti kalba i %locale%'
+theme:
+  invalid: 'Nepalaikoma tema.'
+  mode:
+    light: Sviesi
+    dark: Tamsi
+  bubble:
+    aria_toggle: 'Keisti svetaines tema'
+    aria_switch: 'Pakeisti tema i %theme%'
+floating:
+  actions:
+    toolbar_aria: 'Greiti veiksmai: kalba, tema ir paskyra'
+    locale:
+      aria: 'Atidaryti kalbos pasirinkima'
+      title: Kalba
+    theme:
+      aria: 'Perjungti tema i %theme%'
+      title: 'Perjungti i %theme%'
+    account:
+      aria: 'Atidaryti paskyros informacija'
+      title: 'Paskyra ir score'
+    logout:
+      aria: 'Atsijungti nuo svetaines'
+    bug:
+      aria: 'Pranesti apie bug'
+      title: 'Pranesti bug'
+bug_report:
+  flash:
+    invalid_csrf: 'Netinkamas pateikimas. Bandykite dar kartą.'
+    missing_required: 'Aprasykite veiksma ir pastebeta rezultata.'
+    created: 'Bug tiketas sekmingai sukurtas.'
+  modal:
+    title: 'Pranesti apie bug'
+    action_description_label: 'Ka padariau'
+    observed_result_label: 'Kas ivyko'
+    expected_result_label: 'Laukiamas rezultatas (neprivaloma)'
+    severity_label: 'Svarbumas'
+    cancel: 'Atsaukti'
+    submit: 'Siusti'
+  severity:
+    minor: 'Nedidelis'
+    major: 'Didelis'
+    critical: 'Kritinis'
+  status:
+    new: 'Naujas'
+    in_progress: 'Vykdomas'
+    resolved: 'Issprestas'
+    reopened: 'Atidarytas is naujo'
+storage:
+  home:
+    meta_title: 'Debesies saugykla'
+    title: 'Jūsų šifruota debesies saugykla'
+    subtitle: 'Saugiai saugokite, tvarkykite ir bendrinkite failus.'
+    cta_files: 'Atidaryti mano failus'
+    cta_login: Prisijungti
+    no_share_role: 'Saugyklos prieiga jūsų paskyrai neaktyvuota'
+    stats_aria: 'Jūsų saugyklos statistika'
+    stats_title: 'Jūsų saugyklos apžvalga'
+    stats_subtitle: 'Realaus laiko asmeninės saugyklos santrauka.'
+    stat_files: Failai
+    stat_space: 'Naudojama vieta'
+    stat_remaining: 'Liko vietos'
+    stat_quota: 'Priskirta kvota: %quota%'
+    stat_space_unlimited: Neribota
+    stat_files_help: 'Užšifruoti failai jūsų asmeninėje erdvėje.'
+    stat_space_help: 'Bendras visų jūsų failų apimtis.'
+    stat_remaining_help_user: 'Likusi talpa jūsų asmeninėje kvotoje (%quota%).'
+    stat_remaining_help_default: 'Likusi talpa numatytoje kvotoje (%quota%).'
+    stat_remaining_help_unlimited: 'Jūsų paskyrai netaikomas saugyklos limitas.'
+    stat_folders_help: 'Aplankai, sukurti struktūruoti medį.'
+    stat_shares_help: 'Viešos nuorodos ir draugų prieiga, galiojanti šiandien.'
+    stat_folders: Aplankai
+    stat_shares: 'Aktyvūs bendrinimai'
+    feature_encrypt_title: 'Šifravimas ramybės būsenoje'
+    feature_encrypt_text: 'Failai užšifruojami AES-256 prieš įrašant į diską.'
+    feature_folders_title: 'Aplankų medis'
+    feature_folders_text: 'Organizuokite įkeltas bylas įdėtiniuose aplankuose su pervadinimu ir perkėlimu.'
+    feature_share_title: 'Viešas ir draugų bendrinimas'
+    feature_share_text: 'Bendrinimo nuorodos su neprivalomu slaptažodžiu ir el. pašto patvirtinimu.'
+    feature_upload_title: 'Dalinis įkėlimas'
+    feature_upload_text: 'Dideli failai patikimai įkeliami dalimis.'
+    features_title: 'Platformos galimybės'
+    features_subtitle: 'Saugus saugojimas, kontroliuojamas bendrinimas ir kvota pagal naudotoją.'
+    feature_quota_title: 'Kvota pagal naudotoją'
+    feature_quota_text: 'Matykite naudojamą vietą ir likusią talpą pagal asmeninę ar platformos kvotą.'
+  access_gate:
+    meta:
+      title: 'Ribota prieiga'
+    title: 'Ribota prieiga'
+    default_message: 'Platforma laikinai užrakinta. Įveskite prieigos pastabą.'
+    bypass_note_label: 'Prieigos pastaba'
+    bypass_note_help: 'Šią pastabą jums suteikė administratorius.'
+    submit: 'Atrakinti prieigą'
+    error:
+      csrf_invalid: 'Netinkamas saugumo raktas.'
+      invalid_note: 'Neteisinga prieigos pastaba.'
+      bypass_note_required: 'Aktyvavus užraktą, reikalinga prieigos pastaba.'
+    success:
+      settings_updated: 'Prieigos užrakto nustatymai atnaujinti.'
+    admin:
+      panel_aria: 'Prieigos užrakto konfigūracija'
+      title: 'Svetainės prieigos užraktas'
+      subtitle: 'Įjunkite užraktą ir pritaikykite lankytojo pranešimą bei slaptą pastabą.'
+      enabled_label: 'Įjungti viešą prieigos užraktą'
+      message_label: 'Lankytojams rodomas pranešimas'
+      message_placeholder: 'Pvz.: tik beta testuotojams.'
+      bypass_note_label: 'Apėjimo pastaba'
+      bypass_note_help: 'Lankytojai turi įvesti tiksliai šią pastabą (24 val. sesijai).'
+      save: 'Išsaugoti užraktą'

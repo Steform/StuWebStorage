@@ -1,0 +1,586 @@
+/* Page scope: user file space — prefer Bootstrap utilities; extend here when needed. */
+.files-top-nav .container-fluid {
+    max-width: 100%;
+}
+
+.files-top-nav .files-nav-search {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.files-nav-search > #files-search-q:has(+ .files-search-clear.d-none) {
+    border-top-right-radius: var(--bs-border-radius);
+    border-bottom-right-radius: var(--bs-border-radius);
+}
+
+.files-top-nav .files-top-nav__actions {
+    white-space: nowrap;
+}
+
+.files-admin-owner-filter-input {
+    max-width: 7.5rem;
+}
+
+.files-top-nav__stack {
+    width: 100%;
+}
+
+.files-top-nav__toolbar-tools {
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .files-top-nav__toolbar-tools {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: center;
+    }
+
+    /* Second toolbar row: keep cluster wrappers as flex groups (search sits on its own row above). */
+    .files-toolbar-md-contents {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .files-toolbar-lead-cluster {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+}
+
+.files-search-prefix__icon {
+    width: 1rem;
+    height: 1rem;
+    display: inline-block;
+}
+
+@media (max-width: 767.98px) {
+    .files-top-nav .files-nav-search {
+        flex: 1 1 100%;
+    }
+
+    .files-toolbar-cluster-view-home {
+        min-width: 0;
+    }
+
+    .files-toolbar-second-row {
+        flex-wrap: wrap;
+    }
+
+}
+
+.files-toolbar-second-row > * {
+    min-width: 0;
+}
+
+/* Nested Affichage menu (mobile + desktop): keep second-level panel above sticky nav and sibling dropdowns. */
+.files-toolbar-slot--display .dropend > .dropdown-menu {
+    z-index: 1060;
+}
+
+@media (max-width: 991.98px) {
+    .files-toolbar-slot--display .files-display-submenu > .dropdown-menu {
+        left: auto;
+        right: 100%;
+        margin-right: 0.125rem;
+    }
+}
+
+.files-admin-scope-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--bs-border-color);
+    background-color: var(--bs-tertiary-bg);
+    font-size: 0.8rem;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.files-admin-scope-badge strong {
+    font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+    .files-admin-scope-badge {
+        order: 90;
+        margin-top: 0.25rem;
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}
+
+/*
+ * Submenu row triggers must NOT use .dropdown-item: Bootstrap closes the parent menu on .dropdown-item
+ * click before the nested dropdown can open (BS5 dropdown dismiss logic).
+ */
+.files-toolbar-slot--display .files-display-submenu-trigger {
+    display: flex;
+    width: 100%;
+    padding: var(--bs-dropdown-item-padding-y) var(--bs-dropdown-item-padding-x);
+    font-weight: 400;
+    color: var(--bs-dropdown-link-color);
+    text-align: start;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
+.files-toolbar-slot--display .files-display-submenu-trigger:hover,
+.files-toolbar-slot--display .files-display-submenu-trigger:focus {
+    color: var(--bs-dropdown-link-hover-color);
+    background-color: var(--bs-dropdown-link-hover-bg);
+}
+
+.files-toolbar-slot--display .files-display-submenu-trigger:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 0.1rem rgba(var(--bs-emphasis-color-rgb), 0.25);
+}
+
+.files-space-page .table td {
+    vertical-align: middle;
+}
+
+.files-owned-list-table thead.files-table-head th,
+.files-shared-list-table thead.files-table-head th {
+    background-color: var(--bs-secondary-bg);
+    color: var(--bs-emphasis-color);
+    border-bottom-color: var(--bs-border-color);
+}
+
+.files-space-page {
+    min-height: calc(100dvh - 9rem);
+    display: flex;
+    flex-direction: column;
+}
+
+/*
+ * /admin/files only: admin dashboard strip sits above the files toolbar (outside <main>).
+ * Without this, .files-space-page + #files-listing-shell min-heights sum past 100dvh and the page scrolls.
+ * /files is unchanged (no modifier class).
+ */
+.files-space-page.files-space-page--admin-files-route {
+    min-height: calc(100dvh - 12.5rem);
+}
+
+.files-drop-zone {
+    border-radius: 0.375rem;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.files-drop-zone--active {
+    background-color: var(--bs-tertiary-bg);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.files-grid-card {
+    min-height: 12rem;
+}
+
+.files-grid-card.files-grid-card-compact {
+    min-height: 9.5rem;
+}
+
+.files-grid-card.files-grid-card-compact.files-grid-card-compact--chrome-less {
+    box-shadow: none !important;
+    border: 0 !important;
+    background: transparent;
+}
+
+.files-grid-card-compact .files-grid-card__select {
+    position: absolute;
+    top: 0.4rem;
+    left: 0.5rem;
+    z-index: 2;
+    margin: 0;
+}
+
+.files-grid-card-compact .files-grid-card-compact__body {
+    gap: 0.5rem;
+    padding: 0.75rem 0.6rem 0.9rem;
+    cursor: pointer;
+}
+
+.files-grid-card-compact .files-grid-card-compact__body:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 1px;
+    border-radius: 0.4rem;
+}
+
+.files-grid-card-compact .files-grid-card-compact__preview {
+    min-height: 5.5rem;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.files-grid-card-compact .files-grid-card-compact__preview-image {
+    width: 100%;
+    max-height: 5.5rem;
+    object-fit: cover;
+    border-radius: 0.35rem;
+    box-shadow: 0 0.3rem 0.7rem rgba(0, 0, 0, 0.2);
+}
+
+.files-grid-card-compact .files-grid-card-compact__preview-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    filter: drop-shadow(0 0.25rem 0.45rem rgba(0, 0, 0, 0.28));
+}
+
+.files-grid-card-compact .files-grid-card-compact__name {
+    line-height: 1.2;
+}
+
+.files-grid-card-compact .files-grid-card-compact__share-badges {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.35rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 999px;
+    color: var(--bs-emphasis-color);
+    background-color: rgba(var(--bs-body-bg-rgb), 0.82);
+    backdrop-filter: blur(2px);
+    pointer-events: none;
+}
+
+.files-grid-card-compact .files-grid-card-compact__share-badge-icon {
+    font-size: 0.72rem;
+    line-height: 1;
+}
+
+.files-grid-card-compact .files-grid-card-compact__share-badge-icon.bi-globe {
+    color: var(--bs-primary, #0d6efd);
+}
+
+.files-grid-card-compact .files-grid-card-compact__share-badge-icon.bi-people-fill {
+    color: var(--bs-success, #198754);
+}
+
+.files-actions-dropdown .dropdown-menu form {
+    min-width: 10rem;
+}
+
+.files-listing-table-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    margin-bottom: 0 !important;
+}
+
+.files-listing-table-wrap .files-actions-dropdown > .dropdown-menu {
+    z-index: 1090;
+    overflow: visible;
+}
+
+.files-actions-dropdown .files-dropdown-menu-scroll {
+    max-height: min(40vh, 18rem);
+    overflow-y: auto;
+}
+
+/* Right-click context menu reuses the same dropdown but must not show an inner scrollbar. */
+.dropdown-menu.files-row-context-menu .files-dropdown-menu-scroll {
+    max-height: none;
+    overflow: visible;
+}
+
+/* Enable vertical scroll only when JS detects that viewport height is insufficient. */
+.dropdown-menu.files-row-context-menu.files-row-context-menu--constrained .files-dropdown-menu-scroll {
+    max-height: unset;
+    overflow: visible;
+}
+
+.dropdown-menu.files-row-context-menu.files-row-context-menu--constrained {
+    overscroll-behavior: contain;
+}
+
+.files-shared-list-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.files-shared-list-table th[data-files-col="type"],
+.files-shared-list-table td[data-files-col="type"] {
+    width: 5rem;
+    min-width: 5rem;
+}
+
+.files-shared-list-table th[data-files-col="type"] {
+    white-space: nowrap;
+}
+
+.files-shared-list-table th.files-col-select,
+.files-shared-list-table td.files-col-select {
+    width: 2.25rem;
+    min-width: 2.25rem;
+}
+
+.files-shared-list-table th[data-files-col="size"],
+.files-shared-list-table td[data-files-col="size"] {
+    width: 8.5rem;
+    min-width: 8.5rem;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.files-shared-list-table th[data-files-col="owner-pseudo"],
+.files-shared-list-table td[data-files-col="owner-pseudo"] {
+    width: 9rem;
+    min-width: 9rem;
+    max-width: 9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.files-shared-list-table th.files-col-actions,
+.files-shared-list-table td.files-actions-anchor-cell {
+    width: 0;
+    min-width: 0;
+}
+
+
+#files-listing-shell .files-live-region {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.files-filter-chips .files-filter-chip {
+    font-weight: 500;
+}
+
+#filesAdvancedFiltersModal .form-select[multiple] {
+    min-height: 8rem;
+}
+
+.files-listing-shell.files-drop-zone {
+    min-height: 4rem;
+    border: 1px dashed transparent;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    flex: 1 1 auto;
+}
+
+#files-listing-shell {
+    min-height: calc(100dvh - 14rem);
+}
+
+.files-space-page.files-space-page--admin-files-route #files-listing-shell {
+    min-height: calc(100dvh - 17.5rem);
+}
+
+#files-listing-shell > .files-live-region {
+    min-height: 100%;
+}
+
+.files-listing-shell.files-drop-zone.files-drop-zone--active {
+    border-color: var(--bs-primary);
+    background-color: var(--bs-tertiary-bg);
+}
+
+@supports (background-color: color-mix(in srgb, red, blue)) {
+    .files-listing-shell.files-drop-zone.files-drop-zone--active {
+        background-color: color-mix(in srgb, var(--bs-primary-bg-subtle) 55%, var(--bs-body-bg));
+    }
+}
+
+.files-live-region[aria-busy='true'] {
+    opacity: 0.65;
+    transition: opacity 0.15s ease;
+}
+
+.files-share-badge {
+    max-width: 100%;
+}
+
+.files-upload-collapse-toggle {
+    font-weight: 500;
+}
+
+#filesUploadModal .files-grantee-suggestions {
+    z-index: 1060;
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+#filesUploadModal .files-grantee-suggestion-item.active {
+    background-color: var(--bs-primary-bg-subtle);
+}
+
+#filesUploadModal #files-upload-progress-bar {
+    transition: width 0.15s ease-out;
+}
+
+.files-grantee-chip .files-grantee-chip-remove {
+    width: 0.65rem;
+    height: 0.65rem;
+    padding: 0;
+    margin-left: 0.15rem;
+    opacity: 0.85;
+}
+
+.files-row-clickable {
+    cursor: pointer;
+}
+
+.files-row-clickable:hover {
+    background-color: var(--bs-secondary-bg);
+}
+
+.files-col-name {
+    cursor: pointer;
+}
+
+.files-col-name:hover {
+    text-decoration: underline;
+}
+
+.files-row-context-menu {
+    position: fixed;
+    z-index: 1090;
+}
+
+.files-actions-anchor-cell {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    padding: 0 !important;
+    border: 0;
+    overflow: visible;
+}
+
+.files-actions-anchor-cell .files-actions-dropdown > .dropdown-toggle {
+    display: none;
+}
+
+.files-grid-card-compact .files-actions-dropdown > .dropdown-toggle {
+    display: none;
+}
+
+.files-properties-preview-box {
+    min-height: 9rem;
+    max-height: 14rem;
+    overflow: hidden;
+}
+
+.files-properties-preview {
+    max-height: 13rem;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.files-share-status-icon {
+    color: var(--bs-warning, #ffc107);
+    font-size: 0.95em;
+    margin-left: 0.25rem;
+    vertical-align: baseline;
+    line-height: 1;
+}
+
+.files-owned-list-table td[data-files-col="share_public"] .files-share-public-cell-inner {
+    flex-wrap: nowrap;
+}
+
+.files-owned-list-table td[data-files-col="share_public"] .files-share-status-icon {
+    flex-shrink: 0;
+}
+
+.files-share-status-icon::before {
+    vertical-align: -0.05em;
+}
+
+.files-filter-dropdown-scroll {
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+/*
+ * Light theme: /files stacks grey surfaces (navbar tertiary, accordion, striped tables, transparent grid cards).
+ * Scoped under html[data-bs-theme="light"] so dark mode keeps Bootstrap defaults.
+ */
+html[data-bs-theme="light"] nav.files-top-nav.bg-body-tertiary {
+    background-color: var(--bs-body-bg) !important;
+}
+
+html[data-bs-theme="light"] .files-space-page {
+    background-color: var(--bs-body-bg);
+}
+
+html[data-bs-theme="light"] .files-space-page #files-listing-shell.files-listing-shell {
+    background-color: var(--bs-body-bg);
+}
+
+html[data-bs-theme="light"] .files-space-page .files-sections-accordion {
+    --bs-accordion-bg: var(--bs-body-bg);
+    --bs-accordion-border-color: var(--bs-border-color);
+    --bs-accordion-btn-bg: var(--bs-tertiary-bg);
+    --bs-accordion-btn-color: var(--bs-body-color);
+    --bs-accordion-active-bg: var(--bs-body-bg);
+    --bs-accordion-active-color: var(--bs-emphasis-color);
+}
+
+html[data-bs-theme="light"] .files-space-page .files-sections-accordion .accordion-item {
+    background-color: var(--bs-body-bg);
+    border-color: var(--bs-border-color);
+}
+
+html[data-bs-theme="light"] .files-space-page .files-sections-accordion .accordion-body {
+    background-color: var(--bs-body-bg);
+}
+
+html[data-bs-theme="light"] .files-space-page .files-owned-list-table,
+html[data-bs-theme="light"] .files-space-page .files-shared-list-table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: var(--bs-tertiary-bg);
+    --bs-table-hover-bg: var(--bs-tertiary-bg);
+}
+
+@supports (background-color: color-mix(in srgb, red, blue)) {
+    html[data-bs-theme="light"] .files-space-page .files-owned-list-table,
+    html[data-bs-theme="light"] .files-space-page .files-shared-list-table {
+        --bs-table-hover-bg: color-mix(in srgb, var(--bs-secondary-bg) 35%, var(--bs-body-bg) 65%);
+    }
+}
+
+html[data-bs-theme="light"] .files-space-page .files-owned-list-table thead.files-table-head th,
+html[data-bs-theme="light"] .files-space-page .files-shared-list-table thead.files-table-head th {
+    background-color: var(--bs-tertiary-bg) !important;
+}
+
+html[data-bs-theme="light"] .files-space-page .files-row-clickable:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
+html[data-bs-theme="light"] .files-space-page .files-grid-card.files-grid-card-compact.files-grid-card-compact--chrome-less {
+    background-color: var(--bs-body-bg);
+}
+
+html[data-bs-theme="light"] .files-space-page .files-listing-shell.files-drop-zone.files-drop-zone--active {
+    background-color: var(--bs-tertiary-bg);
+}
+
+@supports (background-color: color-mix(in srgb, red, blue)) {
+    html[data-bs-theme="light"] .files-space-page .files-listing-shell.files-drop-zone.files-drop-zone--active {
+        background-color: color-mix(in srgb, var(--bs-primary-bg-subtle) 45%, var(--bs-body-bg));
+    }
+}
+

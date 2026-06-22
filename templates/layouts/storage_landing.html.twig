@@ -1,0 +1,8 @@
+{% extends 'base.html.twig' %}
+
+{% block main_container_class %}p-0{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('css/storage-landing.css') }}" rel="stylesheet">
+{% endblock %}

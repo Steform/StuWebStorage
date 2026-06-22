@@ -1,0 +1,7 @@
+framework:
+    trusted_hosts:
+        - '^storage\.loc$'
+        - '^localhost$'
+        - '^127\.0\.0\.1$'
+    session:
+        cookie_secure: false

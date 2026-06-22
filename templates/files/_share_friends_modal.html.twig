@@ -1,0 +1,81 @@
+{# Friends share modal (Sprint 22 - decoupled). Drives single + bulk friends sharing with per-grant expiration. #}
+<div class="modal fade" id="filesShareFriendsModal" tabindex="-1" aria-labelledby="filesShareFriendsModalTitle" aria-hidden="true"
+    {% if is_granted('ROLE_SHARE_FRIENDS') %} data-files-grantee-search-url="{{ path('files_grantee_search') }}"{% endif %}
+    data-files-share-state-url-template="{{ path('files_share_state', { id: 999999 }) }}"
+    data-files-folder-share-state-url-template="{{ path('files_folder_share_state', { id: 999999 }) }}"
+    data-files-share-friends-single-url-template="{{ path('files_share_friends', { id: 999999 }) }}"
+    data-files-share-friends-folder-url-template="{{ path('files_folder_share_friends', { id: 999999 }) }}"
+    data-files-share-friends-bulk-url="{{ path('files_share_bulk_friends') }}"
+    data-files-share-friends-csrf="{{ csrf_token(csrfShareFriends) }}"
+    data-files-share-friends-folder-csrf="{{ csrf_token(csrfFolderShareFriends) }}"
+    data-files-share-friends-bulk-csrf="{{ csrf_token(csrfShareBulkFriends) }}"
+    data-msg-grantee-fetch-error="{{ 'files.upload.grantee_fetch_error'|trans({}, 'messages', currentLocale) }}"
+    data-msg-grantee-live-none="{{ 'files.upload.grantee_live_none'|trans({}, 'messages', currentLocale) }}"
+    data-msg-grantee-live-results="{{ 'files.upload.grantee_live_results'|trans({}, 'messages', currentLocale) }}"
+    data-msg-grantee-remove-aria="{{ 'files.upload.grantee_remove_aria'|trans({}, 'messages', currentLocale) }}"
+    data-msg-title-single="{{ 'files.share.friends.modal_title_single'|trans({}, 'messages', currentLocale) }}"
+    data-msg-title-folder="{{ 'files.folder.share.friends.modal_title_single'|trans({}, 'messages', currentLocale) }}"
+    data-msg-title-bulk="{{ 'files.share.friends.modal_title_bulk'|trans({}, 'messages', currentLocale) }}"
+    data-msg-load-error="{{ 'files.share.load_error'|trans({}, 'messages', currentLocale) }}"
+    data-msg-submit-error="{{ 'files.share.submit_error'|trans({}, 'messages', currentLocale) }}"
+    data-msg-bulk-results-ok="{{ 'files.share.bulk_results.ok'|trans({}, 'messages', currentLocale) }}"
+    data-msg-bulk-results-failed="{{ 'files.share.bulk_results.failed'|trans({}, 'messages', currentLocale) }}"
+    data-msg-grant-expires-aria="{{ 'files.share.grant_expires_per_aria'|trans({}, 'messages', currentLocale) }}"
+    data-msg-grant-expires-label="{{ 'files.share.grant_expires_per_label'|trans({}, 'messages', currentLocale) }}"
+    data-msg-grant-expiration-mixed="{{ 'files.folder.share.friends.friends_expiration_mixed'|trans({}, 'messages', currentLocale) }}"
+    data-msg-grant-expired-badge="{{ 'files.folder.share.friends.friends_grant_expired'|trans({}, 'messages', currentLocale) }}"
+>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="filesShareFriendsModalTitle">{{ 'files.share.friends.modal_title_single'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'files.upload.modal_close'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <form id="files-share-friends-form" method="post" novalidate>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfShareFriends) }}" data-files-share-friends-csrf-input>
+                <input type="hidden" name="mode" value="single" data-files-share-friends-mode-input>
+                <input type="hidden" name="admin_context" value="" data-files-share-admin-context-input>
+                <input type="hidden" name="admin_view_scope" value="" data-files-share-admin-view-scope-input>
+                <input type="hidden" name="subject_user" value="" data-files-share-subject-user-input>
+                <input type="hidden" name="grantee_ids" id="files-share-friends-grantee-ids" value="">
+                <div class="d-none" data-files-share-friends-bulk-ids></div>
+
+                <div class="modal-body">
+                    <p class="files-share-target-summary text-muted small mb-3" data-files-share-friends-target-summary aria-live="polite"></p>
+
+                    {% if is_granted('ROLE_SHARE_FRIENDS') %}
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label" for="files-share-friends-grantee-input">{{ 'files.share.friends.grants_label'|trans({}, 'messages', currentLocale) }}</label>
+                                <div class="position-relative">
+                                    <input class="form-control" id="files-share-friends-grantee-input" type="search" autocomplete="off" aria-autocomplete="list" aria-controls="files-share-friends-grantee-suggestions" aria-expanded="false" placeholder="{{ 'files.upload.grantee_search_placeholder'|trans({}, 'messages', currentLocale) }}">
+                                    <ul class="list-group files-grantee-suggestions shadow d-none" id="files-share-friends-grantee-suggestions" role="listbox" hidden tabindex="-1"></ul>
+                                </div>
+                                <p class="form-text mb-1">{{ 'files.upload.grantee_search_hint'|trans({}, 'messages', currentLocale) }}</p>
+                                <div id="files-share-friends-grantee-chips" class="d-flex flex-column gap-2 mb-1 files-share-grantee-chips" aria-label="{{ 'files.upload.grantees_selected_aria'|trans({}, 'messages', currentLocale) }}"></div>
+                                <p class="visually-hidden" id="files-share-friends-grantee-live" aria-live="polite"></p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">{{ 'files.share.friends.role_required'|trans({}, 'messages', currentLocale) }}</p>
+                    {% endif %}
+
+                    <div class="files-share-bulk-only d-none mt-3" data-files-share-friends-bulk-only>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="files-share-friends-replace-existing" name="replace_existing" value="1">
+                            <label class="form-check-label" for="files-share-friends-replace-existing">{{ 'files.share.replace_existing_label'|trans({}, 'messages', currentLocale) }}</label>
+                        </div>
+                        <p class="form-text text-warning">{{ 'files.share.replace_existing_warning'|trans({}, 'messages', currentLocale) }}</p>
+                    </div>
+
+                    <div class="alert alert-warning mt-3 d-none" role="alert" data-files-share-friends-error></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.advanced.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                    <button type="submit" class="btn btn-primary" data-files-share-friends-submit>{{ 'files.share.apply'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'admin.users.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+
+{% block top_navigation %}
+    {% include 'components/_storage_admin_nav.html.twig' %}
+{% endblock %}
+
+{% block main_container_class %}container py-4{% endblock %}
+
+{% block body %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <h1 class="h4 mb-0">{{ 'admin.users.list.title'|trans({}, 'messages', currentLocale) }}</h1>
+            </div>
+            <form class="row g-2 mb-3" method="get" action="{{ path('admin_users_index') }}">
+                <div class="col-12 col-md-8">
+                    <input class="form-control" type="text" name="q" value="{{ search }}" placeholder="{{ 'admin.users.list.search_placeholder'|trans({}, 'messages', currentLocale) }}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <button class="btn btn-primary w-100" type="submit">{{ 'admin.users.list.search_submit'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>{{ 'admin.users.fields.email'|trans({}, 'messages', currentLocale) }}</th>
+                        <th>{{ 'admin.users.fields.pseudonym'|trans({}, 'messages', currentLocale) }}</th>
+                        <th>{{ 'admin.users.fields.roles'|trans({}, 'messages', currentLocale) }}</th>
+                        <th>{{ 'admin.users.fields.active'|trans({}, 'messages', currentLocale) }}</th>
+                        <th class="text-end">{{ 'admin.users.fields.actions'|trans({}, 'messages', currentLocale) }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.pseudonym }}</td>
+                            <td>{{ user.roles|join(', ') }}</td>
+                            <td>
+                                <span class="badge {{ user.active ? 'text-bg-success' : 'text-bg-secondary' }}">
+                                    {{ (user.active ? 'admin.users.status.active' : 'admin.users.status.inactive')|trans({}, 'messages', currentLocale) }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ path('admin_users_show', {id: user.id}) }}" class="btn btn-sm btn-outline-primary">{{ 'admin.users.actions.manage'|trans({}, 'messages', currentLocale) }}</a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">{{ 'admin.users.list.empty'|trans({}, 'messages', currentLocale) }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="mb-0 text-muted">{{ 'admin.users.list.total'|trans({'%count%': total}, 'messages', currentLocale) }}</p>
+        </div>
+    </div>
+{% endblock %}

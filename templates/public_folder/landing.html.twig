@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+{% block title %}{{ 'files.public_folder_landing.meta_title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+{% block stylesheets %}
+    <link href="{{ asset('css/public-file-landing.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/public-folder-landing.css') }}" rel="stylesheet">
+{% endblock %}
+{% block main_container_class %}container py-4 public-landing{% endblock %}
+{% block body %}
+<div
+    id="public-landing-root"
+    class="public-landing__root"
+    data-public-token="{{ publicToken|e('html_attr') }}"
+    data-endpoint-challenge="{{ path('download_public_challenge')|e('html_attr') }}"
+    data-endpoint-verify="{{ path('download_public_verify')|e('html_attr') }}"
+    data-endpoint-verify-password="{{ path('download_public_verify_share_password')|e('html_attr') }}"
+    data-endpoint-file="{{ path('download_public_folder')|e('html_attr') }}"
+    data-share-password-prefill="{{ sharePasswordPrefill|default('')|e('html_attr') }}"
+    data-msg-api-fallback="{{ 'files.public_folder_landing.api_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-api-msgs="{{ {
+        'download.challenge.invalid_payload': 'download.challenge.invalid_payload'|trans({}, 'messages', currentLocale),
+        'download.challenge.resource_not_found': 'download.challenge.resource_not_found'|trans({}, 'messages', currentLocale),
+        'download.challenge.cooldown': 'download.challenge.cooldown'|trans({}, 'messages', currentLocale),
+        'download.challenge.sent': 'download.challenge.sent'|trans({}, 'messages', currentLocale),
+        'download.challenge.totp_required': 'download.challenge.totp_required'|trans({}, 'messages', currentLocale),
+        'download.verify.invalid_payload': 'download.verify.invalid_payload'|trans({}, 'messages', currentLocale),
+        'download.verify.challenge_not_found': 'download.verify.challenge_not_found'|trans({}, 'messages', currentLocale),
+        'download.resource.unreadable': 'download.resource.unreadable'|trans({}, 'messages', currentLocale),
+        'download.authorized': 'download.authorized'|trans({}, 'messages', currentLocale),
+        'share.file.expired': 'share.file.expired'|trans({}, 'messages', currentLocale),
+        'download.public_folder.zip_empty': 'download.public_folder.zip_empty'|trans({}, 'messages', currentLocale),
+        'download.public_folder.zip_limit_files': 'download.public_folder.zip_limit_files'|trans({}, 'messages', currentLocale),
+        'download.public_folder.zip_limit_bytes': 'download.public_folder.zip_limit_bytes'|trans({}, 'messages', currentLocale),
+        'download.public_folder.zip_limit_time': 'download.public_folder.zip_limit_time'|trans({}, 'messages', currentLocale),
+        'download.totp_ok_password_required': 'download.totp_ok_password_required'|trans({}, 'messages', currentLocale),
+        'download.share_password.invalid': 'download.share_password.invalid'|trans({}, 'messages', currentLocale),
+        'download.share_password.rate_limited': 'download.share_password.rate_limited'|trans({}, 'messages', currentLocale),
+    }|json_encode|e('html_attr') }}"
+>
+    <div class="row justify-content-center g-4">
+        <div class="col-12 col-lg-10 col-xl-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <h1 class="h3 mb-3">{{ 'files.public_folder_landing.title'|trans({}, 'messages', currentLocale) }}</h1>
+                    <p class="text-body-secondary mb-4">{{ 'files.public_folder_landing.intro'|trans({}, 'messages', currentLocale) }}</p>
+                    <div class="row g-4 align-items-start">
+                        <div class="col-12 col-md-5 col-lg-4 text-center public-landing__preview-col">
+                            <div class="public-landing__preview border rounded-3 bg-body-secondary d-flex align-items-center justify-content-center p-3 public-folder-landing__folder-icon-wrap" data-public-landing-preview-wrap>
+                                <i class="bi bi-folder2-open display-3 text-warning" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-7 col-lg-8">
+                            <dl class="row mb-0 public-landing__dl">
+                                <dt class="col-sm-4">{{ 'files.public_folder_landing.folder_name_label'|trans({}, 'messages', currentLocale) }}</dt>
+                                <dd class="col-sm-8 text-break mb-2">{{ folder.name }}</dd>
+                                <dt class="col-sm-4">{{ 'files.public_folder_landing.public_files_label'|trans({}, 'messages', currentLocale) }}</dt>
+                                <dd class="col-sm-8 mb-2">{{ publicFileCount }}</dd>
+                                <dt class="col-sm-4">{{ 'files.public_folder_landing.public_expires_label'|trans({}, 'messages', currentLocale) }}</dt>
+                                <dd class="col-sm-8 mb-0">{% if folder.publicShareExpiresAt %}{{ folder.publicShareExpiresAt|date('Y-m-d H:i') }}{% else %}{{ 'files.public_folder_landing.public_expires_never'|trans({}, 'messages', currentLocale) }}{% endif %}</dd>
+                            </dl>
+                            {% if publicFileCount < 1 %}
+                            <p class="alert alert-warning mb-0 mt-3" role="status">{{ 'files.public_folder_landing.no_public_files_hint'|trans({}, 'messages', currentLocale) }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <h2 class="h5 mb-3">{{ 'files.public_folder_landing.section_email_title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <p class="small text-body-secondary mb-3" id="public-landing-hint" data-public-landing-hint>{{ 'files.public_folder_landing.email_hint'|trans({}, 'messages', currentLocale) }}</p>
+                    <div class="d-none" id="public-landing-alert" role="status" data-public-landing-alert></div>
+                    <form class="row g-3" id="public-landing-form" novalidate>
+                        <div class="col-12 col-md-6">
+                            <label for="public-landing-email" class="form-label">{{ 'files.public_folder_landing.email_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <input type="email" class="form-control" id="public-landing-email" name="email" required autocomplete="email" placeholder="{{ 'files.public_folder_landing.email_placeholder'|trans({}, 'messages', currentLocale) }}">
+                        </div>
+                        <div class="col-12 col-md-6 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-primary w-100" id="public-landing-send" data-public-landing-send>{{ 'files.public_folder_landing.send_code'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4">
+                            <label for="public-landing-code" class="form-label">{{ 'files.public_folder_landing.code_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <input type="text" class="form-control" id="public-landing-code" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="{{ 'files.public_folder_landing.code_placeholder'|trans({}, 'messages', currentLocale) }}" aria-describedby="public-landing-hint">
+                        </div>
+                        <div class="col-12 d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-primary" id="public-landing-verify" data-public-landing-verify disabled>{{ 'files.public_folder_landing.verify_submit'|trans({}, 'messages', currentLocale) }}</button>
+                            <a href="#" class="btn btn-success d-none" id="public-landing-download" data-public-landing-download>{{ 'files.public_folder_landing.download_zip'|trans({}, 'messages', currentLocale) }}</a>
+                        </div>
+                        <div class="col-12 d-none border-top pt-3 mt-2" id="public-landing-share-password-section">
+                            <label for="public-landing-share-password" class="form-label">{{ 'files.public_folder_landing.share_password_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <input type="password" class="form-control mb-2" id="public-landing-share-password" name="share_password" autocomplete="new-password">
+                            <button type="button" class="btn btn-primary" id="public-landing-submit-share-password">{{ 'files.public_folder_landing.share_password_submit'|trans({}, 'messages', currentLocale) }}</button>
+                            <p class="form-text small mb-0">{{ 'files.public_folder_landing.share_password_hint'|trans({}, 'messages', currentLocale) }}</p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+    <script src="{{ asset('js/public-folder-landing.js') }}?v=20260504-share-pwd" defer></script>
+{% endblock %}

@@ -1,0 +1,95 @@
+/**
+ * Media preview modal (global): image, PDF iframe, native video/audio, plain text.
+ */
+[data-files-media-preview-trigger] {
+    cursor: pointer;
+}
+
+/* Ensure thumbnail bitmap receives the click (stacking / hit-testing). */
+.files-grid-card-compact__preview--media-trigger .files-grid-card-compact__preview-image {
+    pointer-events: auto;
+}
+
+/* List view: type column uses decorative SVG; clicks resolve via td / capture handler. */
+
+.media-preview-modal-body {
+    min-height: 12rem;
+}
+
+.media-preview-modal-body__inner {
+    min-height: inherit;
+}
+
+.media-preview-slot--image {
+    min-height: min(70vh, 48rem);
+}
+
+.media-preview-modal__img {
+    display: block;
+    max-width: 100%;
+    max-height: min(70vh, 48rem);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.media-preview-slot--pdf {
+    min-height: min(70vh, 48rem);
+}
+
+.media-preview-pdf-frame-wrap {
+    min-height: min(65vh, 44rem);
+    max-height: min(70vh, 48rem);
+}
+
+.media-preview-modal__pdf-frame {
+    display: block;
+    width: 100%;
+    height: min(65vh, 44rem);
+    min-height: 12rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+}
+
+.media-preview-slot--video {
+    min-height: min(70vh, 48rem);
+}
+
+.media-preview-video-wrap {
+    max-height: min(70vh, 48rem);
+}
+
+.media-preview-modal__video {
+    display: block;
+    max-height: min(65vh, 44rem);
+}
+
+.media-preview-slot--audio {
+    min-height: 8rem;
+}
+
+.media-preview-modal__audio {
+    max-width: 100%;
+}
+
+.media-preview-slot--text {
+    min-height: min(70vh, 48rem);
+}
+
+.media-preview-modal__text {
+    display: block;
+    width: 100%;
+    max-height: min(65vh, 44rem);
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 1rem;
+    margin: 0;
+    font-family: var(--bs-font-monospace);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+}

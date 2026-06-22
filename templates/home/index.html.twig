@@ -1,0 +1,173 @@
+{% extends 'layouts/storage_landing.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'storage.home.meta_title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block body %}
+<section class="storage-hero py-5 py-lg-6" aria-labelledby="storage-hero-title">
+    <div class="container text-center py-4">
+        <div class="storage-hero__icon mb-4" aria-hidden="true">
+            <img src="{{ asset('images/storage/cloud-hero.svg') }}" alt="" class="storage-hero__cloud-img">
+        </div>
+        <h1 id="storage-hero-title" class="display-5 fw-semibold mb-3">{{ 'storage.home.title'|trans({}, 'messages', currentLocale) }}</h1>
+        <p class="lead text-body-secondary col-lg-8 mx-auto mb-4">{{ 'storage.home.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+        {% if storage_maintenance_mode_enabled() and not app.user %}
+            <div class="alert alert-warning col-lg-8 mx-auto text-start mb-4" role="status">
+                <strong>{{ 'maintenance.banner.title'|trans({}, 'messages', currentLocale) }}</strong>
+                <p class="mb-0 mt-2">
+                    {% if storage_maintenance_message() %}
+                        {{ storage_maintenance_message() }}
+                    {% else %}
+                        {{ 'maintenance.banner.default_message'|trans({}, 'messages', currentLocale) }}
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+        <div class="d-flex flex-wrap justify-content-center gap-2">
+            {% if app.user and is_granted('ROLE_SHARE') %}
+                <a class="btn btn-primary btn-lg" href="{{ path('files_index') }}">{{ 'storage.home.cta_files'|trans({}, 'messages', currentLocale) }}</a>
+            {% elseif app.user %}
+                <span class="btn btn-secondary btn-lg disabled" aria-disabled="true">{{ 'storage.home.no_share_role'|trans({}, 'messages', currentLocale) }}</span>
+            {% elseif not storage_maintenance_mode_enabled() %}
+                <a class="btn btn-primary btn-lg" href="{{ path('app_login') }}">{{ 'storage.home.cta_login'|trans({}, 'messages', currentLocale) }}</a>
+            {% endif %}
+            {% if is_granted('ROLE_ADMIN') %}
+                <a class="btn btn-outline-primary btn-lg" href="{{ path('admin_files_index') }}">{{ 'app.nav.files_admin'|trans({}, 'messages', currentLocale) }}</a>
+                <a class="btn btn-outline-secondary btn-lg" href="{{ path('admin_settings_index') }}">{{ 'app.nav.dashboard'|trans({}, 'messages', currentLocale) }}</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% if stats is not null %}
+<section class="container pb-4" aria-label="{{ 'storage.home.stats_aria'|trans({}, 'messages', currentLocale) }}">
+    <div class="text-center mb-4">
+        <h2 class="h5 mb-2 mt-5">{{ 'storage.home.stats_title'|trans({}, 'messages', currentLocale) }}</h2>
+        <p class="text-body-secondary mb-0">{{ 'storage.home.stats_subtitle'|trans({}, 'messages', currentLocale) }}</p>
+    </div>
+    <div class="row row-cols-2 row-cols-lg-5 g-3">
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-stat-card">
+                <div class="card-body">
+                    <i class="bi bi-file-earmark-lock-fill text-primary fs-4 mb-2" aria-hidden="true"></i>
+                    <div class="text-body-secondary small">{{ 'storage.home.stat_files'|trans({}, 'messages', currentLocale) }}</div>
+                    <div class="fs-3 fw-semibold mb-2">{{ stats.fileCount }}</div>
+                    <p class="text-body-secondary small mb-0">{{ 'storage.home.stat_files_help'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-stat-card">
+                <div class="card-body">
+                    <i class="bi bi-hdd-stack-fill text-primary fs-4 mb-2" aria-hidden="true"></i>
+                    <div class="text-body-secondary small">{{ 'storage.home.stat_space'|trans({}, 'messages', currentLocale) }}</div>
+                    <div class="fs-3 fw-semibold mb-2">{{ stats.totalBytes|files_size_format }}</div>
+                    <p class="text-body-secondary small mb-0">{{ 'storage.home.stat_space_help'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-stat-card">
+                <div class="card-body">
+                    <i class="bi bi-speedometer2 text-primary fs-4 mb-2" aria-hidden="true"></i>
+                    <div class="text-body-secondary small">{{ 'storage.home.stat_remaining'|trans({}, 'messages', currentLocale) }}</div>
+                    {% if stats.quotaSource != 'unlimited' %}
+                        <div class="small text-body-secondary mb-1">{{ 'storage.home.stat_quota'|trans({'%quota%': stats.quotaBytes|files_size_format}, 'messages', currentLocale) }}</div>
+                    {% endif %}
+                    <div class="fs-3 fw-semibold mb-2">
+                        {% if stats.remainingBytes is not null %}
+                            {{ stats.remainingBytes|files_size_format }}
+                        {% else %}
+                            {{ 'storage.home.stat_space_unlimited'|trans({}, 'messages', currentLocale) }}
+                        {% endif %}
+                    </div>
+                    <p class="text-body-secondary small mb-0">
+                        {% if stats.quotaSource == 'unlimited' %}
+                            {{ 'storage.home.stat_remaining_help_unlimited'|trans({}, 'messages', currentLocale) }}
+                        {% elseif stats.quotaSource == 'user' %}
+                            {{ 'storage.home.stat_remaining_help_user'|trans({'%quota%': stats.quotaBytes|files_size_format}, 'messages', currentLocale) }}
+                        {% else %}
+                            {{ 'storage.home.stat_remaining_help_default'|trans({'%quota%': stats.quotaBytes|files_size_format}, 'messages', currentLocale) }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-stat-card">
+                <div class="card-body">
+                    <i class="bi bi-folder2-open text-primary fs-4 mb-2" aria-hidden="true"></i>
+                    <div class="text-body-secondary small">{{ 'storage.home.stat_folders'|trans({}, 'messages', currentLocale) }}</div>
+                    <div class="fs-3 fw-semibold mb-2">{{ stats.folderCount }}</div>
+                    <p class="text-body-secondary small mb-0">{{ 'storage.home.stat_folders_help'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-stat-card">
+                <div class="card-body">
+                    <i class="bi bi-link-45deg text-primary fs-4 mb-2" aria-hidden="true"></i>
+                    <div class="text-body-secondary small">{{ 'storage.home.stat_shares'|trans({}, 'messages', currentLocale) }}</div>
+                    <div class="fs-3 fw-semibold mb-2">{{ stats.activeShares }}</div>
+                    <p class="text-body-secondary small mb-0">{{ 'storage.home.stat_shares_help'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="container pb-5">
+    <div class="text-center mb-4">
+        <h2 class="h5 mb-2 mt-5">{{ 'storage.home.features_title'|trans({}, 'messages', currentLocale) }}</h2>
+        <p class="text-body-secondary mb-0">{{ 'storage.home.features_subtitle'|trans({}, 'messages', currentLocale) }}</p>
+    </div>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-5 g-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-feature-card">
+                <div class="card-body">
+                    <i class="bi bi-shield-lock-fill text-primary fs-2 mb-3" aria-hidden="true"></i>
+                    <h2 class="h5">{{ 'storage.home.feature_encrypt_title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <p class="text-body-secondary mb-0">{{ 'storage.home.feature_encrypt_text'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-feature-card">
+                <div class="card-body">
+                    <i class="bi bi-folder2-open text-primary fs-2 mb-3" aria-hidden="true"></i>
+                    <h2 class="h5">{{ 'storage.home.feature_folders_title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <p class="text-body-secondary mb-0">{{ 'storage.home.feature_folders_text'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-feature-card">
+                <div class="card-body">
+                    <i class="bi bi-link-45deg text-primary fs-2 mb-3" aria-hidden="true"></i>
+                    <h2 class="h5">{{ 'storage.home.feature_share_title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <p class="text-body-secondary mb-0">{{ 'storage.home.feature_share_text'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-feature-card">
+                <div class="card-body">
+                    <i class="bi bi-cloud-upload-fill text-primary fs-2 mb-3" aria-hidden="true"></i>
+                    <h2 class="h5">{{ 'storage.home.feature_upload_title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <p class="text-body-secondary mb-0">{{ 'storage.home.feature_upload_text'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 storage-feature-card">
+                <div class="card-body">
+                    <i class="bi bi-speedometer2 text-primary fs-2 mb-3" aria-hidden="true"></i>
+                    <h2 class="h5">{{ 'storage.home.feature_quota_title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <p class="text-body-secondary mb-0">{{ 'storage.home.feature_quota_text'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

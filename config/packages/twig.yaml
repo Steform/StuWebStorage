@@ -1,0 +1,5 @@
+twig:
+  default_path: '%kernel.project_dir%/templates'
+  globals:
+    app_kernel_environment: '%kernel.environment%'
+    app_debug: '%kernel.debug%'

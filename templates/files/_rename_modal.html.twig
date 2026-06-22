@@ -1,0 +1,31 @@
+<div class="modal fade" id="filesRenameModal" tabindex="-1" aria-labelledby="filesRenameModalTitle" aria-hidden="true"
+    data-files-rename-url-template="{{ path('files_rename', { id: 999999 }) }}"
+    data-files-folder-rename-url-template="{{ path('files_folder_rename', { id: 999999 }) }}"
+    data-files-rename-csrf-file="{{ csrf_token(csrfRename) }}"
+    data-files-rename-csrf-folder="{{ csrf_token(csrfFolderRename) }}"
+    data-rename-title-file="{{ 'files.rename.modal_title'|trans({}, 'messages', currentLocale) }}"
+    data-rename-title-folder="{{ 'files.folder.rename.modal_title'|trans({}, 'messages', currentLocale) }}"
+    data-msg-error="{{ 'files.rename.modal_error'|trans({}, 'messages', currentLocale) }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="filesRenameModalTitle">{{ 'files.rename.modal_title'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'files.upload.modal_close'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <form id="files-rename-form" method="post" action="#" data-files-rename-target-kind="file">
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfRename) }}">
+                    <div class="mb-0">
+                        <label for="files-rename-name" class="form-label">{{ 'files.rename.name_label'|trans({}, 'messages', currentLocale) }}</label>
+                        <input type="text" class="form-control" id="files-rename-name" name="name" maxlength="255" required autocomplete="off">
+                    </div>
+                    <div class="alert alert-danger d-none mt-3 mb-0" role="alert" data-files-rename-error></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.rename.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                    <button type="submit" class="btn btn-primary" data-files-rename-submit>{{ 'files.rename.submit'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

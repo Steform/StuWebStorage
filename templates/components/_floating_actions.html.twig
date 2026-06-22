@@ -1,0 +1,158 @@
+{% set currentLocale = app.request.locale|default('fr') %}
+{% set currentTheme = app.request.attributes.get('app_theme', 'light') %}
+{% set isDarkTheme = currentTheme == 'dark' %}
+{% set targetTheme = isDarkTheme ? 'light' : 'dark' %}
+{% set canShowAccountAction = app.user %}
+{% set localeMeta = {
+    fr: { label: 'locale.name.fr'|trans({}, 'messages', currentLocale) },
+    en: { label: 'locale.name.en'|trans({}, 'messages', currentLocale) },
+    de: { label: 'locale.name.de'|trans({}, 'messages', currentLocale) },
+    lt: { label: 'locale.name.lt'|trans({}, 'messages', currentLocale) },
+    no: { label: 'locale.name.no'|trans({}, 'messages', currentLocale) }
+} %}
+{% set activeLocales = app.request.attributes.get('active_locales', ['fr', 'en', 'de', 'lt', 'no']) %}
+{% set localeItems = [] %}
+{% for localeCode in activeLocales %}
+    {% if localeMeta[localeCode] is defined %}
+        {% set localeItems = localeItems|merge([{ code: localeCode, label: localeMeta[localeCode].label }]) %}
+    {% endif %}
+{% endfor %}
+
+<div
+    class="floating-actions"
+    role="toolbar"
+    aria-label="{{ 'floating.actions.toolbar_aria'|trans({}, 'messages', currentLocale) }}"
+>
+    <div class="floating-actions__bar d-inline-flex flex-nowrap align-items-center gap-1">
+        <div class="dropup">
+            <button
+                class="btn floating-actions__icon-btn dropdown-toggle"
+                type="button"
+                id="floating-actions-locale-toggle"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
+                aria-expanded="false"
+                aria-label="{{ 'floating.actions.locale.aria'|trans({}, 'messages', currentLocale) }}"
+                title="{{ 'floating.actions.locale.title'|trans({}, 'messages', currentLocale) }}"
+            >
+                <i class="bi bi-globe2" aria-hidden="true"></i>
+            </button>
+            <ul class="dropdown-menu floating-actions__submenu" aria-labelledby="floating-actions-locale-toggle">
+                {% for item in localeItems %}
+                    <li>
+                        <a
+                            class="dropdown-item d-flex justify-content-between align-items-center{% if currentLocale == item.code %} active{% endif %}"
+                            href="{{ path('locale_switch', { locale: item.code }) }}"
+                            aria-label="{{ 'locale.bubble.aria_switch'|trans({'%locale%': item.label}, 'messages', currentLocale) }}"
+                        >
+                            <span class="small text-uppercase">{{ item.code }}</span>
+                            {% if currentLocale == item.code %}
+                                <i class="bi bi-check2" aria-hidden="true"></i>
+                            {% endif %}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <a
+            class="btn floating-actions__icon-btn"
+            href="{{ path('theme_switch', { theme: targetTheme }) }}"
+            aria-label="{{ 'floating.actions.theme.aria'|trans({'%theme%': ('theme.mode.' ~ targetTheme)|trans({}, 'messages', currentLocale)}, 'messages', currentLocale) }}"
+            title="{{ 'floating.actions.theme.title'|trans({'%theme%': ('theme.mode.' ~ targetTheme)|trans({}, 'messages', currentLocale)}, 'messages', currentLocale) }}"
+        >
+            <i class="bi {{ isDarkTheme ? 'bi-sun-fill' : 'bi-moon-stars-fill' }}" aria-hidden="true"></i>
+        </a>
+
+        {% if canShowAccountAction %}
+            <button
+                class="btn floating-actions__icon-btn"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#bugReportModal"
+                aria-label="{{ 'floating.actions.bug.aria'|trans({}, 'messages', currentLocale) }}"
+                title="{{ 'floating.actions.bug.title'|trans({}, 'messages', currentLocale) }}"
+            >
+                <i class="bi bi-bug-fill" aria-hidden="true"></i>
+            </button>
+            <div class="dropup">
+                <button
+                    class="btn floating-actions__icon-btn dropdown-toggle"
+                    type="button"
+                    id="floating-actions-account-toggle"
+                    data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside"
+                    aria-expanded="false"
+                    aria-label="{{ 'floating.actions.account.aria'|trans({}, 'messages', currentLocale) }}"
+                    title="{{ 'floating.actions.account.title'|trans({}, 'messages', currentLocale) }}"
+                >
+                    <i class="bi bi-person-circle" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end floating-actions__submenu" aria-labelledby="floating-actions-account-toggle">
+                    <a class="dropdown-item" href="{{ path('app_profile_show') }}">
+                        {{ 'app.nav.my_profile'|trans({}, 'messages', currentLocale) }}
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a
+                        class="dropdown-item text-danger"
+                        href="{{ path('app_logout') }}"
+                        aria-label="{{ 'floating.actions.logout.aria'|trans({}, 'messages', currentLocale) }}"
+                    >
+                        {{ 'app.nav.logout'|trans({}, 'messages', currentLocale) }}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if canShowAccountAction %}
+    <div class="modal fade" id="bugReportModal" tabindex="-1" aria-labelledby="bugReportModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form method="post" action="{{ path('bug_report_submit') }}" id="bug-report-submit-form">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="bugReportModalTitle">{{ 'bug_report.modal.title'|trans({}, 'messages', currentLocale) }}</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'app.close'|trans({}, 'messages', currentLocale) }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('bug_report_submit') }}">
+                        <input type="hidden" name="source_route" value="{{ app.request.attributes.get('_route', '') }}">
+                        <input type="hidden" name="source_path" value="{{ app.request.pathInfo }}">
+                        <input type="hidden" name="source_query" value="{{ app.request.queryString }}">
+                        <input type="hidden" name="source_locale" value="{{ currentLocale }}">
+                        <input type="hidden" name="source_theme" value="{{ currentTheme }}">
+                        <input type="hidden" name="viewport_width" value="" data-bug-report-viewport-width>
+                        <input type="hidden" name="viewport_height" value="" data-bug-report-viewport-height>
+                        <input type="hidden" name="action_timeline" value="" data-bug-report-action-timeline>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="bug-report-action-description">{{ 'bug_report.modal.action_description_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <textarea id="bug-report-action-description" class="form-control" rows="3" name="action_description" maxlength="4000" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="bug-report-observed-result">{{ 'bug_report.modal.observed_result_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <textarea id="bug-report-observed-result" class="form-control" rows="3" name="observed_result" maxlength="4000" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="bug-report-expected-result">{{ 'bug_report.modal.expected_result_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <textarea id="bug-report-expected-result" class="form-control" rows="3" name="expected_result" maxlength="4000"></textarea>
+                        </div>
+                        <div>
+                            <label class="form-label" for="bug-report-severity">{{ 'bug_report.modal.severity_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <select id="bug-report-severity" class="form-select" name="severity">
+                                <option value="minor">{{ 'bug_report.severity.minor'|trans({}, 'messages', currentLocale) }}</option>
+                                <option value="major">{{ 'bug_report.severity.major'|trans({}, 'messages', currentLocale) }}</option>
+                                <option value="critical">{{ 'bug_report.severity.critical'|trans({}, 'messages', currentLocale) }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'bug_report.modal.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                        <button type="submit" class="btn btn-primary">{{ 'bug_report.modal.submit'|trans({}, 'messages', currentLocale) }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}

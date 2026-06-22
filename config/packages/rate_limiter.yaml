@@ -1,0 +1,10 @@
+framework:
+  rate_limiter:
+    admin_invite:
+      policy: fixed_window
+      limit: 20
+      interval: '1 hour'
+    invite_activation:
+      policy: fixed_window
+      limit: 15
+      interval: '1 hour'

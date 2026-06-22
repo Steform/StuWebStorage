@@ -1,0 +1,33 @@
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+<div class="card shadow-sm h-100" id="settings-access-gate">
+    <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+                <h2 class="h5 mb-1">{{ 'admin.settings.access_gate.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <p class="text-body-secondary small mb-0">{{ 'admin.settings.access_gate.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+            </div>
+            {% if accessGateSettings.enabled %}
+                <span class="badge text-bg-warning">{{ 'admin.settings.access_gate.status_active'|trans({}, 'messages', currentLocale) }}</span>
+            {% else %}
+                <span class="badge text-bg-secondary">{{ 'admin.settings.access_gate.status_inactive'|trans({}, 'messages', currentLocale) }}</span>
+            {% endif %}
+        </div>
+        <form method="post" action="{{ path('admin_settings_access_gate_update') }}" class="row g-3">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token(accessGateCsrfToken) }}">
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="access_gate_enabled" name="access_gate_enabled" value="1" {% if accessGateSettings.enabled %}checked{% endif %}>
+                    <label class="form-check-label" for="access_gate_enabled">{{ 'storage.access_gate.admin.enabled_label'|trans({}, 'messages', currentLocale) }}</label>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <label class="form-label" for="access_gate_threshold">{{ 'storage.access_gate.admin.threshold_label'|trans({}, 'messages', currentLocale) }}</label>
+                <input id="access_gate_threshold" name="access_gate_threshold" type="number" min="0" max="100" step="1" class="form-control" value="{{ accessGateSettings.antibotThreshold|default(50) }}">
+                <div class="form-text">{{ 'storage.access_gate.admin.threshold_help'|trans({}, 'messages', currentLocale) }}</div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">{{ 'storage.access_gate.admin.save'|trans({}, 'messages', currentLocale) }}</button>
+            </div>
+        </form>
+    </div>
+</div>

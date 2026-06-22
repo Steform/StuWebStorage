@@ -1,0 +1,114 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'admin.bug_reports.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+
+{% block top_navigation %}
+    {% include 'components/_storage_admin_nav.html.twig' %}
+{% endblock %}
+
+{% block main_container_class %}container py-4{% endblock %}
+
+{% block body %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h1 class="h4 mb-0">{{ 'admin.bug_reports.detail.title'|trans({'%id%': report.id}, 'messages', currentLocale) }}</h1>
+                <a class="btn btn-outline-secondary btn-sm" href="{{ path('admin_bug_reports_index') }}">{{ 'admin.bug_reports.actions.back'|trans({}, 'messages', currentLocale) }}</a>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="border rounded p-2">
+                        <small class="text-muted d-block">{{ 'admin.bug_reports.fields.status'|trans({}, 'messages', currentLocale) }}</small>
+                        <strong>{{ ('bug_report.status.' ~ report.status)|trans({}, 'messages', currentLocale) }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-2">
+                        <small class="text-muted d-block">{{ 'admin.bug_reports.fields.severity'|trans({}, 'messages', currentLocale) }}</small>
+                        <strong>{{ ('bug_report.severity.' ~ report.severity)|trans({}, 'messages', currentLocale) }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-2">
+                        <small class="text-muted d-block">{{ 'admin.bug_reports.fields.reporter'|trans({}, 'messages', currentLocale) }}</small>
+                        <strong>{{ report.reporterUser.email }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">{{ 'bug_report.modal.action_description_label'|trans({}, 'messages', currentLocale) }}</label>
+                    <pre class="border rounded p-2 bg-body-tertiary">{{ report.actionDescription }}</pre>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ 'bug_report.modal.observed_result_label'|trans({}, 'messages', currentLocale) }}</label>
+                    <pre class="border rounded p-2 bg-body-tertiary">{{ report.observedResult }}</pre>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">{{ 'bug_report.modal.expected_result_label'|trans({}, 'messages', currentLocale) }}</label>
+                <pre class="border rounded p-2 bg-body-tertiary">{{ report.expectedResult ?: '-' }}</pre>
+            </div>
+
+            <h2 class="h6">{{ 'admin.bug_reports.detail.context_title'|trans({}, 'messages', currentLocale) }}</h2>
+            <div class="table-responsive mb-3">
+                <table class="table table-sm">
+                    <tbody>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.created_at'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.createdAt|date('Y-m-d H:i:s') }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.path'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.path }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.route_name'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.routeName ?: '-' }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.query'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.queryString ?: '-' }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.locale'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.locale }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.theme'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.theme }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.user_agent'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.userAgent ?: '-' }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.viewport'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.viewportWidth ?: 0 }}x{{ report.viewportHeight ?: 0 }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.referrer'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.referrer ?: '-' }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.correlation_id'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.correlationId ?: '-' }}</td></tr>
+                    <tr><th scope="row">{{ 'admin.bug_reports.fields.app_version'|trans({}, 'messages', currentLocale) }}</th><td>{{ report.appVersion ?: '-' }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="h6">{{ 'admin.bug_reports.detail.timeline_title'|trans({}, 'messages', currentLocale) }}</h2>
+            <pre class="border rounded p-2 bg-body-tertiary mb-3">{{ report.actionTimelineJson ? report.actionTimelineJson|json_encode(constant('JSON_PRETTY_PRINT')) : '[]' }}</pre>
+
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                <form method="post" action="{{ path('admin_bug_reports_status', { id: report.id }) }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrfStatusToken }}">
+                    <input type="hidden" name="status" value="in_progress">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">{{ 'admin.bug_reports.actions.mark_in_progress'|trans({}, 'messages', currentLocale) }}</button>
+                </form>
+                <form method="post" action="{{ path('admin_bug_reports_status', { id: report.id }) }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrfStatusToken }}">
+                    <input type="hidden" name="status" value="resolved">
+                    <button type="submit" class="btn btn-outline-success btn-sm">{{ 'admin.bug_reports.actions.mark_resolved'|trans({}, 'messages', currentLocale) }}</button>
+                </form>
+                <form method="post" action="{{ path('admin_bug_reports_status', { id: report.id }) }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrfStatusToken }}">
+                    <input type="hidden" name="status" value="reopened">
+                    <button type="submit" class="btn btn-outline-warning btn-sm">{{ 'admin.bug_reports.actions.reopen'|trans({}, 'messages', currentLocale) }}</button>
+                </form>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                {% if report.archived %}
+                    <form method="post" action="{{ path('admin_bug_reports_unarchive', { id: report.id }) }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrfUnarchiveToken }}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">{{ 'admin.bug_reports.actions.unarchive'|trans({}, 'messages', currentLocale) }}</button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{{ path('admin_bug_reports_archive', { id: report.id }) }}" class="d-flex flex-wrap gap-2">
+                        <input type="hidden" name="_csrf_token" value="{{ csrfArchiveToken }}">
+                        <input class="form-control form-control-sm" type="text" name="archive_reason" maxlength="255" placeholder="{{ 'admin.bug_reports.fields.archive_reason'|trans({}, 'messages', currentLocale) }}">
+                        <button type="submit" class="btn btn-outline-dark btn-sm">{{ 'admin.bug_reports.actions.archive'|trans({}, 'messages', currentLocale) }}</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

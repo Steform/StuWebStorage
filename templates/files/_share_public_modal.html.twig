@@ -1,0 +1,80 @@
+{# Public share modal (Sprint 22 - decoupled). Drives single + bulk public sharing. Expects currentLocale, csrfSharePublic, csrfShareBulkPublic. #}
+<div class="modal fade" id="filesSharePublicModal" tabindex="-1" aria-labelledby="filesSharePublicModalTitle" aria-hidden="true"
+    data-files-share-state-url-template="{{ path('files_share_state', { id: 999999 }) }}"
+    data-files-folder-share-state-url-template="{{ path('files_folder_share_state', { id: 999999 }) }}"
+    data-files-share-public-single-url-template="{{ path('files_share_public', { id: 999999 }) }}"
+    data-files-share-public-folder-url-template="{{ path('files_folder_share_public', { id: 999999 }) }}"
+    data-files-share-public-password-toggle-single-url-template="{{ path('files_share_public_password_toggle', { id: 999999 }) }}"
+    data-files-share-public-password-toggle-folder-url-template="{{ path('files_folder_share_public_password_toggle', { id: 999999 }) }}"
+    data-files-share-public-bulk-url="{{ path('files_share_bulk_public') }}"
+    data-files-share-public-csrf="{{ csrf_token(csrfSharePublic) }}"
+    data-files-share-public-folder-csrf="{{ csrf_token(csrfFolderSharePublic) }}"
+    data-files-share-public-bulk-csrf="{{ csrf_token(csrfShareBulkPublic) }}"
+    data-msg-title-single="{{ 'files.share.public.modal_title_single'|trans({}, 'messages', currentLocale) }}"
+    data-msg-title-folder="{{ 'files.folder.share.public.modal_title_single'|trans({}, 'messages', currentLocale) }}"
+    data-msg-title-bulk="{{ 'files.share.public.modal_title_bulk'|trans({}, 'messages', currentLocale) }}"
+    data-msg-load-error="{{ 'files.share.load_error'|trans({}, 'messages', currentLocale) }}"
+    data-msg-submit-error="{{ 'files.share.submit_error'|trans({}, 'messages', currentLocale) }}"
+    data-msg-bulk-results-ok="{{ 'files.share.bulk_results.ok'|trans({}, 'messages', currentLocale) }}"
+    data-msg-bulk-results-failed="{{ 'files.share.bulk_results.failed'|trans({}, 'messages', currentLocale) }}"
+    data-msg-expires-relative-future="{{ 'files.share.public.expires_relative_future'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-expires-relative-past="{{ 'files.share.public.expires_relative_past'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-expires-relative-soon="{{ 'files.share.public.expires_relative_soon'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="filesSharePublicModalTitle">{{ 'files.share.public.modal_title_single'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'files.upload.modal_close'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <form id="files-share-public-form" method="post" novalidate>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfSharePublic) }}" data-files-share-public-csrf-input>
+                <input type="hidden" name="mode" value="single" data-files-share-public-mode-input>
+                <input type="hidden" name="admin_context" value="" data-files-share-admin-context-input>
+                <input type="hidden" name="admin_view_scope" value="" data-files-share-admin-view-scope-input>
+                <input type="hidden" name="subject_user" value="" data-files-share-subject-user-input>
+                <div class="d-none" data-files-share-public-bulk-ids></div>
+
+                <div class="modal-body">
+                    <p class="files-share-target-summary text-muted small mb-3" data-files-share-public-target-summary aria-live="polite"></p>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="files-share-public-enabled" name="is_public" value="1" {% if not is_granted('ROLE_SHARE_PUBLIC') %}disabled{% endif %}>
+                                <label class="form-check-label" for="files-share-public-enabled">{{ 'files.share.public.enable_label'|trans({}, 'messages', currentLocale) }}</label>
+                            </div>
+                            <p class="form-text">{{ 'files.share.public.enable_hint'|trans({}, 'messages', currentLocale) }}</p>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label" for="files-share-public-expires-at">{{ 'files.share.public.expires_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <input class="form-control" id="files-share-public-expires-at" type="datetime-local" name="public_expires_at" autocomplete="off">
+                            <p class="form-text small text-muted d-none" data-files-share-public-expiry-relative aria-live="polite"></p>
+                            <p class="form-text">{{ 'files.share.public.expires_hint'|trans({}, 'messages', currentLocale) }}</p>
+                        </div>
+                        <div class="col-12" id="files-share-public-password-block" data-files-share-public-password-block>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="files-share-public-password-enabled" name="public_password_enabled" value="1" {% if not is_granted('ROLE_SHARE_PUBLIC') %}disabled{% endif %}>
+                                <label class="form-check-label" for="files-share-public-password-enabled">{{ 'files.share.public.password_enable_label'|trans({}, 'messages', currentLocale) }}</label>
+                            </div>
+                            <p class="form-text small">{{ 'files.share.public.password_enable_hint'|trans({}, 'messages', currentLocale) }}</p>
+                            <label class="form-label" for="files-share-public-password-display">{{ 'files.share.public.password_field_label'|trans({}, 'messages', currentLocale) }}</label>
+                            <div class="input-group">
+                                <input class="form-control font-monospace" type="text" id="files-share-public-password-display" name="public_password_display" readonly autocomplete="off" aria-readonly="true" data-files-share-public-password-display>
+                                <button type="button" class="btn btn-outline-secondary" id="files-share-public-password-copy" data-files-share-public-password-copy aria-label="{{ 'files.share.public.password_copy_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.share.public.password_copy'|trans({}, 'messages', currentLocale) }}</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mt-3 d-none" role="alert" data-files-share-public-error></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.advanced.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                    <button type="submit" class="btn btn-primary" data-files-share-public-submit>{{ 'files.share.apply'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

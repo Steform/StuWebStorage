@@ -1,0 +1,7 @@
+/**
+ * Public folder landing — complements Bootstrap 5.3 + public-file-landing.css.
+ */
+
+.public-folder-landing__folder-icon-wrap {
+    min-height: 12rem;
+}

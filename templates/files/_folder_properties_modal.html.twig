@@ -1,0 +1,57 @@
+<div class="modal fade" id="filesFolderPropertiesModal" tabindex="-1" aria-labelledby="filesFolderPropertiesModalTitle" aria-hidden="true"
+    data-files-folder-properties-url-template="{{ path('files_folder_properties', { id: 999999 }) }}"
+    data-files-shared-folder-properties-url-template="{{ path('files_shared_folder_properties', { id: 999999 }) }}"
+    data-msg-error="{{ 'files.folder.properties.error'|trans({}, 'messages', currentLocale) }}"
+    data-msg-yes="{{ 'files.boolean.yes'|trans({}, 'messages', currentLocale) }}"
+    data-msg-no="{{ 'files.boolean.no'|trans({}, 'messages', currentLocale) }}"
+>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="filesFolderPropertiesModalTitle">{{ 'files.folder.properties.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'files.upload.modal_close'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="files-properties-loading text-center py-3 d-none" data-files-folder-prop="loading" aria-live="polite">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">{{ 'files.properties.loading'|trans({}, 'messages', currentLocale) }}</span>
+                    </div>
+                </div>
+                <div class="alert alert-danger d-none" role="alert" data-files-folder-prop="error"></div>
+                <div class="d-none" data-files-folder-prop="content">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">{{ 'files.table.name'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8 text-break" data-files-folder-prop="name"></dd>
+
+                        <dt class="col-sm-4 d-none" data-files-folder-prop="sharedByLabel">{{ 'files.properties.shared_by'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8 d-none" data-files-folder-prop="sharedBy"></dd>
+
+                        <dt class="col-sm-4">{{ 'files.folder.properties.total_size'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8" data-files-folder-prop="totalSize"></dd>
+
+                        <dt class="col-sm-4">{{ 'files.folder.properties.total_files'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8" data-files-folder-prop="totalFiles"></dd>
+
+                        <dt class="col-sm-4">{{ 'files.folder.properties.total_subfolders'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8" data-files-folder-prop="totalSubfolders"></dd>
+
+                        <dt class="col-sm-4">{{ 'files.table.uploaded'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8" data-files-folder-prop="createdAt"></dd>
+
+                        <dt class="col-sm-4">{{ 'files.table.modified'|trans({}, 'messages', currentLocale) }}</dt>
+                        <dd class="col-sm-8" data-files-folder-prop="updatedAt"></dd>
+
+                            <dt class="col-sm-4">{{ 'files.table.share_public'|trans({}, 'messages', currentLocale) }}</dt>
+                            <dd class="col-sm-8" data-files-folder-prop="publicActive"></dd>
+
+                            <dt class="col-sm-4">{{ 'files.table.share_friends'|trans({}, 'messages', currentLocale) }}</dt>
+                            <dd class="col-sm-8" data-files-folder-prop="friendsActive"></dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.advanced.cancel'|trans({}, 'messages', currentLocale) }}</button>
+            </div>
+        </div>
+    </div>
+</div>

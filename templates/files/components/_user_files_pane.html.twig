@@ -1,0 +1,234 @@
+{# One user pane: single accordion, listing_scope from toolbar Affichage (admin godview all users). #}
+{% set o = pane.owned %}
+{% set s = pane.shared %}
+{% set grantMaps = pane.grantMaps %}
+{% set files = o.files|default([]) %}
+{% set folders = o.folders|default([]) %}
+{% set folderLandingMap = o.folderPublicLandingUrls|default({}) %}
+{% set folderShareStates = o.folderShareStates|default({}) %}
+{% set folderSizeBytes = o.folderSizeBytes|default({}) %}
+{% set currentFolder = o.currentFolder|default(null) %}
+{% set breadcrumbFolders = o.breadcrumbFolders|default([]) %}
+{% set currentFolderPublicLandingUrl = o.currentFolderPublicLandingUrl|default(null) %}
+{% set currentFolderShareState = o.currentFolderShareState|default(null) %}
+{% set isCurrentFolderCompletelyEmpty = o.isCurrentFolderCompletelyEmpty|default(true) %}
+{% set sharedForMeFiles = s.sharedForMeFiles|default([]) %}
+{% set sharedForMeFolders = s.sharedForMeFolders|default([]) %}
+{% set sharedFolderSizeBytes = s.sharedFolderSizeBytes|default({}) %}
+{% set sharedOwnerLabelsByFileId = s.sharedOwnerLabelsByFileId|default({}) %}
+{% set sharedOwnerLabelsByFolderId = s.sharedOwnerLabelsByFolderId|default({}) %}
+{% set sharedForMeCurrentFolderId = s.sharedForMeCurrentFolderId|default(0) %}
+{% set ls = listingScope|default('both') %}
+{% set ufKey = 'uf_' ~ pane.subjectUserId %}
+{% set sfKey = 'sf_' ~ pane.subjectUserId %}
+{% set currentSortField = listingCriteria.sortField|default('') %}
+{% set currentSortDirection = listingCriteria.sortDirection|default('') %}
+<div class="accordion mb-4" id="accordion-shell-{{ pane.paneId }}">
+    <div
+        class="accordion-item files-user-pane"
+        id="{{ pane.paneId }}"
+        data-files-pane-id="{{ pane.paneId }}"
+        data-files-subject-user-id="{{ pane.subjectUserId }}"
+        data-files-subject-user-label="{{ pane.subjectUserLabel|e('html_attr') }}"
+    >
+        <h2 class="accordion-header" id="heading-{{ pane.paneId }}">
+            <button
+                type="button"
+                class="accordion-button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapse-{{ pane.paneId }}"
+                aria-expanded="true"
+                aria-controls="collapse-{{ pane.paneId }}"
+            >
+                {{ pane.subjectUserLabel }}
+            </button>
+        </h2>
+        <div
+            id="collapse-{{ pane.paneId }}"
+            class="accordion-collapse collapse show"
+            aria-labelledby="heading-{{ pane.paneId }}"
+        >
+            <div class="accordion-body pb-3">
+                {% if layoutView == 'grid' %}
+                    {% if pane.showOwnedSection and pane.showSharedSection %}
+                        <div class="files-user-pane__subsection mb-4" data-files-pane-owned="{{ pane.paneId }}">
+                            <h3 class="h6 text-body-secondary border-bottom pb-2 mb-3">{{ 'files.section.my_files'|trans({}, 'messages', currentLocale) }}</h3>
+                            {% include 'files/components/_user_files_pane_owned_grid.html.twig' with {
+                                pane: pane,
+                                listingQuery: listingQuery,
+                                ufKey: ufKey,
+                                files: files,
+                                folders: folders,
+                                folderLandingMap: folderLandingMap,
+                                folderShareStates: folderShareStates,
+                                currentFolder: currentFolder,
+                                breadcrumbFolders: breadcrumbFolders,
+                                grantMaps: grantMaps,
+                                listingScope: ls,
+                                hasActiveCriteria: hasActiveCriteria|default(false),
+                                isCurrentFolderCompletelyEmpty: isCurrentFolderCompletelyEmpty,
+                                csrfFolderDelete: csrfFolderDelete,
+                                filesIndexRoute: filesIndexRoute|default('files_index'),
+                                currentLocale: currentLocale
+                            } %}
+                        </div>
+                        <div class="files-user-pane__subsection" data-files-pane-shared="{{ pane.paneId }}">
+                            <h3 class="h6 text-body-secondary border-bottom pb-2 mb-3">{{ 'files.section.shared_for_me'|trans({}, 'messages', currentLocale) }}</h3>
+                            {% include 'files/components/_user_files_pane_shared_grid.html.twig' with {
+                                pane: pane,
+                                listingQuery: listingQuery,
+                                sfKey: sfKey,
+                                sharedForMeFiles: sharedForMeFiles,
+                                sharedForMeFolders: sharedForMeFolders,
+                                sharedOwnerLabelsByFileId: sharedOwnerLabelsByFileId,
+                                sharedOwnerLabelsByFolderId: sharedOwnerLabelsByFolderId,
+                                sharedForMeCurrentFolderId: sharedForMeCurrentFolderId,
+                                grantMaps: grantMaps,
+                                listingScope: ls,
+                                filesIndexRoute: filesIndexRoute|default('files_index'),
+                                currentLocale: currentLocale
+                            } %}
+                        </div>
+                    {% elseif pane.showOwnedSection %}
+                        <div data-files-pane-owned="{{ pane.paneId }}">
+                            {% include 'files/components/_user_files_pane_owned_grid.html.twig' with {
+                                pane: pane,
+                                listingQuery: listingQuery,
+                                ufKey: ufKey,
+                                files: files,
+                                folders: folders,
+                                folderLandingMap: folderLandingMap,
+                                folderShareStates: folderShareStates,
+                                currentFolder: currentFolder,
+                                breadcrumbFolders: breadcrumbFolders,
+                                grantMaps: grantMaps,
+                                listingScope: ls,
+                                hasActiveCriteria: hasActiveCriteria|default(false),
+                                isCurrentFolderCompletelyEmpty: isCurrentFolderCompletelyEmpty,
+                                csrfFolderDelete: csrfFolderDelete,
+                                filesIndexRoute: filesIndexRoute|default('files_index'),
+                                currentLocale: currentLocale
+                            } %}
+                        </div>
+                    {% elseif pane.showSharedSection %}
+                        <div data-files-pane-shared="{{ pane.paneId }}">
+                            {% include 'files/components/_user_files_pane_shared_grid.html.twig' with {
+                                pane: pane,
+                                listingQuery: listingQuery,
+                                sfKey: sfKey,
+                                sharedForMeFiles: sharedForMeFiles,
+                                sharedForMeFolders: sharedForMeFolders,
+                                sharedOwnerLabelsByFileId: sharedOwnerLabelsByFileId,
+                                sharedOwnerLabelsByFolderId: sharedOwnerLabelsByFolderId,
+                                sharedForMeCurrentFolderId: sharedForMeCurrentFolderId,
+                                grantMaps: grantMaps,
+                                listingScope: ls,
+                                filesIndexRoute: filesIndexRoute|default('files_index'),
+                                currentLocale: currentLocale
+                            } %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    {% if pane.showOwnedSection and pane.showSharedSection %}
+                        <div class="files-user-pane__subsection mb-4" data-files-pane-owned="{{ pane.paneId }}">
+                            <h3 class="h6 text-body-secondary border-bottom pb-2 mb-3">{{ 'files.section.my_files'|trans({}, 'messages', currentLocale) }}</h3>
+                            {% include 'files/components/_user_files_pane_owned_table.html.twig' with {
+                                pane: pane,
+                                listingQuery: listingQuery,
+                                ufKey: ufKey,
+                                files: files,
+                                folders: folders,
+                                folderLandingMap: folderLandingMap,
+                                folderShareStates: folderShareStates,
+                                folderSizeBytes: folderSizeBytes,
+                                currentFolder: currentFolder,
+                                breadcrumbFolders: breadcrumbFolders,
+                                currentFolderPublicLandingUrl: currentFolderPublicLandingUrl,
+                                currentFolderShareState: currentFolderShareState,
+                                isCurrentFolderCompletelyEmpty: isCurrentFolderCompletelyEmpty,
+                                grantMaps: grantMaps,
+                                currentSortField: currentSortField,
+                                currentSortDirection: currentSortDirection,
+                                sortCycle: sortCycle,
+                                listingScope: ls,
+                                hasActiveCriteria: hasActiveCriteria|default(false),
+                                csrfFolderDelete: csrfFolderDelete,
+                                filesIndexRoute: filesIndexRoute|default('files_index'),
+                                currentLocale: currentLocale,
+                                adminContext: adminContext|default(false)
+                            } %}
+                        </div>
+                        <div class="files-user-pane__subsection" data-files-pane-shared="{{ pane.paneId }}">
+                            <h3 class="h6 text-body-secondary border-bottom pb-2 mb-3">{{ 'files.section.shared_for_me'|trans({}, 'messages', currentLocale) }}</h3>
+                            {% include 'files/components/_user_files_pane_shared_table.html.twig' with {
+                                pane: pane,
+                                listingQuery: listingQuery,
+                                sfKey: sfKey,
+                                sharedForMeFiles: sharedForMeFiles,
+                                sharedForMeFolders: sharedForMeFolders,
+                                sharedFolderSizeBytes: sharedFolderSizeBytes,
+                                sharedOwnerLabelsByFileId: sharedOwnerLabelsByFileId,
+                                sharedOwnerLabelsByFolderId: sharedOwnerLabelsByFolderId,
+                                sharedForMeCurrentFolderId: sharedForMeCurrentFolderId,
+                                currentSortField: currentSortField,
+                                currentSortDirection: currentSortDirection,
+                                sortCycle: sortCycle,
+                                listingScope: ls,
+                                filesIndexRoute: filesIndexRoute|default('files_index'),
+                                currentLocale: currentLocale
+                            } %}
+                        </div>
+                    {% elseif pane.showOwnedSection %}
+                        <div data-files-pane-owned="{{ pane.paneId }}">
+                            {% include 'files/components/_user_files_pane_owned_table.html.twig' with {
+                                pane: pane,
+                                listingQuery: listingQuery,
+                                ufKey: ufKey,
+                                files: files,
+                                folders: folders,
+                                folderLandingMap: folderLandingMap,
+                                folderShareStates: folderShareStates,
+                                folderSizeBytes: folderSizeBytes,
+                                currentFolder: currentFolder,
+                                breadcrumbFolders: breadcrumbFolders,
+                                currentFolderPublicLandingUrl: currentFolderPublicLandingUrl,
+                                currentFolderShareState: currentFolderShareState,
+                                isCurrentFolderCompletelyEmpty: isCurrentFolderCompletelyEmpty,
+                                grantMaps: grantMaps,
+                                currentSortField: currentSortField,
+                                currentSortDirection: currentSortDirection,
+                                sortCycle: sortCycle,
+                                listingScope: ls,
+                                hasActiveCriteria: hasActiveCriteria|default(false),
+                                csrfFolderDelete: csrfFolderDelete,
+                                filesIndexRoute: filesIndexRoute|default('files_index'),
+                                currentLocale: currentLocale,
+                                adminContext: adminContext|default(false)
+                            } %}
+                        </div>
+                    {% elseif pane.showSharedSection %}
+                        <div data-files-pane-shared="{{ pane.paneId }}">
+                            {% include 'files/components/_user_files_pane_shared_table.html.twig' with {
+                                pane: pane,
+                                listingQuery: listingQuery,
+                                sfKey: sfKey,
+                                sharedForMeFiles: sharedForMeFiles,
+                                sharedForMeFolders: sharedForMeFolders,
+                                sharedFolderSizeBytes: sharedFolderSizeBytes,
+                                sharedOwnerLabelsByFileId: sharedOwnerLabelsByFileId,
+                                sharedOwnerLabelsByFolderId: sharedOwnerLabelsByFolderId,
+                                sharedForMeCurrentFolderId: sharedForMeCurrentFolderId,
+                                currentSortField: currentSortField,
+                                currentSortDirection: currentSortDirection,
+                                sortCycle: sortCycle,
+                                listingScope: ls,
+                                filesIndexRoute: filesIndexRoute|default('files_index'),
+                                currentLocale: currentLocale
+                            } %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

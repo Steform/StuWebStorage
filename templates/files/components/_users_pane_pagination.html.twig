@@ -1,0 +1,34 @@
+{# Admin godview: pagination for ROLE_SHARE user list (view_scope=all). #}
+{% if usersPagination is defined and usersPagination is not null %}
+{% set up = usersPagination %}
+{% set pq = listingQuery|default({}) %}
+{% set totalPages = up.totalPages|default(1) %}
+{% set page = up.page|default(1) %}
+<nav class="mb-3 d-flex flex-wrap align-items-center gap-2 justify-content-between" aria-label="{{ 'files.admin.users_pagination.nav_aria'|trans({}, 'messages', currentLocale) }}">
+    <div class="small text-body-secondary">
+        {% set startUser = up.totalUsers > 0 ? (page - 1) * up.pageSize + 1 : 0 %}
+        {% set endUser = min(page * up.pageSize, up.totalUsers) %}
+        {{ 'files.admin.users_pagination.summary'|trans({
+            '%start%': startUser,
+            '%end%': endUser,
+            '%total%': up.totalUsers
+        }, 'messages', currentLocale) }}
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="small mb-0">{{ 'files.admin.users_pagination.per_page'|trans({}, 'messages', currentLocale) }}</span>
+        <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'files.admin.users_pagination.per_page'|trans({}, 'messages', currentLocale) }}">
+            {% for sz in [20, 50, 100, 200] %}
+                <a class="btn btn-outline-secondary{% if up.pageSize == sz %} active{% endif %}" href="{{ path(filesIndexRoute|default('files_index'), pq|merge({'users_page_size': sz, 'users_page': 1})) }}">{{ sz }}</a>
+            {% endfor %}
+        </div>
+        <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'files.admin.users_pagination.page_controls'|trans({}, 'messages', currentLocale) }}">
+            {% if page > 1 %}
+                <a class="btn btn-outline-secondary" href="{{ path(filesIndexRoute|default('files_index'), pq|merge({'users_page': page - 1})) }}">{{ 'files.admin.users_pagination.prev'|trans({}, 'messages', currentLocale) }}</a>
+            {% endif %}
+            {% if page < totalPages %}
+                <a class="btn btn-outline-secondary" href="{{ path(filesIndexRoute|default('files_index'), pq|merge({'users_page': page + 1})) }}">{{ 'files.admin.users_pagination.next'|trans({}, 'messages', currentLocale) }}</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+{% endif %}

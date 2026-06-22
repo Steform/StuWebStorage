@@ -1,0 +1,977 @@
+app:
+  close: Close
+  meta:
+    title: StuWebStorage
+  nav:
+    home: Home
+    my_profile: 'My profile'
+    logout: Logout
+    language: Language
+    files_user: 'My files'
+    files_admin: 'All files (admin)'
+    security_users: 'User list'
+    security_invite: 'Invite user'
+    settings: Settings
+    dashboard: Dashboard
+    bug_reports: 'Bug tickets'
+profile:
+  meta:
+    title: 'My profile'
+  page:
+    title: 'My profile'
+    subtitle: 'View your account information.'
+  sections:
+    public_profile: 'Public profile'
+    email_change: 'Change my email'
+    password_change: 'Change my password'
+  fields:
+    email: Email
+    pseudonym: Pseudonym
+    status: Status
+    new_email: 'New email'
+    totp_code: 'TOTP code'
+    current_password: 'Current password'
+    new_password: 'New password'
+  placeholders:
+    new_email: new@example.com
+    totp_code: '123456'
+  actions:
+    update_pseudonym: 'Update pseudonym'
+    request_email_change: 'Send TOTP code'
+    confirm_email_change: 'Confirm email change'
+    send_password_totp: 'Send password TOTP code'
+    confirm_password_change: 'Change password'
+  status:
+    active: Active
+    inactive: Inactive
+  success:
+    pseudonym_updated: 'Pseudonym updated.'
+    email_change_requested: 'TOTP code sent to the new email.'
+    email_updated: 'Email updated after validation.'
+    password_totp_sent: 'TOTP code sent for password change.'
+    password_updated: 'Password changed.'
+  error:
+    pseudonym_required: 'Pseudonym is required.'
+    pseudonym_too_long: 'Pseudonym is too long.'
+    email_invalid: 'Invalid new email.'
+    email_same_as_current: 'New email is the same as current email.'
+    email_already_used: 'This email is already used.'
+    email_change_not_found: 'No pending email change found.'
+    totp_invalid: 'Invalid or expired TOTP code.'
+    password_required: 'New password is required.'
+    current_password_invalid: 'Current password is invalid.'
+security:
+  login:
+    meta:
+      title: Login
+    title: 'Secure login'
+    subtitle: 'Sign in with email and password.'
+    email: Email
+    email_placeholder: you@example.com
+    password: Password
+    password_placeholder: 'Your password'
+    totp: 'TOTP code'
+    totp_placeholder: '123456'
+    submit: Continue
+    remember_me: 'Trust this device for 6 months'
+    error_invalid_credentials: 'Invalid credentials or TOTP code.'
+  totp:
+    meta:
+      title: 'TOTP validation'
+    title: 'Second-step verification'
+    subtitle: 'Enter the TOTP code sent by email to finish sign in.'
+    submit: 'Validate code'
+    resend: 'Resend code by email'
+    resend_wait: 'Resend in %seconds% s'
+    resend_error: 'Unable to resend the code right now.'
+auth:
+  totp:
+    challenge:
+      invalid_payload: 'Email is required to send a TOTP code.'
+      sent: 'TOTP code sent by email.'
+      cooldown: 'Please wait before requesting another code.'
+      rate_limited: 'Too many resend attempts. Please wait before requesting a new code.'
+    invalid: 'Invalid or expired TOTP code.'
+    valid: 'TOTP code validated.'
+mail:
+  invite:
+    subject: 'Your user invitation'
+    title: 'Invitation to join the platform'
+    intro: 'You received an invitation. Use the link below to activate your account and set your password.'
+    cta: 'Activate my account'
+    expiry_hint: 'This link expires quickly. Request a new invitation if needed.'
+    security_hint: 'Never share this link. Our team will never ask for it.'
+    footer: 'Automated invitation email - please do not reply.'
+  totp:
+    subject: 'Your TOTP verification code'
+    brand: StuWebStorage
+    title: 'Verification code'
+    intro: 'Use the code below to finalize your administrator session verification.'
+    code_label: 'TOTP code'
+    expiry_hint: 'This code expires quickly. Request a new code if needed.'
+    security_hint: 'Never share this code. Our team will never ask for it.'
+    footer: 'Automated security email - please do not reply.'
+share:
+  file:
+    expired: 'This shared file expired or is no longer available.'
+download:
+  challenge:
+    invalid_payload: 'Email and file token are required.'
+    resource_not_found: 'This file is not available for public download.'
+    cooldown: 'Please wait before requesting another code.'
+    sent: 'A verification code was sent to your email.'
+    totp_required: 'Invalid or expired verification code.'
+  verify:
+    invalid_payload: 'Challenge id and code are required.'
+    challenge_not_found: 'This verification session was not found.'
+  resource:
+    unreadable: 'The file could not be read.'
+  authorized: 'You can download the file now.'
+  totp_ok_password_required: 'Email verified. Enter the access password to continue.'
+  share_password:
+    invalid: 'Access denied. Please check the password and try again.'
+    rate_limited: 'Too many attempts. Please wait about five minutes before trying again.'
+    preauth_invalid: 'This verification step expired. Confirm your email code again.'
+  public_folder:
+    zip_empty: 'No publicly shared file is available in this folder for download.'
+    zip_limit_files: 'Too many files for one ZIP. Ask the owner to split the folder or reduce publicly shared files.'
+    zip_limit_bytes: 'The ZIP would exceed the allowed total size.'
+    zip_limit_time: 'Building the ZIP took too long. Try again later.'
+media:
+  preview:
+    title: 'File preview'
+    close_aria: 'Close preview window'
+    close_button: Close
+    pdf_frame_title: 'PDF document preview'
+    open_new_tab: 'Open in a new tab'
+    video_label: 'Video preview'
+    audio_label: 'Audio preview'
+    fullscreen: Fullscreen
+    playback_failed: 'This media could not be played in your browser (unsupported format or codec).'
+    text_label: 'Text file preview'
+    text_load_failed: 'Could not load file contents.'
+files:
+  meta:
+    title: 'My files'
+  section:
+    my_files: 'My files'
+    shared_for_me: 'Shared with me'
+    shared_for_me_empty: 'No files are currently shared with you.'
+  listing_scope:
+    empty_owned: 'No files in this scope.'
+    empty_shared: 'No incoming shares in this scope.'
+  intro: 'Uploads are encrypted at rest. Set visibility according to your roles.'
+  admin:
+    mode_banner: 'Administration mode active (scope: %owner%).'
+    owner_fallback_notice: 'No target user in the URL. Showing files for account %label% (ID %id%).'
+    view_scope_owner: 'One user'
+    view_scope_all: 'All users'
+    owner_filter_label: User
+    owner_filter_apply: Apply
+    owner_badge: 'Owner: %owner%'
+    target_owner_label: 'Target user'
+    target_owner_hint: 'Type a name or email, pick a suggestion, or rely on the pre-filled user from the active pane.'
+    users_pagination:
+      nav_aria: 'Users list pagination'
+      summary: 'Users %start%–%end% of %total%'
+      per_page: 'Per page'
+      page_controls: 'Page navigation'
+      prev: Previous
+      next: Next
+    users_pane:
+      grid_fallback: 'Switch to list layout to browse folders in this view.'
+  nav:
+    filter: Filter
+  toolbar:
+    send: Send
+    columns_label: Columns
+    columns_aria: 'Choose visible columns'
+    action_global: 'Action (%count%)'
+    heading: 'Search and filters'
+    search_label: Search
+    search_placeholder: Search
+    filter_public_label: Publishing
+    filter_public_all: All
+    filter_public_yes: 'Public only'
+    filter_public_no: 'Private only'
+    extensions_label: Extensions
+    sort_label: Sort
+    sort_name: Name
+    sort_size: Size
+    sort_uploaded: Uploaded
+    sort_modified: Modified
+    sort_ext: Extension
+    dir_label: Direction
+    dir_asc: Ascending
+    dir_desc: Descending
+    apply: Apply
+    reset: Reset
+    listing_scope_owned: 'My files'
+    listing_scope_shared: 'Shared with me'
+    listing_scope_both: Both
+    listing_scope_group_aria: 'Listing scope'
+    display_menu_label: Display
+    display_menu_aria: 'Display scope and layout'
+    display_section_scope: Scope
+    display_section_layout: Layout
+  search:
+    clear_aria: 'Clear search'
+  advanced:
+    open: 'Advanced filters'
+    title: 'Advanced filters'
+    close: Close
+    apply: 'Apply filters'
+    cancel: Cancel
+    reset_only: 'Clear advanced filters'
+    reset_in_modal: 'Clear advanced filters'
+    uploaded_after: 'Uploaded after'
+    uploaded_before: 'Uploaded before'
+    updated_after: 'Modified after'
+    updated_before: 'Modified before'
+    expires_after: 'Expires after'
+    expires_before: 'Expires before'
+    filter_has_grant: 'Shared with at least one user (grant)'
+    filter_has_grant_all: Any
+    filter_has_grant_yes: 'Has at least one grant'
+    filter_has_grant_no: 'No grants'
+    grantees_label: 'Share recipients'
+    grantees_hint: 'Only users already granted on your files are listed.'
+    extensions_dropdown_aria: 'Choose file extensions to filter'
+    extensions_button_all: 'All extensions'
+    extensions_button_count: '%count% extension(s) selected'
+    grantees_dropdown_aria: 'Choose share recipients to filter'
+    grantees_button_all: 'All recipients'
+    grantees_button_count: '%count% recipient(s) selected'
+    filter_select_all: 'Select all'
+    filter_clear_selection: 'Clear selection'
+    filters_owned_list_hint: 'Extension and recipient filters apply to your files list. The “Shared with me” section only follows sort settings from this dialog.'
+    filters_shared_list_hint: 'Extension and recipient filters do not narrow the “Shared with me” list; only sorting applies.'
+    view_layout: Layout
+  chips:
+    search: 'Search: %value%'
+    filter_public_yes: 'Visibility: public'
+    filter_public_no: 'Visibility: private'
+    extensions: 'Extensions: %list%'
+    filter_has_grant_yes: 'Has user share'
+    filter_has_grant_no: 'No user share'
+    uploaded_after: 'Uploaded after %date%'
+    uploaded_before: 'Uploaded before %date%'
+    updated_after: 'Modified after %date%'
+    updated_before: 'Modified before %date%'
+    expires_after: 'Expires after %date%'
+    expires_before: 'Expires before %date%'
+    grantee: '%name% (#%id%)'
+  view:
+    list: List
+    grid: Grid
+    toggle_aria: 'List or grid view'
+  grid:
+    open_actions_aria: 'Open file actions for %name%'
+    badge:
+      public_aria: 'Public sharing enabled'
+      friends_aria: 'Friends sharing enabled'
+  upload:
+    heading: 'Upload a file'
+    collapsed_heading: 'Show upload options (encrypted upload)'
+    modal_title: 'Upload a file'
+    modal_close: 'Close upload dialog'
+    modal_cancel: Cancel
+    drop_hint: 'Drag and drop a file here or use the field below.'
+    file_label: File
+    visibility_label: Visibility
+    visibility_private: Private
+    visibility_public: Public
+    expires_label: 'Expires at (optional)'
+    grantees_label: 'Authorized users (private share)'
+    grantee_search_placeholder: 'Type at least two letters of the pseudonym'
+    grantee_search_hint: 'Pick recipients from suggestions (up to five by pseudonym).'
+    grantees_selected_aria: 'Selected recipients for private sharing'
+    grantee_label_fallback: User
+    grantee_fetch_error: 'Pseudonym search failed. Try again.'
+    grantee_live_none: 'No matching users.'
+    grantee_live_results: '%count% suggestion(s).'
+    grantee_remove_aria: 'Remove this recipient'
+    submit: Upload
+    bytes_hint: 'Maximum encrypted payload size: %formatted_size%.'
+    progress_sending: Sending
+    progress_processing: 'Processing on the server'
+    progress_bar_aria: 'File upload progress'
+    xhr_network_error: 'The server could not be reached. Check your connection and try again.'
+    selected_byte_size_label: 'Size:'
+  table:
+    name: Name
+    extension: Type
+    pseudo: Pseudo
+    size: Size
+    uploaded: Uploaded
+    modified: Modified
+    expires: Expires
+    visibility: Visibility
+    share_public: Public
+    share_friends: Shared
+    token: 'Public token'
+    actions: Actions
+    sort:
+      state:
+        none: 'Not sorted'
+        desc: 'Descending sort'
+        asc: 'Ascending sort'
+  boolean:
+    'yes': 'Yes'
+    'no': 'No'
+  visibility:
+    public: Public
+    private: Private
+  action:
+    label: Actions
+    create_folder: 'Create folder'
+    download: Download
+    delete: Delete
+    delete_selection: 'Delete selection'
+    move_selection: 'Move selection'
+    download_selection: 'Download selection'
+    share: Share
+    share_public: 'Public sharing'
+    share_friends: 'Friends sharing'
+    make_public: 'Make public'
+    make_private: 'Make private'
+    add_grant: 'Add grant'
+    revoke_grant: Revoke
+    properties: Properties
+    preview: Preview
+    rename: Rename
+    copy_public_link: 'Copy link'
+    copy_public_link_with_password: 'Copy link with password'
+    copy_public_link_aria: 'Copy public link to clipboard'
+    copy_public_link_with_password_aria: 'Copy public link including password to clipboard'
+    copy_public_link_done: 'Public link copied to clipboard.'
+    copy_public_link_failed: 'Could not copy the link.'
+    copy_public_link_password_missing: 'Public password is not available. Open Public sharing and confirm password is enabled.'
+    menu:
+      global_aria: 'Actions on selection'
+  folder:
+    root: 'Root'
+    open: 'Open folder %name%'
+    breadcrumb:
+      aria: 'Folder breadcrumb'
+    field:
+      name: 'Folder name'
+    action:
+      create: 'New folder'
+      open: Open
+      properties: Properties
+      share_public: 'Share publicly'
+      share_friends: 'Share with friends'
+      rename: Rename
+      download_zip: 'Download ZIP'
+      delete: 'Delete folder'
+    rename:
+      modal_title: 'Rename folder'
+    modal:
+      create_title: 'Create a folder'
+      delete_title: 'Delete a folder'
+      delete_recursive_message: 'The folder is not empty, are you sure you want to delete it?'
+    properties:
+      title: 'Folder properties'
+      total_size: 'Total size'
+      total_files: 'File count'
+      total_subfolders: 'Subfolder count'
+      error: 'Unable to load folder properties.'
+    share:
+      public:
+        modal_title_single: 'Share folder publicly'
+      friends:
+        modal_title_single: 'Share folder with friends'
+        friends_expiration_mixed: 'Files in this folder use different expirations for this recipient.'
+        friends_grant_expired: Expired
+    flash:
+      name_required: 'Folder name is required.'
+      already_exists: 'A folder with this name already exists here.'
+      name_conflict_with_file: 'A file with this name already exists in this location.'
+      parent_invalid: 'Selected parent folder is invalid.'
+      created: 'Folder created successfully.'
+      deleted_recursive: 'Folder deleted recursively.'
+      share_empty: 'This folder currently has no shareable files.'
+    public_link:
+      resolve_failed: 'Could not prepare the public link. Check folder sharing settings or try again.'
+      no_files: 'No suitable file was found in this folder for a public link.'
+      copy_fallback_intro: 'Your public link is ready. Copy from the field or use the button.'
+  public_landing:
+    meta_title: 'Download a shared file'
+    title: 'Shared file'
+    intro: 'Enter your email to receive a code, then confirm to preview (when available) and download.'
+    preview_alt: 'Preview: %name%'
+    file_name_label: 'File name'
+    size_label: Size
+    type_label: Type
+    type_unknown: Unknown
+    uploaded_label: Uploaded
+    public_expires_label: 'Public link expires'
+    public_expires_never: 'No expiry'
+    section_email_title: 'Email verification'
+    email_hint: 'We send a short code to your inbox to protect this link from abuse.'
+    email_label: Email
+    email_placeholder: you@example.com
+    send_code: 'Send code'
+    code_label: 'Code from email'
+    code_placeholder: '6 digits'
+    verify_submit: 'Confirm and download'
+    download_file: 'Download file'
+    share_password_label: 'Access password'
+    share_password_submit: 'Confirm password and download'
+    share_password_hint: 'Including the password in the link (?share_password=) is optional and may appear in browser history.'
+    api_error: 'Something went wrong. Try again.'
+  public_folder_landing:
+    meta_title: 'Download a shared folder (ZIP)'
+    title: 'Shared folder'
+    intro: 'Enter your email to receive a code, then confirm to download a ZIP of files that have an active public link in this folder tree.'
+    folder_name_label: 'Folder name'
+    public_files_label: 'Public files (in subtree)'
+    public_expires_label: 'Public sharing expires'
+    public_expires_never: 'No expiry'
+    no_public_files_hint: 'No file with an active public link is in this folder tree right now. After verification, downloading the ZIP may fail until files are shared publicly.'
+    section_email_title: 'Email verification'
+    email_hint: 'We send a short code to protect this folder link from abuse.'
+    email_label: Email
+    email_placeholder: you@example.com
+    send_code: 'Send code'
+    code_label: 'Code from email'
+    code_placeholder: '6 digits'
+    verify_submit: 'Confirm and download ZIP'
+    download_zip: 'Download ZIP'
+    share_password_label: 'Access password'
+    share_password_submit: 'Confirm password and download ZIP'
+    share_password_hint: 'Including the password in the URL is optional; it may appear in browser history.'
+    api_error: 'Something went wrong. Try again.'
+  grant:
+    label: 'Grantee user ID'
+    submit: 'Grant access'
+  selection:
+    aria_select_all: 'Select all / unselect all'
+    aria_select_row: 'Select file %name%'
+    live_count: '%count% file(s) selected'
+    multi_pane_error: 'Select items in only one user panel for this action.'
+  share:
+    modal_title_single: 'Share a file'
+    modal_title_bulk: 'Share %count% files'
+    public_label: Visibility
+    expires_label: 'Share expiration (optional)'
+    expires_hint: 'Expiration cuts only the share, the file remains.'
+    grants_label: 'Recipients (pseudonym)'
+    grant_expires_per_label: 'Per-recipient expiration'
+    grant_expires_per_aria: 'Expiration for this recipient'
+    replace_existing_label: 'Replace existing shares'
+    replace_existing_warning: 'Current shares will be overwritten by this submission.'
+    apply: 'Apply share'
+    bulk_results:
+      ok: '%count% file(s) shared successfully.'
+      failed: '%count% file(s) failed.'
+    load_error: 'Could not load share state.'
+    submit_error: 'Could not apply share. Try again.'
+    target_summary_single: 'File: %name%'
+    target_summary_bulk: 'Selection: %count% file(s)'
+    'yes': 'Yes'
+    'no': 'No'
+    expiration_active_aria: 'Expiration configured for this channel'
+    public:
+      modal_title_single: 'Public link'
+      modal_title_bulk: 'Public link for selection'
+      enable_label: 'Enable public link'
+      enable_hint: 'Anyone with the link can download while the link stays active.'
+      expires_label: 'Public link expiry (optional)'
+      expires_hint: 'Leave empty for no expiry. After expiry the public link stops working.'
+      expires_relative_future: 'About ~M~ minute(s) until expiry (this device clock).'
+      expires_relative_past: 'This date and time are about ~M~ minute(s) in the past on this device: after saving the link will be inactive.'
+      expires_relative_soon: 'Less than one minute until expiry.'
+      password_enable_label: 'Require an access password (after email verification)'
+      password_enable_hint: 'A random password is generated when you enable this option. Including it in the URL is convenient but slightly less secure than sending it separately.'
+      password_field_label: 'Current access password'
+      password_copy: 'Copy password'
+      password_copy_aria: 'Copy access password to clipboard'
+      password_copy_done: 'Access password copied to clipboard.'
+      password_copy_unavailable_godview: 'Password copy is unavailable in this admin context.'
+    friends:
+      modal_title_single: 'Share with friends'
+      modal_title_bulk: 'Share with friends (selection)'
+      grants_label: 'Recipients (pseudonym)'
+      role_required: 'Your roles do not allow friend sharing.'
+  move_bulk:
+    title: 'Move selection'
+    message: 'Pick a destination folder, then confirm to move the selected items there.'
+    breadcrumb_root: Root
+    empty_child_folders: 'No subfolders. You can move here or go up.'
+    open_child_aria: 'Open folder'
+    parent_up: 'Parent folder'
+    go_root: 'Go to root'
+    move_here: 'Move here'
+    cancel: Cancel
+    close_aria: 'Close move dialog'
+    toast_success: 'Move completed: %count% item(s) moved.'
+    toast_partial: 'Partial move: %ok% item(s) moved, %failed% failed.'
+    toast_error: 'Could not move the selection. Try again.'
+  delete_bulk:
+    title: 'Confirm deletion'
+    message: 'Permanently delete the selected items?'
+    count_suffix: 'item(s) selected'
+    more_template: '+%count% more'
+    toast_success: 'Deletion completed: %count% item(s) removed.'
+    toast_partial: 'Partial deletion: %ok% item(s) removed, %failed% failed.'
+    toast_error: 'Could not delete the selection. Please try again.'
+    cancel: Cancel
+    confirm: 'Confirm deletion'
+    close_aria: 'Close confirmation dialog'
+  delete_confirm:
+    title: 'Confirm deletion'
+    close_aria: 'Close confirmation dialog'
+    message: 'Permanently delete the following item?'
+    cancel: Cancel
+    confirm: Delete
+  properties:
+    title: 'File properties'
+    preview_alt: 'File preview'
+    extension_fallback: FILE
+    loading: 'Loading properties...'
+    error: 'Unable to load the file properties.'
+    never_expires: 'No expiration'
+    no_recipients: 'No active recipient.'
+    recipients: Recipients
+    recipient_until: 'Until %date%'
+    recipient_no_expiry: 'No expiration'
+    public_token: 'Public token'
+    public_validity: 'Public share validity'
+    public_no_expiry: 'No expiration'
+    public_status: 'Public link status'
+    public_disabled: 'Public sharing is disabled.'
+    public_status_off: 'Off'
+    public_status_active: Active
+    public_status_expired: Expired
+    edit_public: 'Edit public link'
+    edit_friends: 'Edit friends'
+    shared_by: 'Shared by'
+    section:
+      public: 'Public share'
+      private: 'Private shares'
+      friends: 'Friends sharing'
+  rename:
+    modal_title: 'Rename file'
+    name_label: 'New name'
+    submit: Rename
+    cancel: Cancel
+    modal_error: 'Could not rename file.'
+  list:
+    empty: 'No files yet.'
+    filtered_empty: 'No files match these criteria.'
+    folder_empty: 'The folder is empty.'
+  pagination:
+    nav_label: 'Files pagination'
+    previous: Previous
+    next: Next
+    page: 'Page %page% / %pages% — %total% file(s)'
+  preferences:
+    invalid_payload: 'Invalid preferences payload.'
+    invalid_device_id: 'Invalid device identifier.'
+    save_failed: 'Could not save interface preferences.'
+  flash:
+    csrf_invalid: 'Security token invalid. Retry the action.'
+    target_owner_required: 'Select a target user for this action in the all-users view.'
+    target_owner_forbidden: 'You cannot act on behalf of another user.'
+    target_owner_context_invalid: 'Target user selection is not allowed in this listing context.'
+    target_owner_invalid: 'The selected user is invalid or cannot receive files here.'
+    target_folder_invalid: 'The selected target folder is invalid for this user.'
+    target_owner_ambiguous: 'Several users match this pseudonym. Pick a suggestion or refine your input.'
+    target_owner_not_found: 'No active user with this exact pseudonym matches this input.'
+    upload_invalid: 'Upload failed or file unreadable.'
+    upload_too_large: 'File exceeds the maximum allowed size.'
+    quota_exceeded: 'Storage quota reached for this user.'
+    public_not_allowed: 'Your roles do not allow public visibility.'
+    storage_failed: 'Could not store the encrypted file.'
+    uploaded: 'File uploaded successfully.'
+    not_found: 'File not found.'
+    deleted: 'File deleted.'
+    visibility_updated: 'Visibility updated.'
+    grant_invalid: 'Grant operation could not be completed.'
+    grant_exists: 'Grant already exists.'
+    grant_added: 'Grant added.'
+    grant_removed: 'Grant removed.'
+    share_applied: 'Sharing updated.'
+    bulk_share_ok: 'Sharing applied to selection.'
+    bulk_share_partial: 'Some files could not be shared.'
+    bulk_delete_ok: 'Deletion applied to selection.'
+    bulk_delete_partial: 'Some files could not be deleted.'
+    move_target_invalid: 'Invalid destination folder.'
+    move_name_conflict: 'A file with this name already exists in the destination folder.'
+    move_folder_into_self_or_descendant: 'Cannot move a folder into itself or into one of its subfolders.'
+    move_folder_name_conflict: 'A folder with this name already exists in the destination folder.'
+    move_bulk_ok: 'Move applied to selection.'
+    move_bulk_partial: 'Some items could not be moved.'
+    bulk_no_ids: 'No file selected.'
+    rename_name_required: 'File name is required.'
+    rename_name_too_long: 'File name is too long.'
+    rename_unchanged: 'No change detected.'
+    renamed: 'File renamed successfully.'
+    upload_name_conflict: 'A file or folder with this name already exists in this location.'
+    name_conflict_same_level: 'A file or folder with this name already exists in this location.'
+    folder_rename_name_required: 'Folder name is required.'
+    folder_rename_name_too_long: 'Folder name is too long.'
+    folder_rename_unchanged: 'No change detected.'
+    folder_rename_name_conflict: 'A folder with this name already exists here.'
+    folder_renamed: 'Folder renamed successfully.'
+    not_owner: 'Access denied for this file.'
+    godview_subject_invalid: 'Invalid target user for this action.'
+    expired: 'This file expired.'
+    download_failed: 'Could not decrypt the stored file.'
+admin:
+  invite:
+    meta:
+      title: 'Invite user'
+    title: 'Invite user'
+    intro: 'Send an email invitation. An activation link will be provided.'
+    email: Email
+    pseudonym: Pseudonym
+    submit: 'Send invitation'
+    back_users: 'Back to list'
+    flash:
+      sent: 'Invitation sent.'
+  users:
+    meta:
+      title: 'User administration'
+    list:
+      title: 'User management'
+      search_placeholder: 'Search by email or pseudonym'
+      search_submit: Search
+      empty: 'No users found.'
+      total: '%count% user(s)'
+    show:
+      title: 'User details'
+    roles_labels:
+      ROLE_USER: User
+      ROLE_ADMIN: Administrator
+      ROLE_CV_CONSULT: 'CV consultant'
+      ROLE_TUILE: 'Home tile manager'
+      ROLE_SHARE: 'File sharing (base)'
+      ROLE_SHARE_SEND: 'Share sending'
+      ROLE_SHARE_PUBLIC: 'Public sharing'
+      ROLE_SHARE_FRIENDS: 'Friends sharing'
+    sections:
+      profile: Profile
+      roles: Roles
+      trusted_devices: 'Trusted devices'
+      security: Security
+      danger_zone: 'Danger zone'
+    fields:
+      email: Email
+      pseudonym: Pseudonym
+      roles: Roles
+      active: Active
+      actions: Actions
+      fingerprint: Fingerprint
+      trusted_until: 'Trusted until'
+      hard_delete_reason: 'Deletion reason'
+      hard_delete_confirm: 'Type DELETE to confirm'
+      hard_delete_placeholder: DELETE
+      storage_quota_gib: 'Storage quota (GiB)'
+      storage_quota_placeholder: 'Platform default'
+    storage:
+      usage: 'Used: %used%'
+      quota_effective: 'Quota: %quota%'
+      quota_personal: 'personal quota'
+      quota_default: 'default quota'
+      quota_unlimited: 'Unlimited quota'
+    actions:
+      manage: Manage
+      back: Back
+      save_profile: 'Save profile'
+      save_roles: 'Save roles'
+      revoke: Revoke
+      revoke_all_devices: 'Revoke all devices'
+      force_password_reset: 'Force password reset'
+      invalidate_sessions: 'Invalidate active sessions'
+      hard_delete: 'Permanent deletion'
+    help:
+      hard_delete: 'This action permanently removes functional data, with encrypted snapshot support for admin rollback.'
+      storage_quota: 'Empty = platform quota. 0 = unlimited. Example: 10 for 10 GiB.'
+    status:
+      active: Active
+      inactive: Inactive
+    devices:
+      empty: 'No trusted device.'
+    success:
+      profile_updated: 'User profile updated.'
+      roles_updated: 'User roles updated.'
+      device_revoked: 'Trusted device revoked.'
+      devices_revoked: 'Trusted devices revoked.'
+      password_reset_forced: 'Password reset forced.'
+      sessions_invalidated: 'Active sessions invalidated.'
+      hard_deleted: 'User permanently deleted.'
+    error:
+      invalid_payload: 'Invalid payload.'
+      invalid_storage_quota: 'Invalid storage quota.'
+      invalid_role: 'Invalid role.'
+      self_role_change_forbidden: 'You cannot modify your own roles.'
+      self_soft_delete_forbidden: 'You cannot disable your own account.'
+      self_hard_delete_forbidden: 'You cannot delete your own account.'
+      hard_delete_confirmation_invalid: 'Invalid delete confirmation phrase.'
+      hard_delete_unavailable: 'Permanent deletion is temporarily unavailable.'
+      vault_key_missing: 'Hard delete vault key is missing.'
+      snapshot_encode_failed: 'Failed to build deletion snapshot.'
+      snapshot_cipher_invalid: 'Invalid snapshot cipher configuration.'
+      snapshot_encrypt_failed: 'Failed to encrypt deletion snapshot.'
+      snapshot_signature_invalid: 'Snapshot signature is invalid.'
+      snapshot_decode_failed: 'Failed to read deletion snapshot.'
+      snapshot_decrypt_failed: 'Failed to decrypt deletion snapshot.'
+      last_admin_protected: 'Cannot modify the last active administrator.'
+      device_not_found: 'Device not found.'
+      already_inactive: 'This account is already inactive.'
+      account_inactive: 'User account is disabled.'
+      share_requires_base: 'ROLE_SHARE_PUBLIC and ROLE_SHARE_FRIENDS require ROLE_SHARE.'
+      share_public_friends_requires_send: 'ROLE_SHARE_PUBLIC and ROLE_SHARE_FRIENDS require ROLE_SHARE_SEND.'
+  settings:
+    meta:
+      title: 'Platform settings'
+    page:
+      title: 'Platform configuration'
+      subtitle: 'Global site settings, visitor antibot, and default quotas.'
+    summary:
+      access_gate: 'Visitor antibot'
+      access_gate_active_help: 'Non-admin visitors pass automatic verification (captcha on failure).'
+      access_gate_inactive_help: 'The site is open without antibot verification.'
+      maintenance: Maintenance
+      maintenance_active_help: 'Sign-in button is hidden. Only admins can log in via /login.'
+      maintenance_inactive_help: 'Public sign-in remains available.'
+      default_quota: 'Default storage quota'
+      default_quota_help: 'Applied to accounts without a personal quota (APP_USER_STORAGE_QUOTA_BYTES env var).'
+    access_gate:
+      title: 'Visitor antibot'
+      subtitle: 'Enable automatic verification and set the score threshold (0-100).'
+      status_active: 'Antibot active'
+      status_inactive: 'Antibot inactive'
+    maintenance:
+      title: Maintenance
+      subtitle: 'Hide public sign-in and restrict /login to administrators.'
+      status_active: 'Maintenance active'
+      status_inactive: 'Maintenance inactive'
+    storage:
+      title: 'Storage'
+      default_quota_label: 'Default quota'
+      per_user_label: 'Per-user quota'
+      per_user_help: 'Set a personal quota on each user profile page.'
+      manage_users: 'Manage users'
+    shortcuts:
+      title: 'Admin shortcuts'
+      preview_gate: 'Preview antibot page'
+  bug_reports:
+    meta:
+      title: 'Bug tickets'
+    list:
+      title: 'Bug tickets'
+      empty: 'No bug ticket matches these filters.'
+    detail:
+      title: 'Ticket #%id%'
+      context_title: 'Captured context'
+      timeline_title: 'Action timeline'
+    filters:
+      status_all: 'All statuses'
+      severity_all: 'All severities'
+      route_placeholder: 'Filter by route'
+      include_archived: 'Include archived'
+      apply: Filter
+    fields:
+      created_at: Date
+      reporter: Reporter
+      path: URL
+      status: Status
+      severity: Severity
+      archived: Archived
+      actions: Actions
+      route_name: Route
+      query: Query
+      locale: Language
+      theme: Theme
+      user_agent: Browser
+      viewport: Viewport
+      referrer: Referrer
+      correlation_id: 'Request ID'
+      app_version: 'App version'
+      archive_reason: 'Archive reason'
+    archived:
+      yes: 'Yes'
+      no: 'No'
+    actions:
+      open: Open
+      back: 'Back to list'
+      mark_in_progress: 'Mark in progress'
+      mark_resolved: 'Mark resolved'
+      reopen: Reopen
+      archive: Archive
+      unarchive: Unarchive
+setup:
+  meta:
+    title: 'Administrator bootstrap'
+  title: 'Configure the first administrator'
+  subtitle: 'Create the first administrator account to unlock the platform.'
+  email: 'Administrator email'
+  pseudonym: Pseudonym
+  password: Password
+  submit: 'Create first administrator'
+  invalid_payload: 'All fields are required.'
+  email_already_used: 'This email is already in use.'
+  totp_sent: 'Administrator account created as pending. A TOTP code was sent by email.'
+  pending_confirmation: 'Your administrator account is pending TOTP validation.'
+invite:
+  invalid_payload: 'Invalid invitation payload.'
+  unauthorized: 'Unauthorized action.'
+  created: 'Invitation created.'
+  user_already_exists: 'A user already exists with this email.'
+  user_persist_failed: 'Unable to create invited account.'
+  email_send_failed: 'Unable to send the invitation email.'
+  rate_limited: 'Too many attempts. Please try again later.'
+  activate:
+    success: 'Activation completed. You can now sign in.'
+    invalid_or_expired: 'The link is invalid, expired, or already used.'
+    password_required: 'Password is required.'
+    meta:
+      title: 'Invited account activation'
+    title: 'Activate your account'
+    subtitle: 'Set your password to complete activation.'
+    password: 'New password'
+    submit: 'Activate my account'
+locale:
+  invalid: 'Unsupported language.'
+  name:
+    fr: French
+    en: English
+    de: German
+    lt: Lithuanian
+    'no': Norwegian
+  bubble:
+    aria_toggle: 'Change site language'
+    aria_switch: 'Switch language to %locale%'
+theme:
+  invalid: 'Unsupported theme.'
+  mode:
+    light: Light
+    dark: Dark
+  bubble:
+    aria_toggle: 'Change site theme'
+    aria_switch: 'Switch theme to %theme%'
+floating:
+  actions:
+    toolbar_aria: 'Quick actions: language, theme, and account'
+    locale:
+      aria: 'Open language selector'
+      title: Language
+    theme:
+      aria: 'Switch theme to %theme%'
+      title: 'Switch to %theme%'
+    account:
+      aria: 'Open account information'
+      title: 'Account and score'
+    logout:
+      aria: 'Sign out of the site'
+    bug:
+      aria: 'Report a bug'
+      title: 'Report bug'
+bug_report:
+  flash:
+    invalid_csrf: 'Invalid submission. Please try again.'
+    missing_required: 'Please describe your action and the observed result.'
+    created: 'Bug ticket created successfully.'
+  modal:
+    title: 'Report a bug'
+    action_description_label: 'What I did'
+    observed_result_label: 'What happened'
+    expected_result_label: 'Expected result (optional)'
+    severity_label: Severity
+    cancel: Cancel
+    submit: Submit
+  severity:
+    minor: Minor
+    major: Major
+    critical: Critical
+  status:
+    new: New
+    in_progress: 'In progress'
+    resolved: Resolved
+    reopened: Reopened
+storage:
+  home:
+    meta_title: 'Cloud storage'
+    title: 'Your encrypted cloud storage'
+    subtitle: 'Store, organize, and share your files securely.'
+    cta_files: 'Open my files'
+    cta_login: 'Sign in'
+    no_share_role: 'Storage access not enabled for your account'
+    stats_aria: 'Your storage statistics'
+    stats_title: 'Your storage overview'
+    stats_subtitle: 'Real-time summary of your personal storage.'
+    stat_files: Files
+    stat_space: 'Space used'
+    stat_remaining: 'Remaining space'
+    stat_quota: 'Allocated quota: %quota%'
+    stat_space_unlimited: Unlimited
+    stat_files_help: 'Encrypted files stored in your personal space.'
+    stat_space_help: 'Total volume used by all your files.'
+    stat_remaining_help_user: 'Remaining capacity in your personal quota (%quota%).'
+    stat_remaining_help_default: 'Remaining capacity in the default quota (%quota%).'
+    stat_remaining_help_unlimited: 'No storage volume limit applies to your account.'
+    stat_folders_help: 'Folders created to organize your tree.'
+    stat_shares_help: 'Public links and friend access still valid today.'
+    stat_folders: Folders
+    stat_shares: 'Active shares'
+    feature_encrypt_title: 'Encryption at rest'
+    feature_encrypt_text: 'Files are encrypted with AES-256 before being written to disk.'
+    feature_folders_title: 'Folder tree'
+    feature_folders_text: 'Organize uploads in nested folders with rename and move support.'
+    feature_share_title: 'Public and friend sharing'
+    feature_share_text: 'Share links with optional password and email verification.'
+    feature_upload_title: 'Chunked uploads'
+    feature_upload_text: 'Large files upload reliably in configurable chunks.'
+    features_title: 'Platform capabilities'
+    features_subtitle: 'Secure storage, controlled sharing, and per-user quota tracking.'
+    feature_quota_title: 'Per-user quota'
+    feature_quota_text: 'See used space and remaining capacity based on your personal or platform quota.'
+  access_gate:
+    meta:
+      title: 'Antibot verification'
+    title: 'Antibot verification'
+    verifying: 'Please wait while we verify you are not a bot…'
+    redirecting: 'Verification successful, redirecting…'
+    captcha_required: 'Automatic verification did not succeed. Enter the code shown to continue.'
+    dev_score: 'Technical score after verification: %score% / %threshold% (development environment).'
+    captcha_label: 'Verification code'
+    captcha_image_alt: 'Captcha image'
+    captcha_refresh: 'New image'
+    submit: Continue
+    flash:
+      denied: 'Access denied. Enter the captcha or try again in a few seconds.'
+      invalid_csrf: 'Invalid submission. Please try again.'
+    error:
+      csrf_invalid: 'Invalid security token.'
+      invalid_threshold: 'Invalid antibot threshold (0 to 100).'
+    success:
+      settings_updated: 'Antibot settings updated.'
+    admin:
+      enabled_label: 'Enable visitor antibot'
+      threshold_label: 'Antibot score threshold (0-100)'
+      threshold_help: 'Higher threshold means stricter verification. Default: 50.'
+      save: 'Save antibot settings'
+maintenance:
+  meta:
+    title: Maintenance
+  title: 'Maintenance in progress'
+  description: 'The platform is temporarily unavailable for public sign-in.'
+  banner:
+    title: 'Maintenance in progress'
+    default_message: 'Sign-in is temporarily suspended. Please check back later.'
+  login:
+    notice: 'Maintenance mode is active: only administrator accounts can sign in.'
+  error:
+    login_forbidden: 'Sign-in denied: only administrators can log in during maintenance.'
+  success:
+    settings_updated: 'Maintenance settings updated.'
+  admin:
+    enabled_label: 'Enable maintenance mode'
+    message_label: 'Message shown on the home page'
+    message_placeholder: 'Example: scheduled maintenance tonight from 10 PM to midnight.'
+    message_help: 'Optional. Displayed on the home page while maintenance is active.'
+    save: 'Save maintenance settings'

@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% set currentLocale = app.request.locale|default('fr') %}
+{% block title %}{{ 'setup.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+{% block favicon %}
+    <link rel="icon" type="{{ storage_favicon_type() }}" href="{{ asset(storage_favicon_href()) }}">
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-7 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h4 mb-3">{{ 'setup.title'|trans({}, 'messages', currentLocale) }}</h1>
+                    <p class="text-muted">{{ 'setup.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+
+                    <form method="post" action="{{ path('setup_create_admin') }}">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ 'setup.email'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="email" name="email" type="email" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pseudonym" class="form-label">{{ 'setup.pseudonym'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="pseudonym" name="pseudonym" type="text" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ 'setup.password'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="password" name="password" type="password" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">{{ 'setup.submit'|trans({}, 'messages', currentLocale) }}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

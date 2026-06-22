@@ -1,0 +1,107 @@
+{# Reusable file properties modal (Sprint 22 - decoupled public/friends sections). Skeleton populated via JS from /files/{id}/properties. #}
+<div class="modal fade" id="filesPropertiesModal" tabindex="-1" aria-labelledby="filesPropertiesModalTitle" aria-hidden="true"
+    data-files-properties-url-template="{{ path('files_properties', { id: 999999 }) }}"
+    data-files-shared-properties-url-template="{{ path('files_shared_properties', { id: 999999 }) }}"
+    data-msg-loading="{{ 'files.properties.loading'|trans({}, 'messages', currentLocale) }}"
+    data-msg-error="{{ 'files.properties.error'|trans({}, 'messages', currentLocale) }}"
+    data-msg-never-expires="{{ 'files.properties.never_expires'|trans({}, 'messages', currentLocale) }}"
+    data-msg-no-recipients="{{ 'files.properties.no_recipients'|trans({}, 'messages', currentLocale) }}"
+    data-msg-recipient-until="{{ 'files.properties.recipient_until'|trans({'%date%': '__DATE__'}, 'messages', currentLocale) }}"
+    data-msg-recipient-no-expiry="{{ 'files.properties.recipient_no_expiry'|trans({}, 'messages', currentLocale) }}"
+    data-msg-public-no-expiry="{{ 'files.properties.public_no_expiry'|trans({}, 'messages', currentLocale) }}"
+    data-msg-public-disabled="{{ 'files.properties.public_disabled'|trans({}, 'messages', currentLocale) }}"
+    data-msg-public-off="{{ 'files.properties.public_status_off'|trans({}, 'messages', currentLocale) }}"
+    data-msg-public-active="{{ 'files.properties.public_status_active'|trans({}, 'messages', currentLocale) }}"
+    data-msg-public-expired="{{ 'files.properties.public_status_expired'|trans({}, 'messages', currentLocale) }}"
+>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="filesPropertiesModalTitle">{{ 'files.properties.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'files.upload.modal_close'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="files-properties-loading text-center py-3 d-none" data-files-prop="loading" aria-live="polite">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">{{ 'files.properties.loading'|trans({}, 'messages', currentLocale) }}</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-danger d-none" role="alert" data-files-prop="error"></div>
+
+                <div class="files-properties-content d-none" data-files-prop="content">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="files-properties-preview-box border rounded d-flex align-items-center justify-content-center bg-body-tertiary p-2">
+                                <img class="files-properties-preview d-none" data-files-prop="preview" alt="{{ 'files.properties.preview_alt'|trans({}, 'messages', currentLocale) }}" loading="lazy">
+                                <div class="files-properties-icon-fallback text-center d-none" data-files-prop="icon-fallback">
+                                    <span class="badge bg-secondary fs-5" data-files-prop="extension-badge">{{ 'files.properties.extension_fallback'|trans({}, 'messages', currentLocale) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">{{ 'files.table.name'|trans({}, 'messages', currentLocale) }}</dt>
+                                <dd class="col-sm-8 text-break" data-files-prop="name"></dd>
+
+                                <dt class="col-sm-4">{{ 'files.table.extension'|trans({}, 'messages', currentLocale) }}</dt>
+                                <dd class="col-sm-8" data-files-prop="extension"></dd>
+
+                                <dt class="col-sm-4">{{ 'files.table.size'|trans({}, 'messages', currentLocale) }}</dt>
+                                <dd class="col-sm-8" data-files-prop="size"></dd>
+
+                                <dt class="col-sm-4">{{ 'files.table.uploaded'|trans({}, 'messages', currentLocale) }}</dt>
+                                <dd class="col-sm-8" data-files-prop="uploaded"></dd>
+
+                                <dt class="col-sm-4">{{ 'files.table.modified'|trans({}, 'messages', currentLocale) }}</dt>
+                                <dd class="col-sm-8" data-files-prop="updated"></dd>
+
+                                <dt class="col-sm-4 d-none" data-files-prop="sharedByLabel">{{ 'files.properties.shared_by'|trans({}, 'messages', currentLocale) }}</dt>
+                                <dd class="col-sm-8 d-none" data-files-prop="sharedBy"></dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <hr data-files-prop-separator="public">
+
+                    <div class="files-properties-section-public" data-files-prop-section="public">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h3 class="h6 mb-0">{{ 'files.properties.section.public'|trans({}, 'messages', currentLocale) }}</h3>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-files-prop-action="edit-public" data-files-prop="editPublicBtn">{{ 'files.properties.edit_public'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">{{ 'files.properties.public_status'|trans({}, 'messages', currentLocale) }}</dt>
+                            <dd class="col-sm-8" data-files-prop="publicStatus"></dd>
+
+                            <dt class="col-sm-4 d-none" data-files-prop="publicTokenLabel">{{ 'files.properties.public_token'|trans({}, 'messages', currentLocale) }}</dt>
+                            <dd class="col-sm-8 text-break d-none" data-files-prop="publicTokenContainer"><code data-files-prop="publicToken"></code></dd>
+
+                            <dt class="col-sm-4 d-none" data-files-prop="publicValidityLabel">{{ 'files.properties.public_validity'|trans({}, 'messages', currentLocale) }}</dt>
+                            <dd class="col-sm-8 d-none" data-files-prop="publicValidityContainer"><span data-files-prop="publicValidity"></span></dd>
+                        </dl>
+                    </div>
+
+                    <hr data-files-prop-separator="friends">
+
+                    <div class="files-properties-section-friends" data-files-prop-section="friends">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h3 class="h6 mb-0">{{ 'files.properties.section.friends'|trans({}, 'messages', currentLocale) }}</h3>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-files-prop-action="edit-friends" data-files-prop="editFriendsBtn">{{ 'files.properties.edit_friends'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                        <ul class="list-group list-group-flush" data-files-prop="grants"></ul>
+                        <p class="text-muted mb-0 d-none" data-files-prop="grantsEmpty">{{ 'files.properties.no_recipients'|trans({}, 'messages', currentLocale) }}</p>
+                        <template data-files-prop="grantTemplate">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="files-properties-grant-pseudo" data-files-prop="grantPseudo"></span>
+                                <span class="text-muted small" data-files-prop="grantUntil"></span>
+                            </li>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'files.advanced.cancel'|trans({}, 'messages', currentLocale) }}</button>
+            </div>
+        </div>
+    </div>
+</div>

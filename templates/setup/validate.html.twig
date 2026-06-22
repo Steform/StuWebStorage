@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% set currentLocale = app.request.locale|default('fr') %}
+{% block title %}{{ 'setup.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+{% block favicon %}
+    <link rel="icon" type="{{ storage_favicon_type() }}" href="{{ asset(storage_favicon_href()) }}">
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h4 mb-3">{{ 'setup.pending_confirmation'|trans({}, 'messages', currentLocale) }}</h1>
+
+                    {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error|trans({}, 'messages', currentLocale) }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" action="{{ path('setup_validate_submit') }}">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ 'security.login.email'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="email" name="email" type="email" class="form-control" value="{{ email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="totp" class="form-label">{{ 'security.login.totp'|trans({}, 'messages', currentLocale) }}</label>
+                            <input id="totp" name="totp" type="text" class="form-control" placeholder="{{ 'security.login.totp_placeholder'|trans({}, 'messages', currentLocale) }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">{{ 'security.totp.submit'|trans({}, 'messages', currentLocale) }}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

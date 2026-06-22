@@ -1,0 +1,948 @@
+app:
+  close: Lukk
+  meta:
+    title: 'CV- og delingsplattform'
+  nav:
+    home: Hjem
+    my_profile: 'Min profil'
+    logout: 'Logg ut'
+    language: Språk
+    files_user: 'Mine filer'
+    files_admin: 'Alle filer (admin)'
+    security_users: Brukerliste
+    security_invite: 'Inviter bruker'
+    settings: Konfigurasjon
+    dashboard: Dashboard
+    bug_reports: 'Bug-billetter'
+profile:
+  meta:
+    title: 'Min profil'
+  page:
+    title: 'Min profil'
+    subtitle: 'Vis kontoinformasjonen din.'
+  sections:
+    public_profile: 'Offentlig profil'
+    email_change: 'Endre min e-post'
+    password_change: 'Endre mitt passord'
+  fields:
+    email: E-post
+    pseudonym: Pseudonym
+    status: Status
+    new_email: 'Ny e-post'
+    totp_code: TOTP-kode
+    current_password: 'Naavaerende passord'
+    new_password: 'Nytt passord'
+  placeholders:
+    new_email: ny@example.com
+    totp_code: '123456'
+  actions:
+    update_pseudonym: 'Oppdater pseudonym'
+    request_email_change: 'Send TOTP-kode'
+    confirm_email_change: 'Bekreft e-postendring'
+    send_password_totp: 'Send passord-TOTP-kode'
+    confirm_password_change: 'Endre passord'
+  status:
+    active: Aktiv
+    inactive: Inaktiv
+  success:
+    pseudonym_updated: 'Pseudonym oppdatert.'
+    email_change_requested: 'TOTP-kode sendt til ny e-post.'
+    email_updated: 'E-post oppdatert etter validering.'
+    password_totp_sent: 'TOTP-kode sendt for passordendring.'
+    password_updated: 'Passord endret.'
+  error:
+    pseudonym_required: 'Pseudonym er paakrevd.'
+    pseudonym_too_long: 'Pseudonym er for langt.'
+    email_invalid: 'Ugyldig ny e-post.'
+    email_same_as_current: 'Ny e-post er lik naavaerende e-post.'
+    email_already_used: 'Denne e-postadressen er allerede i bruk.'
+    email_change_not_found: 'Ingen ventende e-postendring funnet.'
+    totp_invalid: 'Ugyldig eller utlopet TOTP-kode.'
+    password_required: 'Nytt passord er paakrevd.'
+    current_password_invalid: 'Naavaerende passord er ugyldig.'
+security:
+  login:
+    meta:
+      title: 'Logg inn'
+    title: 'Sikker innlogging'
+    subtitle: 'Logg inn med e-post og passord.'
+    email: E-post
+    email_placeholder: deg@example.com
+    password: Passord
+    password_placeholder: 'Ditt passord'
+    totp: TOTP-kode
+    totp_placeholder: '123456'
+    submit: Fortsett
+    remember_me: 'Stol pa denne enheten i 6 maneder'
+    error_invalid_credentials: 'Ugyldige legitimasjoner eller TOTP-kode.'
+  totp:
+    meta:
+      title: TOTP-validering
+    title: 'Bekreftelse i trinn to'
+    subtitle: 'Skriv inn TOTP-koden sendt pa e-post for a fullfore innloggingen.'
+    submit: 'Valider kode'
+    resend: 'Send koden pa e-post igjen'
+    resend_wait: 'Send igjen om %seconds% s'
+    resend_error: 'Kan ikke sende koden pa nytt akkurat na.'
+auth:
+  totp:
+    challenge:
+      invalid_payload: 'E-post kreves for a sende en TOTP-kode.'
+      sent: 'TOTP-kode sendt pa e-post.'
+      cooldown: 'Vent litt for du ber om en ny kode.'
+      rate_limited: 'For mange nye forsok. Vent for du ber om en ny kode.'
+    invalid: 'Ugyldig eller utlopet TOTP-kode.'
+    valid: 'TOTP-kode validert.'
+mail:
+  invite:
+    subject: 'Din brukerinvitasjon'
+    title: 'Invitasjon til plattformen'
+    intro: 'Du har mottatt en invitasjon. Bruk lenken under for a aktivere kontoen din og sette passordet ditt.'
+    cta: 'Aktiver kontoen min'
+    expiry_hint: 'Lenken utløper raskt. Be om en ny invitasjon ved behov.'
+    security_hint: 'Del aldri denne lenken. Teamet vart vil aldri be om den.'
+    footer: 'Automatisk invitasjons-epost - vennligst ikke svar.'
+  totp:
+    subject: 'Din TOTP-verifiseringskode'
+    brand: StuWebStorage
+    title: Verifiseringskode
+    intro: 'Bruk koden under for a fullfore validering av administratorsesjonen din.'
+    code_label: TOTP-kode
+    expiry_hint: 'Denne koden utloper raskt. Be om en ny kode ved behov.'
+    security_hint: 'Del aldri denne koden. Teamet vart vil aldri be om den.'
+    footer: 'Automatisk sikkerhets-epost - vennligst ikke svar.'
+share:
+  file:
+    expired: 'Denne delte filen er utløpt eller ikke lenger tilgjengelig.'
+download:
+  challenge:
+    invalid_payload: 'E-post og filnøkkel kreves.'
+    resource_not_found: 'Denne filen er ikke tilgjengelig for offentlig nedlasting.'
+    cooldown: 'Vent litt før du ber om en ny kode.'
+    sent: 'En bekreftelseskode ble sendt til e-posten din.'
+    totp_required: 'Ugyldig eller utløpt bekreftelseskode.'
+  verify:
+    invalid_payload: 'Økt-id og kode kreves.'
+    challenge_not_found: 'Denne bekreftelsesøkten finnes ikke.'
+  resource:
+    unreadable: 'Filen kunne ikke leses.'
+  authorized: 'Du kan laste ned filen nå.'
+  totp_ok_password_required: 'E-post bekreftet. Skriv inn tilgangspassordet for aa fortsette.'
+  share_password:
+    invalid: 'Tilgang avslått. Sjekk passordet og prøv igjen.'
+    rate_limited: 'For mange forsøk. Vent omtrent fem minutter før du prøver igjen.'
+    preauth_invalid: 'Dette verifiseringssteget er utløpt. Bekreft e-postkoden på nytt.'
+  public_folder:
+    zip_empty: 'Ingen offentlig delt fil i denne mappen er tilgjengelig for nedlasting.'
+    zip_limit_files: 'For mange filer for ett ZIP-arkiv. Be eieren om å dele opp eller redusere offentlig delte filer.'
+    zip_limit_bytes: 'ZIP-en ville overstige den tillatte samlede storrelsen.'
+    zip_limit_time: 'Det tok for lang tid aa bygge ZIP-en. Prov igjen senere.'
+media:
+  preview:
+    title: Filforhandsvisning
+    close_aria: 'Lukk forhandsvisningsvinduet'
+    close_button: Lukk
+    pdf_frame_title: 'Forhandsvisning av PDF-dokument'
+    open_new_tab: 'Åpne i ny fane'
+    video_label: Videoforhandsvisning
+    audio_label: Lydforhandsvisning
+    fullscreen: Fullskjerm
+    playback_failed: 'Mediet kunne ikke spilles av i nettleseren din (ikke støttet format eller kodek).'
+    text_label: 'Forhandsvisning av tekstfil'
+    text_load_failed: 'Kunne ikke laste filinnholdet.'
+files:
+  meta:
+    title: 'Mine filer'
+  section:
+    my_files: 'Mine filer'
+    shared_for_me: 'Delt med meg'
+    shared_for_me_empty: 'Ingen filer er delt med deg akkurat nå.'
+  listing_scope:
+    empty_owned: 'Ingen filer i dette omfanget.'
+    empty_shared: 'Ingen inngående delinger i dette omfanget.'
+  intro: 'Opplastinger er kryptert i ro. Synlighet følger rollene dine.'
+  admin:
+    mode_banner: 'Administrasjonsmodus aktiv (omfang: %owner%).'
+    owner_fallback_notice: 'Ingen malbruker i URL. Viser filer for konto %label% (ID %id%).'
+    view_scope_owner: 'En bruker'
+    view_scope_all: 'Alle brukere'
+    owner_filter_label: Bruker
+    owner_filter_apply: Bruk
+    owner_badge: 'Eier: %owner%'
+    target_owner_label: Målbruker
+    target_owner_hint: 'Skriv navn eller e-post, velg et forslag, eller bruk forhåndsutfylt bruker fra aktiv rute.'
+    users_pagination:
+      nav_aria: 'Paginering for brukerliste'
+      summary: 'Brukere %start%–%end% av %total%'
+      per_page: 'Per side'
+      page_controls: Sidenavigasjon
+      prev: Forrige
+      next: Neste
+    users_pane:
+      grid_fallback: 'Bytt til listevisning for å bla i mapper i denne visningen.'
+  nav:
+    filter: Filtrer
+  toolbar:
+    send: Send
+    columns_label: Kolonner
+    columns_aria: 'Velg synlige kolonner'
+    action_global: 'Handling (%count%)'
+    heading: 'Søk og filtre'
+    search_label: Søk
+    search_placeholder: Søk
+    filter_public_label: Publisering
+    filter_public_all: Alle
+    filter_public_yes: 'Kun offentlig'
+    filter_public_no: 'Kun privat'
+    extensions_label: Filtyper
+    sort_label: Sorter
+    sort_name: Navn
+    sort_size: Størrelse
+    sort_uploaded: 'Lastet opp'
+    sort_modified: Endret
+    sort_ext: Filtype
+    dir_label: Retning
+    dir_asc: Stigende
+    dir_desc: Synkende
+    apply: Bruk
+    reset: Nullstill
+    listing_scope_owned: 'Mine filer'
+    listing_scope_shared: 'Delt med meg'
+    listing_scope_both: Begge
+    listing_scope_group_aria: 'Omfang for listede filer'
+    display_menu_label: Visning
+    display_menu_aria: 'Omfang og layout'
+    display_section_scope: Omfang
+    display_section_layout: Oppsett
+  search:
+    clear_aria: 'Tøm søk'
+  advanced:
+    open: 'Avanserte filtre'
+    title: 'Avanserte filtre'
+    close: Lukk
+    apply: 'Bruk filtre'
+    cancel: Avbryt
+    reset_only: 'Fjern avanserte filtre'
+    reset_in_modal: 'Fjern avanserte filtre'
+    uploaded_after: 'Lastet opp etter'
+    uploaded_before: 'Lastet opp foer'
+    updated_after: 'Endret etter'
+    updated_before: 'Endret foer'
+    expires_after: 'Utloeper etter'
+    expires_before: 'Utloeper foer'
+    filter_has_grant: 'Delt med minst én bruker'
+    filter_has_grant_all: Likegyldig
+    filter_has_grant_yes: 'Minst én tildeling'
+    filter_has_grant_no: 'Ingen tildelinger'
+    grantees_label: 'Mottakere av deling'
+    grantees_hint: 'Bare brukere som allerede har tilgang vises.'
+    extensions_dropdown_aria: 'Velg filendelser som skal filtreres'
+    extensions_button_all: 'Alle filendelser'
+    extensions_button_count: '%count% filendelse(r) valgt'
+    grantees_dropdown_aria: 'Velg mottakere for filtrering'
+    grantees_button_all: 'Alle mottakere'
+    grantees_button_count: '%count% mottaker(e) valgt'
+    filter_select_all: 'Velg alle'
+    filter_clear_selection: 'Tøm valg'
+    filters_owned_list_hint: 'Filter for filendelser og mottakere gjelder filene dine. Seksjonen «Delt med meg» bruker bare sortering fra dette vinduet.'
+    filters_shared_list_hint: 'Filter for filendelser og mottakere begrenser ikke «Delt med meg»; bare sortering gjelder.'
+    view_layout: Oppsett
+  chips:
+    search: 'Soek: %value%'
+    filter_public_yes: 'Synlighet: offentlig'
+    filter_public_no: 'Synlighet: privat'
+    extensions: 'Filtyper: %list%'
+    filter_has_grant_yes: 'Har brukerdeling'
+    filter_has_grant_no: 'Ingen brukerdeling'
+    uploaded_after: 'Lastet opp etter %date%'
+    uploaded_before: 'Lastet opp foer %date%'
+    updated_after: 'Endret etter %date%'
+    updated_before: 'Endret foer %date%'
+    expires_after: 'Utloeper etter %date%'
+    expires_before: 'Utloeper foer %date%'
+    grantee: '%name% (#%id%)'
+  view:
+    list: Liste
+    grid: Rutenett
+    toggle_aria: 'Liste- eller rutenettvisning'
+  grid:
+    open_actions_aria: 'Aapne filhandlinger for %name%'
+    badge:
+      public_aria: 'Offentlig deling aktiv'
+      friends_aria: 'Vennedeling aktiv'
+  upload:
+    heading: 'Last opp fil'
+    collapsed_heading: 'Vis opplastingsvalg (kryptert)'
+    modal_title: 'Last opp fil'
+    modal_close: 'Lukk opplastingsvindu'
+    modal_cancel: Avbryt
+    drop_hint: 'Dra og slipp en fil hit, eller bruk feltet under.'
+    file_label: Fil
+    visibility_label: Synlighet
+    visibility_private: Privat
+    visibility_public: Offentlig
+    expires_label: 'Utløper (valgfritt)'
+    grantees_label: 'Autoriserte brukere (privat deling)'
+    grantee_search_placeholder: 'Skriv minst to bokstaver i pseudonymet'
+    grantee_search_hint: 'Velg mottakere fra forslag (opptil fem etter pseudonym).'
+    grantees_selected_aria: 'Valgte mottakere for privat deling'
+    grantee_label_fallback: Bruker
+    grantee_fetch_error: 'Søk etter pseudonym mislyktes. Prøv igjen.'
+    grantee_live_none: 'Ingen treff.'
+    grantee_live_results: '%count% forslag.'
+    grantee_remove_aria: 'Fjern denne mottakeren'
+    submit: 'Last opp'
+    bytes_hint: 'Maksimal klartekststorrelse: %formatted_size%.'
+    progress_sending: Sender
+    progress_processing: 'Behandles pa serveren'
+    progress_bar_aria: 'Fremdrift for filopplasting'
+    xhr_network_error: 'Kunne ikke na serveren. Sjekk tilkoblingen og proev igjen.'
+    selected_byte_size_label: 'Storrelse:'
+  table:
+    name: Navn
+    extension: Type
+    pseudo: Pseudonym
+    size: Størrelse
+    uploaded: 'Lastet opp'
+    modified: Endret
+    expires: Utløper
+    visibility: Synlighet
+    share_public: Offentlig
+    share_friends: Delt
+    token: 'Offentlig nøkkel'
+    actions: Handlinger
+    sort:
+      state:
+        none: 'Ikke sortert'
+        desc: 'Synkende sortering'
+        asc: 'Stigende sortering'
+  boolean:
+    'yes': Ja
+    'no': Nei
+  visibility:
+    public: Offentlig
+    private: Privat
+  action:
+    label: Handlinger
+    create_folder: 'Opprett mappe'
+    download: 'Last ned'
+    delete: Slett
+    delete_selection: 'Slett utvalg'
+    move_selection: 'Flytt utvalg'
+    download_selection: 'Last ned utvalg'
+    share: Del
+    share_public: 'Offentlig deling'
+    share_friends: Vennedeling
+    make_public: 'Gjør offentlig'
+    make_private: 'Gjør privat'
+    add_grant: 'Legg til tildeling'
+    revoke_grant: Tilbakekall
+    properties: Egenskaper
+    preview: Forhandsvis
+    rename: 'Gi nytt navn'
+    copy_public_link: 'Kopier lenke'
+    copy_public_link_with_password: 'Kopier lenke med passord'
+    copy_public_link_aria: 'Kopier offentlig lenke til utklippstavlen'
+    copy_public_link_with_password_aria: 'Kopier offentlig lenke inkludert passord til utklippstavlen'
+    copy_public_link_done: 'Offentlig lenke er kopiert.'
+    copy_public_link_failed: 'Kunne ikke kopiere lenken.'
+    copy_public_link_password_missing: 'Offentlig passord er ikke tilgjengelig. Åpne offentlig deling og bekreft at passord er aktivert.'
+    menu:
+      global_aria: 'Handlinger på utvalget'
+  folder:
+    root: 'Rot'
+    open: 'Aapne mappe %name%'
+    breadcrumb:
+      aria: Mappe-sti
+    field:
+      name: Mappenavn
+    action:
+      create: 'Ny mappe'
+      open: Aapne
+      properties: Egenskaper
+      share_public: 'Del offentlig'
+      share_friends: 'Del med venner'
+      rename: 'Gi nytt navn'
+      download_zip: 'Last ned ZIP'
+      delete: 'Slett mappe'
+    rename:
+      modal_title: 'Gi mappe nytt navn'
+    modal:
+      create_title: 'Opprett mappe'
+      delete_title: 'Slett mappe'
+      delete_recursive_message: 'Mappen er ikke tom. Er du sikker på at du vil slette den?'
+    properties:
+      title: Mappeegenskaper
+      total_size: 'Total størrelse'
+      total_files: 'Antall filer'
+      total_subfolders: 'Antall undermapper'
+      error: 'Kunne ikke laste mappeegenskaper.'
+    share:
+      public:
+        modal_title_single: 'Del mappe offentlig'
+      friends:
+        modal_title_single: 'Del mappe med venner'
+        friends_expiration_mixed: 'Filene i denne mappen har ulike utløpsdatoer for denne mottakeren.'
+        friends_grant_expired: Utløpt
+    flash:
+      name_required: 'Mappenavn er påkrevd.'
+      already_exists: 'En mappe med dette navnet finnes allerede her.'
+      name_conflict_with_file: 'En fil med dette navnet finnes allerede på dette stedet.'
+      parent_invalid: 'Valgt foreldremappe er ugyldig.'
+      created: 'Mappe opprettet.'
+      deleted_recursive: 'Mappe slettet rekursivt.'
+      share_empty: 'Denne mappen har ingen delbare filer akkurat nå.'
+    public_link:
+      resolve_failed: 'Kunne ikke klargjøre den offentlige lenken. Sjekk mappens delingsinnstillinger eller prøv igjen.'
+      no_files: 'Ingen egnet fil i denne mappen for en offentlig lenke.'
+      copy_fallback_intro: 'Den offentlige lenken er klar. Kopier fra feltet eller bruk knappen.'
+  public_landing:
+    meta_title: 'Last ned delt fil'
+    title: 'Delt fil'
+    intro: 'Skriv inn e-posten din for en kode, bekreft for forhåndsvisning (når mulig) og nedlasting.'
+    preview_alt: 'Forhåndsvisning: %name%'
+    file_name_label: Filnavn
+    size_label: Størrelse
+    type_label: Type
+    type_unknown: Ukjent
+    uploaded_label: 'Lastet opp'
+    public_expires_label: 'Offentlig lenke utløper'
+    public_expires_never: 'Uten utløp'
+    section_email_title: E-postbekreftelse
+    email_hint: 'Vi sender en kort kode for å begrense misbruk av lenken.'
+    email_label: E-post
+    email_placeholder: deg@eksempel.no
+    send_code: 'Send kode'
+    code_label: 'Kode fra e-post'
+    code_placeholder: '6 sifre'
+    verify_submit: 'Bekreft og last ned'
+    download_file: 'Last ned filen'
+    share_password_label: Tilgangspassord
+    share_password_submit: 'Bekreft passord og last ned'
+    share_password_hint: 'Aa inkludere passordet i URL (?share_password=) er valgfritt; det kan vises i nettleserhistorikken.'
+    api_error: 'Noe gikk galt. Prøv igjen.'
+  public_folder_landing:
+    meta_title: 'Last ned delt mappe (ZIP)'
+    title: 'Delt mappe'
+    intro: 'Skriv inn e-posten din for aa motta en kode, bekreft deretter for aa laste ned et ZIP med filer som har en aktiv offentlig lenke i denne mappetreet.'
+    folder_name_label: Mappenavn
+    public_files_label: 'Offentlige filer (undertre)'
+    public_expires_label: 'Offentlig deling utloper'
+    public_expires_never: 'Uten utlopsdato'
+    no_public_files_hint: 'Ingen fil med aktiv offentlig lenke i dette treet akkurat na. Etter bekreftelse kan ZIP mislykkes til filer er offentlig delt.'
+    section_email_title: E-postbekreftelse
+    email_hint: 'Vi sender en kort kode for aa beskytte mappenlenken mot misbruk.'
+    email_label: E-post
+    email_placeholder: deg@eksempel.no
+    send_code: 'Send kode'
+    code_label: 'Kode fra e-post'
+    code_placeholder: '6 siffer'
+    verify_submit: 'Bekreft og last ned ZIP'
+    download_zip: 'Last ned ZIP'
+    share_password_label: Tilgangspassord
+    share_password_submit: 'Bekreft passord og last ned ZIP'
+    share_password_hint: 'Passord i URL er valgfritt; det kan vises i nettleserhistorikken.'
+    api_error: 'Noe gikk galt. Prøv igjen.'
+  grant:
+    label: 'Bruker-ID for tildeling'
+    submit: 'Gi tilgang'
+  selection:
+    aria_select_all: 'Velg / fjern alle'
+    aria_select_row: 'Velg filen %name%'
+    live_count: '%count% fil(er) valgt'
+    multi_pane_error: 'Velg elementer i kun ett brukerpane for denne handlingen.'
+  share:
+    modal_title_single: 'Del en fil'
+    modal_title_bulk: 'Del %count% filer'
+    public_label: Synlighet
+    expires_label: 'Utløp på deling (valgfritt)'
+    expires_hint: 'Utløp avbryter kun delingen, filen forblir.'
+    grants_label: 'Mottakere (pseudonym)'
+    grant_expires_per_label: 'Personlig utløp'
+    grant_expires_per_aria: 'Utløp for denne mottakeren'
+    replace_existing_label: 'Erstatt eksisterende delinger'
+    replace_existing_warning: 'Eksisterende delinger blir overskrevet av denne inntastingen.'
+    apply: 'Bruk deling'
+    bulk_results:
+      ok: '%count% fil(er) delt vellykket.'
+      failed: '%count% fil(er) feilet.'
+    load_error: 'Kunne ikke laste delingsstatusen.'
+    submit_error: 'Kunne ikke bruke delingen. Prøv igjen.'
+    target_summary_single: 'Fil: %name%'
+    target_summary_bulk: 'Utvalg: %count% fil(er)'
+    'yes': Ja
+    'no': Nei
+    expiration_active_aria: 'Utløp er konfigurert for denne kanalen'
+    public:
+      modal_title_single: 'Offentlig lenke'
+      modal_title_bulk: 'Offentlig lenke for utvalg'
+      enable_label: 'Aktiver offentlig lenke'
+      enable_hint: 'Alle med lenken kan laste ned så lenge lenken er aktiv.'
+      expires_label: 'Utløp for offentlig lenke (valgfritt)'
+      expires_hint: 'La stå tom for uten utløp. Etter utløp slutter den offentlige lenken å virke.'
+      expires_relative_future: 'Ca. ~M~ minutt(er) til utløp (klokken på denne enheten).'
+      expires_relative_past: 'Denne datoen og klokkeslettet er ca. ~M~ minutt(er) tilbake på denne enheten: etter lagring blir lenken inaktiv.'
+      expires_relative_soon: 'Under ett minutt til utløp.'
+      password_enable_label: 'Krev tilgangspassord (etter e-postbekreftelse)'
+      password_enable_hint: 'Et tilfeldig passord genereres når du aktiverer dette. Aa ha det i URL er praktisk, men litt mindre sikkert enn aa sende det separat.'
+      password_field_label: 'Naavaerende tilgangspassord'
+      password_copy: 'Kopier passord'
+      password_copy_aria: 'Kopier tilgangspassord til utklippstavlen'
+      password_copy_done: 'Tilgangspassord kopiert til utklippstavlen.'
+      password_copy_unavailable_godview: 'Passordkopiering er ikke tilgjengelig i denne admin-konteksten.'
+    friends:
+      modal_title_single: 'Del med venner'
+      modal_title_bulk: 'Del med venner (utvalg)'
+      grants_label: 'Mottakere (pseudonym)'
+      role_required: 'Rollene dine tillater ikke vennedeling.'
+  move_bulk:
+    title: 'Flytt utvalg'
+    message: 'Velg en maappe, deretter bekreft flyttingen.'
+    breadcrumb_root: Rot
+    empty_child_folders: 'Ingen undermapper. Du kan flytte hit eller gaa opp.'
+    open_child_aria: 'Aapne mappe'
+    parent_up: 'Overordnet mappe'
+    go_root: 'Gaa til rot'
+    move_here: 'Flytt hit'
+    cancel: Avbryt
+    close_aria: 'Lukk flytting'
+    toast_success: 'Flytting fullfoert: %count% element(er).'
+    toast_partial: 'Delvis flytting: %ok% flyttet, %failed% feilet.'
+    toast_error: 'Kunne ikke flytte utvalget. Proev igjen.'
+  delete_bulk:
+    title: 'Bekreft sletting'
+    message: 'Slette valgte elementer permanent?'
+    count_suffix: 'element(er) valgt'
+    more_template: '+%count% til'
+    toast_success: 'Sletting fullfort: %count% element(er) fjernet.'
+    toast_partial: 'Delvis sletting: %ok% element(er) fjernet, %failed% feilet.'
+    toast_error: 'Kunne ikke slette utvalget. Prov igjen.'
+    cancel: Avbryt
+    confirm: 'Bekreft sletting'
+    close_aria: 'Lukk bekreftelsesvinduet'
+  delete_confirm:
+    title: 'Bekreft sletting'
+    close_aria: 'Lukk bekreftelsesvinduet'
+    message: 'Slette dette elementet permanent?'
+    cancel: Avbryt
+    confirm: Slett
+  properties:
+    title: Filegenskaper
+    preview_alt: 'Forhandsvisning av filen'
+    extension_fallback: FIL
+    loading: 'Laster egenskaper...'
+    error: 'Kunne ikke laste filegenskapene.'
+    never_expires: 'Ingen utlop'
+    no_recipients: 'Ingen aktive mottakere.'
+    recipients: Mottakere
+    recipient_until: 'Til %date%'
+    recipient_no_expiry: 'Ingen utlop'
+    public_token: 'Offentlig token'
+    public_validity: 'Gyldighet for offentlig deling'
+    public_no_expiry: 'Ingen utlop'
+    public_status: 'Status for offentlig lenke'
+    public_disabled: 'Offentlig deling er deaktivert.'
+    public_status_off: Av
+    public_status_active: Aktiv
+    public_status_expired: Utløpt
+    edit_public: 'Rediger offentlig lenke'
+    edit_friends: 'Rediger venner'
+    shared_by: 'Delt av'
+    section:
+      public: 'Offentlig deling'
+      private: 'Private delinger'
+      friends: Vennedeling
+  rename:
+    modal_title: 'Gi filen nytt navn'
+    name_label: 'Nytt navn'
+    submit: 'Lagre navn'
+    cancel: Avbryt
+    modal_error: 'Kunne ikke gi filen nytt navn.'
+  list:
+    empty: 'Ingen filer ennå.'
+    filtered_empty: 'Ingen filer samsvarer med disse kriteriene.'
+    folder_empty: 'Mappen er tom.'
+  pagination:
+    nav_label: Filpaginering
+    previous: Forrige
+    next: Neste
+    page: 'Side %page% / %pages% — %total% fil(er)'
+  preferences:
+    invalid_payload: 'Ugyldig preferansepayload.'
+    invalid_device_id: 'Ugyldig enhetsidentifikator.'
+    save_failed: 'Kunne ikke lagre grensesnittpreferanser.'
+  flash:
+    csrf_invalid: 'Ugyldig sikkerhetstoken. Prøv igjen.'
+    target_owner_required: 'Velg en målbruker for denne handlingen i visningen for alle brukere.'
+    target_owner_forbidden: 'Du kan ikke handle på vegne av en annen bruker.'
+    target_owner_context_invalid: 'Valg av målbruker er ikke tillatt i denne liste­konteksten.'
+    target_owner_invalid: 'Valgt bruker er ugyldig eller kan ikke motta filer her.'
+    target_folder_invalid: 'Valgt målmappe er ugyldig for denne brukeren.'
+    target_owner_ambiguous: 'Flere brukere matcher dette pseudonymet. Velg et forslag eller presiser inndata.'
+    target_owner_not_found: 'Ingen aktiv bruker med nøyaktig dette pseudonymet samsvarer med dette inndata.'
+    upload_invalid: 'Opplasting feilet eller filen er uleselig.'
+    upload_too_large: 'Filen overskrider maksimal størrelse.'
+    quota_exceeded: 'Lagringskvote nådd for denne brukeren.'
+    public_not_allowed: 'Rollene dine tillater ikke offentlig synlighet.'
+    storage_failed: 'Kunne ikke lagre den krypterte filen.'
+    uploaded: 'Filen er lastet opp.'
+    not_found: 'Filen finnes ikke.'
+    deleted: 'Filen er slettet.'
+    visibility_updated: 'Synlighet er oppdatert.'
+    grant_invalid: 'Kunne ikke fullføre tildelingen.'
+    grant_exists: 'Tildelingen finnes allerede.'
+    grant_added: 'Tildeling lagt til.'
+    grant_removed: 'Tildeling fjernet.'
+    share_applied: 'Deling oppdatert.'
+    bulk_share_ok: 'Deling brukt på utvalget.'
+    bulk_share_partial: 'Noen filer kunne ikke deles.'
+    bulk_delete_ok: 'Sletting brukt på utvalget.'
+    bulk_delete_partial: 'Noen filer kunne ikke slettes.'
+    move_target_invalid: 'Ugyldig maalmappe.'
+    move_name_conflict: 'En fil med dette navnet finnes allerede i maalmappen.'
+    move_folder_into_self_or_descendant: 'Kan ikke flytte en mappe inn i seg selv eller et undernivaa.'
+    move_folder_name_conflict: 'En mappe med dette navnet finnes allerede i maalmappen.'
+    move_bulk_ok: 'Flytting brukt på utvalget.'
+    move_bulk_partial: 'Noen elementer kunne ikke flyttes.'
+    bulk_no_ids: 'Ingen filer valgt.'
+    rename_name_required: 'Filnavn er paakrevd.'
+    rename_name_too_long: 'Filnavnet er for langt.'
+    rename_unchanged: 'Ingen endring oppdaget.'
+    renamed: 'Filnavn oppdatert.'
+    upload_name_conflict: 'En fil eller mappe med dette navnet finnes allerede på dette stedet.'
+    name_conflict_same_level: 'En fil eller mappe med dette navnet finnes allerede på dette stedet.'
+    folder_rename_name_required: 'Mappenavn er påkrevd.'
+    folder_rename_name_too_long: 'Mappenavnet er for langt.'
+    folder_rename_unchanged: 'Ingen endring registrert.'
+    folder_rename_name_conflict: 'En mappe med dette navnet finnes allerede her.'
+    folder_renamed: 'Mappe omdøpt.'
+    not_owner: 'Tilgang nektet til denne filen.'
+    godview_subject_invalid: 'Ugyldig malbruker for denne handlingen.'
+    expired: 'Denne filen er utløpt.'
+    download_failed: 'Kunne ikke dekryptere den lagrede filen.'
+admin:
+  invite:
+    meta:
+      title: 'Inviter bruker'
+    title: 'Inviter bruker'
+    intro: 'Send en e-postinvitasjon. Aktiveringslenke blir levert.'
+    email: E-post
+    pseudonym: Pseudonym
+    submit: 'Send invitasjon'
+    back_users: 'Tilbake til liste'
+    flash:
+      sent: 'Invitasjon sendt.'
+  users:
+    meta:
+      title: Brukeradministrasjon
+    list:
+      title: Brukeradministrasjon
+      search_placeholder: 'Sok etter e-post eller pseudonym'
+      search_submit: Sok
+      empty: 'Ingen brukere funnet.'
+      total: '%count% bruker(e)'
+    show:
+      title: Brukerdetaljer
+    roles_labels:
+      ROLE_USER: Bruker
+      ROLE_ADMIN: Administrator
+      ROLE_CV_CONSULT: CV-konsulent
+      ROLE_TUILE: 'Administrasjon av forsides fliser'
+      ROLE_SHARE: 'Fildeling (grunnlag)'
+      ROLE_SHARE_SEND: 'Sende delinger'
+      ROLE_SHARE_PUBLIC: 'Offentlig deling'
+      ROLE_SHARE_FRIENDS: 'Deling med venner'
+    sections:
+      profile: Profil
+      roles: Roller
+      trusted_devices: 'Paalitelige enheter'
+      security: Sikkerhet
+      danger_zone: Faresone
+    fields:
+      email: E-post
+      pseudonym: Pseudonym
+      roles: Roller
+      active: Aktiv
+      actions: Handlinger
+      fingerprint: Fingeravtrykk
+      trusted_until: 'Stolt til'
+      hard_delete_reason: Sletterason
+      hard_delete_confirm: 'Skriv DELETE for bekreftelse'
+      hard_delete_placeholder: DELETE
+      storage_quota_gib: 'Lagringskvote (GiB)'
+      storage_quota_placeholder: 'Plattformstandard'
+    storage:
+      usage: 'Brukt: %used%'
+      quota_effective: 'Kvote: %quota%'
+      quota_personal: 'personlig kvote'
+      quota_default: 'standardkvote'
+      quota_unlimited: 'Ubegrenset kvote'
+    actions:
+      manage: Administrer
+      back: Tilbake
+      save_profile: 'Lagre profil'
+      save_roles: 'Lagre roller'
+      revoke: Tilbakekall
+      revoke_all_devices: 'Tilbakekall alle enheter'
+      force_password_reset: 'Tving passordnullstilling'
+      invalidate_sessions: 'Invalider aktive sesjoner'
+      hard_delete: 'Slett permanent'
+    help:
+      hard_delete: 'Denne handlingen fjerner funksjonelle data permanent; kryptert snapshot muliggjør admin-rollback.'
+      storage_quota: 'Tom = plattformkvote. 0 = ubegrenset. Eksempel: 10 for 10 GiB.'
+    status:
+      active: Aktiv
+      inactive: Inaktiv
+    devices:
+      empty: 'Ingen paalitelige enheter.'
+    success:
+      profile_updated: 'Brukerprofil oppdatert.'
+      roles_updated: 'Brukerroller oppdatert.'
+      device_revoked: 'Paalitelig enhet tilbakekalt.'
+      devices_revoked: 'Paalitelige enheter tilbakekalt.'
+      password_reset_forced: 'Passordnullstilling tvunget.'
+      sessions_invalidated: 'Aktive sesjoner invalidert.'
+      hard_deleted: 'Bruker slettet permanent.'
+    error:
+      invalid_payload: 'Ugyldig data.'
+      invalid_storage_quota: 'Ugyldig lagringskvote.'
+      invalid_role: 'Ugyldig rolle.'
+      self_role_change_forbidden: 'Du kan ikke endre dine egne roller.'
+      self_soft_delete_forbidden: 'Du kan ikke deaktivere din egen konto.'
+      self_hard_delete_forbidden: 'Du kan ikke slette din egen konto.'
+      hard_delete_confirmation_invalid: 'Ugyldig slettebekreftelse.'
+      hard_delete_unavailable: 'Permanent sletting er midlertidig utilgjengelig.'
+      vault_key_missing: 'Nokkel for slettehvelv mangler.'
+      snapshot_encode_failed: 'Klarte ikke opprette slettesnapshot.'
+      snapshot_cipher_invalid: 'Ugyldig konfigurasjon for snapshot-kryptering.'
+      snapshot_encrypt_failed: 'Klarte ikke kryptere slettesnapshot.'
+      snapshot_signature_invalid: 'Snapshot-signatur er ugyldig.'
+      snapshot_decode_failed: 'Klarte ikke lese slettesnapshot.'
+      snapshot_decrypt_failed: 'Klarte ikke dekryptere slettesnapshot.'
+      last_admin_protected: 'Kan ikke endre siste aktive administrator.'
+      device_not_found: 'Enhet ikke funnet.'
+      already_inactive: 'Denne kontoen er allerede inaktiv.'
+      account_inactive: 'Brukerkontoen er deaktivert.'
+      share_requires_base: 'ROLE_SHARE_PUBLIC og ROLE_SHARE_FRIENDS krever ROLE_SHARE.'
+      share_public_friends_requires_send: 'ROLE_SHARE_PUBLIC og ROLE_SHARE_FRIENDS krever ROLE_SHARE_SEND.'
+  settings:
+    meta:
+      title: Plattformkonfigurasjon
+    page:
+      title: Plattformkonfigurasjon
+      subtitle: 'Globale innstillinger, tilgangssperre og standardkvoter.'
+    summary:
+      access_gate: Tilgangssperre
+      access_gate_active_help: 'Ikke-admin besokende ma skrive inn bypass-notatet.'
+      access_gate_inactive_help: 'Nettstedet er apent uten bypass-notat.'
+      default_quota: 'Standard lagringskvote'
+      default_quota_help: 'Gjelder kontoer uten personlig kvote (APP_USER_STORAGE_QUOTA_BYTES).'
+    access_gate:
+      title: 'Offentlig tilgangssperre'
+      subtitle: 'Laas nettstedet og tillat bypass med hemmelig notat.'
+      status_active: 'Sperre aktiv'
+      status_inactive: 'Sperre inaktiv'
+    storage:
+      title: Lagring
+      default_quota_label: Standardkvote
+      per_user_label: Brukerkvote
+      per_user_help: 'Personlig kvote settes pa brukerprofilen.'
+      manage_users: 'Administrer brukere'
+    shortcuts:
+      title: Admin-snarveier
+      preview_gate: 'Forhandsvis sperreside'
+  bug_reports:
+    meta:
+      title: 'Bug-billetter'
+    list:
+      title: 'Bug-billetter'
+      empty: 'Ingen bug-billetter for disse filtrene.'
+    detail:
+      title: 'Billett #%id%'
+      context_title: 'Fanget kontekst'
+      timeline_title: 'Handlingstidslinje'
+    filters:
+      status_all: 'Alle statuser'
+      severity_all: 'Alle alvorlighetsgrader'
+      route_placeholder: 'Filtrer etter rute'
+      include_archived: 'Inkluder arkiverte'
+      apply: 'Filtrer'
+    fields:
+      created_at: 'Dato'
+      reporter: 'Bruker'
+      path: 'URL'
+      status: 'Status'
+      severity: 'Alvorlighetsgrad'
+      archived: 'Arkivert'
+      actions: 'Handlinger'
+      route_name: 'Rute'
+      query: 'Query'
+      locale: 'Sprak'
+      theme: 'Tema'
+      user_agent: 'Nettleser'
+      viewport: 'Viewport'
+      referrer: 'Referrer'
+      correlation_id: 'Request ID'
+      app_version: 'App-versjon'
+      archive_reason: 'Arkiveringsarsak'
+    archived:
+      yes: 'Ja'
+      no: 'Nei'
+    actions:
+      open: 'Apne'
+      back: 'Tilbake til listen'
+      mark_in_progress: 'Sett under arbeid'
+      mark_resolved: 'Marker som lost'
+      reopen: 'Apne pa nytt'
+      archive: 'Arkiver'
+      unarchive: 'Fjern arkivering'
+setup:
+  meta:
+    title: Administratoroppsett
+  title: 'Konfigurer første administrator'
+  subtitle: 'Opprett den første administratorkontoen for å låse opp plattformen.'
+  email: 'Administrator e-post'
+  pseudonym: Pseudonym
+  password: Passord
+  submit: 'Opprett første administrator'
+  invalid_payload: 'Alle felt er påkrevd.'
+  email_already_used: 'Denne e-postadressen er allerede i bruk.'
+  totp_sent: 'Administratorkonto opprettet som ventende. En TOTP-kode er sendt på e-post.'
+  pending_confirmation: 'Administratorkontoen din venter på TOTP-bekreftelse.'
+invite:
+  invalid_payload: 'Ugyldige invitasjonsdata.'
+  unauthorized: 'Uautorisert handling.'
+  created: 'Invitasjon opprettet.'
+  user_already_exists: 'En bruker finnes allerede med denne e-postadressen.'
+  user_persist_failed: 'Kunne ikke opprette invitert konto.'
+  email_send_failed: 'Kunne ikke sende invitasjons-eposten.'
+  rate_limited: 'For mange forsok. Prov igjen senere.'
+  activate:
+    success: 'Aktivering fullført. Du kan nå logge inn.'
+    invalid_or_expired: 'Lenken er ugyldig, utløpt, eller allerede brukt.'
+    password_required: 'Passord er påkrevd.'
+    meta:
+      title: 'Aktivering av invitert konto'
+    title: 'Aktiver kontoen din'
+    subtitle: 'Sett passordet ditt for å fullføre aktiveringen.'
+    password: 'Nytt passord'
+    submit: 'Aktiver kontoen min'
+locale:
+  invalid: 'Språket støttes ikke.'
+  name:
+    fr: Fransk
+    en: Engelsk
+    de: Tysk
+    lt: Litauisk
+    'no': Norsk
+  bubble:
+    aria_toggle: 'Bytt nettstedsspråk'
+    aria_switch: 'Bytt språk til %locale%'
+theme:
+  invalid: 'Temaet støttes ikke.'
+  mode:
+    light: Lys
+    dark: Mork
+  bubble:
+    aria_toggle: 'Bytt nettstedstema'
+    aria_switch: 'Bytt tema til %theme%'
+floating:
+  actions:
+    toolbar_aria: 'Hurtighandlinger: sprak, tema og konto'
+    locale:
+      aria: 'Apne sprakvelger'
+      title: Sprak
+    theme:
+      aria: 'Bytt tema til %theme%'
+      title: 'Bytt til %theme%'
+    account:
+      aria: 'Apne kontoinformasjon'
+      title: 'Konto og score'
+    logout:
+      aria: 'Logg ut av nettstedet'
+    bug:
+      aria: 'Rapporter en bug'
+      title: 'Rapporter bug'
+bug_report:
+  flash:
+    invalid_csrf: 'Ugyldig innsending. Proev igjen.'
+    missing_required: 'Beskriv handlingen din og det observerte resultatet.'
+    created: 'Bug-billett opprettet.'
+  modal:
+    title: 'Rapporter en bug'
+    action_description_label: 'Hva jeg gjorde'
+    observed_result_label: 'Hva som skjedde'
+    expected_result_label: 'Forventet resultat (valgfritt)'
+    severity_label: 'Alvorlighetsgrad'
+    cancel: 'Avbryt'
+    submit: 'Send'
+  severity:
+    minor: 'Mindre'
+    major: 'Stor'
+    critical: 'Kritisk'
+  status:
+    new: 'Ny'
+    in_progress: 'Under arbeid'
+    resolved: 'Loest'
+    reopened: 'Aapnet pa nytt'
+storage:
+  home:
+    meta_title: Skylagring
+    title: 'Din krypterte skylagring'
+    subtitle: 'Lagre, organiser og del filene dine trygt.'
+    cta_files: 'Åpne mine filer'
+    cta_login: 'Logg inn'
+    no_share_role: 'Lagringstilgang er ikke aktivert for kontoen din'
+    stats_aria: 'Din lagringsstatistikk'
+    stats_title: 'Oversikt over lagringen din'
+    stats_subtitle: 'Sanntidssammendrag av din personlige lagring.'
+    stat_files: Filer
+    stat_space: 'Brukt plass'
+    stat_remaining: 'Gjenstaaende plass'
+    stat_quota: 'Tildelt kvote: %quota%'
+    stat_space_unlimited: Ubegrenset
+    stat_files_help: 'Krypterte filer lagret i ditt personlige omraade.'
+    stat_space_help: 'Total volum brukt av alle filene dine.'
+    stat_remaining_help_user: 'Gjenstaaende kapasitet i din personlige kvote (%quota%).'
+    stat_remaining_help_default: 'Gjenstaaende kapasitet i standardkvoten (%quota%).'
+    stat_remaining_help_unlimited: 'Ingen lagringsgrense gjelder for kontoen din.'
+    stat_folders_help: 'Mapper opprettet for aa strukturere treet ditt.'
+    stat_shares_help: 'Offentlige lenker og vennetilgang som fortsatt er gyldige i dag.'
+    stat_folders: Mapper
+    stat_shares: 'Aktive delinger'
+    feature_encrypt_title: 'Kryptering i ro'
+    feature_encrypt_text: 'Filer krypteres med AES-256 før de skrives til disk.'
+    feature_folders_title: Mappetre
+    feature_folders_text: 'Organiser opplastinger i nestede mapper med omdøping og flytting.'
+    feature_share_title: 'Offentlig deling og venner'
+    feature_share_text: 'Delingslenker med valgfritt passord og e-postbekreftelse.'
+    feature_upload_title: 'Opplasting i deler'
+    feature_upload_text: 'Store filer lastes opp pålitelig i konfigurerbare deler.'
+    features_title: Plattformfunksjoner
+    features_subtitle: 'Sikker lagring, kontrollert deling og kvote per bruker.'
+    feature_quota_title: 'Kvote per bruker'
+    feature_quota_text: 'Se brukt plass og gjenstaaende kapasitet basert paa personlig eller plattformkvote.'
+  access_gate:
+    meta:
+      title: 'Begrenset tilgang'
+    title: 'Begrenset tilgang'
+    default_message: 'Plattformen er midlertidig laast. Skriv inn tilgangsnotatet.'
+    bypass_note_label: 'Tilgangsnotat'
+    bypass_note_help: 'Administratoren har delt dette notatet med deg.'
+    submit: 'Laas opp tilgang'
+    error:
+      csrf_invalid: 'Ugyldig sikkerhetstoken.'
+      invalid_note: 'Feil tilgangsnotat.'
+      bypass_note_required: 'Tilgangsnotat kreves naar laasen er aktiv.'
+    success:
+      settings_updated: 'Innstillinger for tilgangslaasing er oppdatert.'
+    admin:
+      panel_aria: 'Konfigurasjon av tilgangslaasing'
+      title: 'Tilgangslaasing for nettstedet'
+      subtitle: 'Aktiver laasen og tilpass beskjed til besokende og hemmelig notat.'
+      enabled_label: 'Aktiver offentlig tilgangslaasing'
+      message_label: 'Melding til besokende'
+      message_placeholder: 'Eksempel: kun for betatestere.'
+      bypass_note_label: 'Omgaa-notat'
+      bypass_note_help: 'Besokende maa skrive inn dette notatet (24 t per okt).'
+      save: 'Lagre laasing'

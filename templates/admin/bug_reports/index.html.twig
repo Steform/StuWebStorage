@@ -1,0 +1,106 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'admin.bug_reports.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+
+{% block top_navigation %}
+    {% include 'components/_storage_admin_nav.html.twig' %}
+{% endblock %}
+
+{% block main_container_class %}container py-4{% endblock %}
+
+{% block body %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <h1 class="h4 mb-0">{{ 'admin.bug_reports.list.title'|trans({}, 'messages', currentLocale) }}</h1>
+            </div>
+
+            <form class="row g-2 mb-3" method="get" action="{{ path('admin_bug_reports_index') }}">
+                <div class="col-12 col-md-2">
+                    <select class="form-select" name="status">
+                        <option value="">{{ 'admin.bug_reports.filters.status_all'|trans({}, 'messages', currentLocale) }}</option>
+                        <option value="new" {% if statusFilter == 'new' %}selected{% endif %}>{{ 'bug_report.status.new'|trans({}, 'messages', currentLocale) }}</option>
+                        <option value="in_progress" {% if statusFilter == 'in_progress' %}selected{% endif %}>{{ 'bug_report.status.in_progress'|trans({}, 'messages', currentLocale) }}</option>
+                        <option value="resolved" {% if statusFilter == 'resolved' %}selected{% endif %}>{{ 'bug_report.status.resolved'|trans({}, 'messages', currentLocale) }}</option>
+                        <option value="reopened" {% if statusFilter == 'reopened' %}selected{% endif %}>{{ 'bug_report.status.reopened'|trans({}, 'messages', currentLocale) }}</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <select class="form-select" name="severity">
+                        <option value="">{{ 'admin.bug_reports.filters.severity_all'|trans({}, 'messages', currentLocale) }}</option>
+                        <option value="minor" {% if severityFilter == 'minor' %}selected{% endif %}>{{ 'bug_report.severity.minor'|trans({}, 'messages', currentLocale) }}</option>
+                        <option value="major" {% if severityFilter == 'major' %}selected{% endif %}>{{ 'bug_report.severity.major'|trans({}, 'messages', currentLocale) }}</option>
+                        <option value="critical" {% if severityFilter == 'critical' %}selected{% endif %}>{{ 'bug_report.severity.critical'|trans({}, 'messages', currentLocale) }}</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <input class="form-control" type="text" name="route_name" value="{{ routeFilter }}" placeholder="{{ 'admin.bug_reports.filters.route_placeholder'|trans({}, 'messages', currentLocale) }}">
+                </div>
+                <div class="col-12 col-md-2">
+                    <input class="form-control" type="date" name="from_date" value="{{ fromDateFilter }}">
+                </div>
+                <div class="col-12 col-md-2">
+                    <input class="form-control" type="date" name="to_date" value="{{ toDateFilter }}">
+                </div>
+                <div class="col-12 col-md-2">
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" id="bug-report-filter-archived" type="checkbox" name="archived" value="1" {% if includeArchived %}checked{% endif %}>
+                        <label class="form-check-label" for="bug-report-filter-archived">{{ 'admin.bug_reports.filters.include_archived'|trans({}, 'messages', currentLocale) }}</label>
+                    </div>
+                </div>
+                <div class="col-12 col-md-12">
+                    <button class="btn btn-primary w-100" type="submit">{{ 'admin.bug_reports.filters.apply'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>{{ 'admin.bug_reports.fields.created_at'|trans({}, 'messages', currentLocale) }}</th>
+                        <th>{{ 'admin.bug_reports.fields.reporter'|trans({}, 'messages', currentLocale) }}</th>
+                        <th>{{ 'admin.bug_reports.fields.path'|trans({}, 'messages', currentLocale) }}</th>
+                        <th>{{ 'admin.bug_reports.fields.severity'|trans({}, 'messages', currentLocale) }}</th>
+                        <th>{{ 'admin.bug_reports.fields.status'|trans({}, 'messages', currentLocale) }}</th>
+                        <th>{{ 'admin.bug_reports.fields.archived'|trans({}, 'messages', currentLocale) }}</th>
+                        <th class="text-end">{{ 'admin.bug_reports.fields.actions'|trans({}, 'messages', currentLocale) }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for report in reports %}
+                        <tr>
+                            <td>{{ report.createdAt|date('Y-m-d H:i') }}</td>
+                            <td>{{ report.reporterUser.email }}</td>
+                            <td>
+                                <span class="d-block">{{ report.path }}</span>
+                                {% if report.routeName %}
+                                    <small class="text-muted">{{ report.routeName }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ ('bug_report.severity.' ~ report.severity)|trans({}, 'messages', currentLocale) }}</td>
+                            <td>{{ ('bug_report.status.' ~ report.status)|trans({}, 'messages', currentLocale) }}</td>
+                            <td>
+                                {% if report.archived %}
+                                    <span class="badge text-bg-secondary">{{ 'admin.bug_reports.archived.yes'|trans({}, 'messages', currentLocale) }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-light">{{ 'admin.bug_reports.archived.no'|trans({}, 'messages', currentLocale) }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ path('admin_bug_reports_show', { id: report.id }) }}">{{ 'admin.bug_reports.actions.open'|trans({}, 'messages', currentLocale) }}</a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">{{ 'admin.bug_reports.list.empty'|trans({}, 'messages', currentLocale) }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
