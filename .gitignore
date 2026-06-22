@@ -50,3 +50,11 @@
 
 # Embedded web-server pid file
 /.web-server-pid
+
+# Environment files (never commit secrets)
+/.env
+/.env.local
+/.env.dev
+/.env.test
+/.env.*.local
+!/.env.exemple
