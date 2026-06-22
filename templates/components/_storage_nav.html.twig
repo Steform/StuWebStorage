@@ -21,15 +21,16 @@
                             <a class="nav-link" href="{{ path('admin_files_index') }}">{{ 'app.nav.files_admin'|trans({}, 'messages', currentLocale) }}</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ path('admin_users_index') }}">{{ 'app.nav.security_users'|trans({}, 'messages', currentLocale) }}</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ path('admin_settings_index') }}">{{ 'app.nav.dashboard'|trans({}, 'messages', currentLocale) }}</a>
                         </li>
                     {% endif %}
                 {% else %}
-                    {% if not storage_maintenance_mode_enabled() %}
-                        <li class="nav-item">
-                            <a class="btn btn-primary btn-sm" href="{{ path('app_login') }}">{{ 'storage.home.cta_login'|trans({}, 'messages', currentLocale) }}</a>
-                        </li>
-                    {% endif %}
+                    <li class="nav-item">
+                        <a class="btn btn-primary btn-sm" href="{{ path('app_login') }}">{{ 'storage.home.cta_login'|trans({}, 'messages', currentLocale) }}</a>
+                    </li>
                 {% endif %}
             </ul>
         </div>

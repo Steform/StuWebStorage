@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-3 g-3 mb-4">
+    <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
         <div class="col">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
@@ -33,23 +33,6 @@
                     {% else %}
                         <span class="badge text-bg-success">{{ 'admin.settings.access_gate.status_inactive'|trans({}, 'messages', currentLocale) }}</span>
                         <p class="text-body-secondary small mt-2 mb-0">{{ 'admin.settings.summary.access_gate_inactive_help'|trans({}, 'messages', currentLocale) }}</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-tools text-primary fs-4" aria-hidden="true"></i>
-                        <h2 class="h6 mb-0">{{ 'admin.settings.summary.maintenance'|trans({}, 'messages', currentLocale) }}</h2>
-                    </div>
-                    {% if accessGateSettings.maintenanceModeEnabled %}
-                        <span class="badge text-bg-warning">{{ 'admin.settings.maintenance.status_active'|trans({}, 'messages', currentLocale) }}</span>
-                        <p class="text-body-secondary small mt-2 mb-0">{{ 'admin.settings.summary.maintenance_active_help'|trans({}, 'messages', currentLocale) }}</p>
-                    {% else %}
-                        <span class="badge text-bg-success">{{ 'admin.settings.maintenance.status_inactive'|trans({}, 'messages', currentLocale) }}</span>
-                        <p class="text-body-secondary small mt-2 mb-0">{{ 'admin.settings.summary.maintenance_inactive_help'|trans({}, 'messages', currentLocale) }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -77,9 +60,6 @@
     <div class="row g-4">
         <div class="col-12 col-xl-8">
             {% include 'admin/settings/_access_gate_card.html.twig' %}
-            <div class="mt-4">
-                {% include 'admin/settings/_maintenance_card.html.twig' %}
-            </div>
         </div>
         <div class="col-12 col-xl-4">
             <div class="card shadow-sm h-100">
@@ -98,6 +78,28 @@
                         <dd class="mb-0">{{ 'admin.settings.storage.per_user_help'|trans({}, 'messages', currentLocale) }}</dd>
                     </dl>
                     <a class="btn btn-outline-primary btn-sm" href="{{ path('admin_users_index') }}">{{ 'admin.settings.storage.manage_users'|trans({}, 'messages', currentLocale) }}</a>
+                </div>
+            </div>
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">{{ 'admin.settings.shortcuts.title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <div class="d-grid gap-2">
+                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('admin_files_index') }}">
+                            <i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{{ 'app.nav.files_admin'|trans({}, 'messages', currentLocale) }}
+                        </a>
+                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('admin_users_index') }}">
+                            <i class="bi bi-people me-1" aria-hidden="true"></i>{{ 'app.nav.security_users'|trans({}, 'messages', currentLocale) }}
+                        </a>
+                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('admin_users_invite') }}">
+                            <i class="bi bi-person-plus me-1" aria-hidden="true"></i>{{ 'app.nav.security_invite'|trans({}, 'messages', currentLocale) }}
+                        </a>
+                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('admin_bug_reports_index') }}">
+                            <i class="bi bi-bug-fill me-1" aria-hidden="true"></i>{{ 'app.nav.bug_reports'|trans({}, 'messages', currentLocale) }}
+                        </a>
+                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('storage_access_gate') }}" target="_blank" rel="noopener noreferrer">
+                            <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>{{ 'admin.settings.shortcuts.preview_gate'|trans({}, 'messages', currentLocale) }}
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

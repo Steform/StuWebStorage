@@ -70,7 +70,7 @@ final class AdminSettingsDashboardTest extends WebTestCase
         self::assertStringContainsString('Dashboard', $content);
         self::assertStringContainsString('floating-actions', $content);
         self::assertStringContainsString('/admin/bug-reports', $content);
-        self::assertStringNotContainsString('Admin shortcuts', $content);
+        self::assertStringContainsString('bi-bug-fill', $content);
     }
 
     /**

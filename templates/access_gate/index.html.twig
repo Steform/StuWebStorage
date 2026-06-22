@@ -1,17 +1,9 @@
 {% extends 'layouts/storage_landing.html.twig' %}
 {% set currentLocale = app.request.locale|default('fr') %}
-{% set accessPhase = accessPhase|default('checking') %}
 
 {% block title %}{{ 'storage.access_gate.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
 
 {% block top_navigation %}{% endblock %}
-
-{% block floating_actions %}{% endblock %}
-
-{% block stylesheets %}
-    {{ parent() }}
-    <link href="{{ asset('css/storage-access-gate.css') }}" rel="stylesheet">
-{% endblock %}
 
 {% block body %}
 <section class="storage-access-gate py-5">
@@ -19,94 +11,30 @@
         <div class="row justify-content-center">
             <div class="col-12 col-md-8 col-lg-6">
                 <div class="card border-0 shadow-sm">
-                    <div
-                        class="card-body storage-access-gate__root text-center"
-                        data-storage-access-gate-root
-                        data-initial-phase="{{ accessPhase }}"
-                        data-target-path="{{ target }}"
-                    >
-                        <form
-                            id="storage-access-gate-form"
-                            method="post"
-                            action="{{ path('storage_access_gate') }}"
-                            class="storage-access-gate__form"
-                        >
-                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('storage_access_gate') }}">
+                    <div class="card-body p-4 p-md-5 text-center">
+                        <div class="storage-access-gate__icon mb-3" aria-hidden="true">
+                            <i class="bi bi-shield-lock-fill text-primary fs-1"></i>
+                        </div>
+                        <h1 class="h4 mb-3">{{ 'storage.access_gate.title'|trans({}, 'messages', currentLocale) }}</h1>
+                    <p class="text-body-secondary mb-4">
+                        {% if gateMessage %}
+                            {{ gateMessage }}
+                        {% else %}
+                            {{ 'storage.access_gate.default_message'|trans({}, 'messages', currentLocale) }}
+                        {% endif %}
+                    </p>
+
+                    {% include 'components/_flash_messages.html.twig' %}
+
+                    <form method="post" action="{{ path('storage_access_gate_submit') }}" class="text-start">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfGate) }}">
                             <input type="hidden" name="target" value="{{ target }}">
-                            <input type="hidden" name="pointer_moves" id="storage-access-gate-pointer-moves" value="0">
-                            <input type="hidden" name="focus_events" id="storage-access-gate-focus-events" value="0">
-                            <input type="hidden" name="time_on_page_ms" id="storage-access-gate-time-on-page" value="0">
-                            <input type="hidden" name="webdriver" id="storage-access-gate-webdriver" value="0">
-
-                            <div
-                                class="storage-access-gate__phase{% if accessPhase == 'checking' %} storage-access-gate__phase--active{% else %} d-none{% endif %}"
-                                data-storage-access-gate-phase="checking"
-                                role="status"
-                                aria-live="polite"
-                            >
-                                <div class="spinner-border text-primary mb-3" aria-hidden="true"></div>
-                                <h1 class="h4 mb-2">{{ 'storage.access_gate.title'|trans({}, 'messages', currentLocale) }}</h1>
-                                <p class="text-body-secondary mb-0">{{ 'storage.access_gate.verifying'|trans({}, 'messages', currentLocale) }}</p>
+                            <div class="mb-3">
+                                <label for="bypass_note" class="form-label">{{ 'storage.access_gate.bypass_note_label'|trans({}, 'messages', currentLocale) }}</label>
+                                <input id="bypass_note" name="bypass_note" type="text" class="form-control" autocomplete="off" required>
+                                <div class="form-text">{{ 'storage.access_gate.bypass_note_help'|trans({}, 'messages', currentLocale) }}</div>
                             </div>
-
-                            <div
-                                class="storage-access-gate__phase d-none"
-                                data-storage-access-gate-phase="success"
-                                role="status"
-                                aria-live="polite"
-                            >
-                                <div class="spinner-border text-success mb-3" aria-hidden="true"></div>
-                                <p class="mb-0">{{ 'storage.access_gate.redirecting'|trans({}, 'messages', currentLocale) }}</p>
-                            </div>
-
-                            <div
-                                class="storage-access-gate__phase storage-access-gate__phase--captcha text-start{% if accessPhase == 'captcha' %} storage-access-gate__phase--active{% else %} d-none{% endif %}"
-                                data-storage-access-gate-phase="captcha"
-                                aria-live="polite"
-                            >
-                                <h1 class="h4 mb-3 text-center">{{ 'storage.access_gate.title'|trans({}, 'messages', currentLocale) }}</h1>
-                                <p class="text-body-secondary mb-3 text-center">{{ 'storage.access_gate.captcha_required'|trans({}, 'messages', currentLocale) }}</p>
-
-                                {% if app.debug and devAccessScore is not null %}
-                                    <p class="alert alert-secondary small storage-access-gate__dev-score text-center" role="status">
-                                        {{ 'storage.access_gate.dev_score'|trans({
-                                            '%score%': devAccessScore.score,
-                                            '%threshold%': devAccessScore.threshold
-                                        }, 'messages', currentLocale) }}
-                                    </p>
-                                {% endif %}
-
-                                {% include 'components/_flash_messages.html.twig' %}
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="captcha-code">{{ 'storage.access_gate.captcha_label'|trans({}, 'messages', currentLocale) }}</label>
-                                    <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
-                                        <img
-                                            data-src="{{ path('storage_access_gate_captcha') }}"
-                                            alt="{{ 'storage.access_gate.captcha_image_alt'|trans({}, 'messages', currentLocale) }}"
-                                            width="100"
-                                            height="40"
-                                            class="storage-access-gate__captcha-image"
-                                        >
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="storage-access-gate-captcha-refresh">
-                                            {{ 'storage.access_gate.captcha_refresh'|trans({}, 'messages', currentLocale) }}
-                                        </button>
-                                    </div>
-                                    <input
-                                        class="form-control"
-                                        id="captcha-code"
-                                        name="captcha_code"
-                                        type="text"
-                                        inputmode="numeric"
-                                        autocomplete="off"
-                                        maxlength="8"
-                                    >
-                                </div>
-
-                                <button type="submit" class="btn btn-primary w-100">
-                                    {{ 'storage.access_gate.submit'|trans({}, 'messages', currentLocale) }}
-                                </button>
-                            </div>
+                            <button type="submit" class="btn btn-primary w-100">{{ 'storage.access_gate.submit'|trans({}, 'messages', currentLocale) }}</button>
                         </form>
                     </div>
                 </div>
@@ -114,9 +42,4 @@
         </div>
     </div>
 </section>
-{% endblock %}
-
-{% block extra_scripts %}
-    {{ parent() }}
-    <script src="{{ asset('js/storage-antibot-detection.js') }}" defer></script>
 {% endblock %}

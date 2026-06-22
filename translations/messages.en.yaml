@@ -730,26 +730,18 @@ admin:
       title: 'Platform settings'
     page:
       title: 'Platform configuration'
-      subtitle: 'Global site settings, visitor antibot, and default quotas.'
+      subtitle: 'Global site settings, access gate, and default quotas.'
     summary:
-      access_gate: 'Visitor antibot'
-      access_gate_active_help: 'Non-admin visitors pass automatic verification (captcha on failure).'
-      access_gate_inactive_help: 'The site is open without antibot verification.'
-      maintenance: Maintenance
-      maintenance_active_help: 'Sign-in button is hidden. Only admins can log in via /login.'
-      maintenance_inactive_help: 'Public sign-in remains available.'
+      access_gate: 'Access gate'
+      access_gate_active_help: 'Non-admin visitors must enter the bypass note to access the site.'
+      access_gate_inactive_help: 'The site is open without a bypass note.'
       default_quota: 'Default storage quota'
       default_quota_help: 'Applied to accounts without a personal quota (APP_USER_STORAGE_QUOTA_BYTES env var).'
     access_gate:
-      title: 'Visitor antibot'
-      subtitle: 'Enable automatic verification and set the score threshold (0-100).'
-      status_active: 'Antibot active'
-      status_inactive: 'Antibot inactive'
-    maintenance:
-      title: Maintenance
-      subtitle: 'Hide public sign-in and restrict /login to administrators.'
-      status_active: 'Maintenance active'
-      status_inactive: 'Maintenance inactive'
+      title: 'Public access gate'
+      subtitle: 'Lock site access and allow bypass with a secret note.'
+      status_active: 'Gate active'
+      status_inactive: 'Gate inactive'
     storage:
       title: 'Storage'
       default_quota_label: 'Default quota'
@@ -758,7 +750,7 @@ admin:
       manage_users: 'Manage users'
     shortcuts:
       title: 'Admin shortcuts'
-      preview_gate: 'Preview antibot page'
+      preview_gate: 'Preview gate page'
   bug_reports:
     meta:
       title: 'Bug tickets'
@@ -932,46 +924,25 @@ storage:
     feature_quota_text: 'See used space and remaining capacity based on your personal or platform quota.'
   access_gate:
     meta:
-      title: 'Antibot verification'
-    title: 'Antibot verification'
-    verifying: 'Please wait while we verify you are not a bot…'
-    redirecting: 'Verification successful, redirecting…'
-    captcha_required: 'Automatic verification did not succeed. Enter the code shown to continue.'
-    dev_score: 'Technical score after verification: %score% / %threshold% (development environment).'
-    captcha_label: 'Verification code'
-    captcha_image_alt: 'Captcha image'
-    captcha_refresh: 'New image'
-    submit: Continue
-    flash:
-      denied: 'Access denied. Enter the captcha or try again in a few seconds.'
-      invalid_csrf: 'Invalid submission. Please try again.'
+      title: 'Restricted access'
+    title: 'Restricted access'
+    default_message: 'This platform is temporarily locked. Enter the access note to continue.'
+    bypass_note_label: 'Access note'
+    bypass_note_help: 'Your administrator shared this note with you.'
+    submit: 'Unlock access'
     error:
       csrf_invalid: 'Invalid security token.'
-      invalid_threshold: 'Invalid antibot threshold (0 to 100).'
+      invalid_note: 'Incorrect access note.'
+      bypass_note_required: 'An access note is required when the lock is enabled.'
     success:
-      settings_updated: 'Antibot settings updated.'
+      settings_updated: 'Access gate settings updated.'
     admin:
-      enabled_label: 'Enable visitor antibot'
-      threshold_label: 'Antibot score threshold (0-100)'
-      threshold_help: 'Higher threshold means stricter verification. Default: 50.'
-      save: 'Save antibot settings'
-maintenance:
-  meta:
-    title: Maintenance
-  title: 'Maintenance in progress'
-  description: 'The platform is temporarily unavailable for public sign-in.'
-  banner:
-    title: 'Maintenance in progress'
-    default_message: 'Sign-in is temporarily suspended. Please check back later.'
-  login:
-    notice: 'Maintenance mode is active: only administrator accounts can sign in.'
-  error:
-    login_forbidden: 'Sign-in denied: only administrators can log in during maintenance.'
-  success:
-    settings_updated: 'Maintenance settings updated.'
-  admin:
-    enabled_label: 'Enable maintenance mode'
-    message_label: 'Message shown on the home page'
-    message_placeholder: 'Example: scheduled maintenance tonight from 10 PM to midnight.'
-    message_help: 'Optional. Displayed on the home page while maintenance is active.'
-    save: 'Save maintenance settings'
+      panel_aria: 'Access gate configuration'
+      title: 'Site access gate'
+      subtitle: 'Enable the lock and customize the visitor message and secret bypass note.'
+      enabled_label: 'Enable public access gate'
+      message_label: 'Message shown to visitors'
+      message_placeholder: 'Example: beta testers only.'
+      bypass_note_label: 'Bypass note'
+      bypass_note_help: 'Visitors must enter this exact note to access the site (24 h per session).'
+      save: 'Save gate settings'

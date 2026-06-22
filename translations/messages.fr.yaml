@@ -730,26 +730,18 @@ admin:
       title: 'Configuration plateforme'
     page:
       title: 'Configuration de la plateforme'
-      subtitle: 'Parametres globaux du site, antibot et quotas par defaut.'
+      subtitle: 'Parametres globaux du site, verrou d''accès et quotas par defaut.'
     summary:
-      access_gate: 'Antibot visiteurs'
-      access_gate_active_help: 'Les visiteurs non admin passent une verification automatique (captcha si echec).'
-      access_gate_inactive_help: 'Le site est accessible sans verification antibot.'
-      maintenance: Maintenance
-      maintenance_active_help: 'Le bouton Connexion est masque. Seuls les admins peuvent se connecter via /login.'
-      maintenance_inactive_help: 'La connexion publique reste disponible.'
+      access_gate: 'Verrou d''accès'
+      access_gate_active_help: 'Les visiteurs non admin doivent saisir la note pour acceder au site.'
+      access_gate_inactive_help: 'Le site est accessible sans note de contournement.'
       default_quota: 'Quota stockage par defaut'
       default_quota_help: 'Valeur appliquee aux comptes sans quota personnel (variable APP_USER_STORAGE_QUOTA_BYTES).'
     access_gate:
-      title: 'Antibot visiteurs'
-      subtitle: 'Activez la verification automatique et reglez le seuil de score (0-100).'
-      status_active: 'Antibot actif'
-      status_inactive: 'Antibot inactif'
-    maintenance:
-      title: Maintenance
-      subtitle: 'Masquez la connexion publique et reservez /login aux administrateurs.'
-      status_active: 'Maintenance active'
-      status_inactive: 'Maintenance inactive'
+      title: 'Verrou d''accès public'
+      subtitle: 'Bloquez l''accès au site et autorisez le contournement via une note secrete.'
+      status_active: 'Verrou actif'
+      status_inactive: 'Verrou inactif'
     storage:
       title: 'Stockage'
       default_quota_label: 'Quota par defaut'
@@ -758,7 +750,7 @@ admin:
       manage_users: 'Gerer les utilisateurs'
     shortcuts:
       title: 'Raccourcis admin'
-      preview_gate: 'Previsualiser la page antibot'
+      preview_gate: 'Previsualiser la page de verrou'
   bug_reports:
     meta:
       title: 'Tickets bug'
@@ -932,46 +924,25 @@ storage:
     feature_quota_text: 'Visualisez l''espace utilise et le volume restant selon votre quota personnel ou celui de la plateforme.'
   access_gate:
     meta:
-      title: 'Verification antibot'
-    title: 'Verification antibot'
-    verifying: 'Veuillez patienter, nous verifions que vous n''etes pas un robot…'
-    redirecting: 'Verification reussie, redirection en cours…'
-    captcha_required: 'La verification automatique n''a pas abouti. Saisissez le code affiche pour continuer.'
-    dev_score: 'Score technique apres verification : %score% / %threshold% (environnement de developpement).'
-    captcha_label: 'Code de verification'
-    captcha_image_alt: 'Image captcha'
-    captcha_refresh: 'Nouvelle image'
-    submit: 'Continuer'
-    flash:
-      denied: 'Acces refuse. Saisissez le captcha ou reessayez dans quelques secondes.'
-      invalid_csrf: 'Soumission invalide. Veuillez reessayer.'
+      title: 'Acces restreint'
+    title: 'Acces restreint'
+    default_message: 'Cette plateforme est temporairement verrouillee. Saisissez la note d''accès pour continuer.'
+    bypass_note_label: 'Note d''accès'
+    bypass_note_help: 'La note vous a été communiquée par l''administrateur de la plateforme.'
+    submit: 'Deverrouiller l''accès'
     error:
       csrf_invalid: 'Jeton de securite invalide.'
-      invalid_threshold: 'Seuil antibot invalide (0 a 100).'
+      invalid_note: 'Note d''accès incorrecte.'
+      bypass_note_required: 'Une note d''accès est requise lorsque le verrou est actif.'
     success:
-      settings_updated: 'Parametres antibot mis a jour.'
+      settings_updated: 'Parametres du verrou d''accès mis a jour.'
     admin:
-      enabled_label: 'Activer l''antibot pour les visiteurs'
-      threshold_label: 'Seuil de score antibot (0-100)'
-      threshold_help: 'Plus le seuil est eleve, plus la verification est stricte. Defaut : 50.'
-      save: 'Enregistrer l''antibot'
-maintenance:
-  meta:
-    title: Maintenance
-  title: 'Maintenance en cours'
-  description: 'La plateforme est temporairement indisponible pour les connexions publiques.'
-  banner:
-    title: 'Maintenance en cours'
-    default_message: 'Les connexions sont temporairement suspendues. Revenez plus tard.'
-  login:
-    notice: 'Mode maintenance actif : seuls les comptes administrateur peuvent se connecter.'
-  error:
-    login_forbidden: 'Connexion refusee : seuls les administrateurs peuvent se connecter pendant la maintenance.'
-  success:
-    settings_updated: 'Parametres de maintenance mis a jour.'
-  admin:
-    enabled_label: 'Activer le mode maintenance'
-    message_label: 'Message affiche sur l''accueil'
-    message_placeholder: 'Exemple : maintenance planifiee ce soir de 22h a minuit.'
-    message_help: 'Optionnel. Affiche sur l''accueil lorsque la maintenance est active.'
-    save: 'Enregistrer la maintenance'
+      panel_aria: 'Configuration du verrou d''accès'
+      title: 'Verrou d''accès du site'
+      subtitle: 'Activez le verrou et personnalisez le message visiteur ainsi que la note secrete de contournement.'
+      enabled_label: 'Activer le verrou d''accès public'
+      message_label: 'Message affiche aux visiteurs'
+      message_placeholder: 'Exemple : acces réservé aux beta-testeurs.'
+      bypass_note_label: 'Note de contournement'
+      bypass_note_help: 'Les visiteurs devront saisir exactement cette note pour acceder au site (24 h par session).'
+      save: 'Enregistrer le verrou'

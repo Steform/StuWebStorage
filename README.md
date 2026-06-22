@@ -183,8 +183,8 @@ cd stuwebstorage
 
 composer install
 
-cp .env .env.local
-# Configure DATABASE_URL, APP_FILE_ENCRYPTION_KEY, mailer, etc.
+cp .env.exemple .env.local
+# Edit .env.local: DATABASE_URL, APP_SECRET, APP_FILE_ENCRYPTION_KEY, MAILER_DSN, DEFAULT_URI, …
 
 php bin/console doctrine:migrations:migrate --no-interaction
 php bin/console cache:clear
@@ -192,14 +192,43 @@ php bin/console cache:clear
 
 Open `/setup` to create the first administrator, then `/` to access the platform.
 
-### Essential environment variables
+### Environment configuration
 
-| Variable | Purpose |
-|----------|---------|
-| `DATABASE_URL` | Database connection |
-| `APP_FILE_ENCRYPTION_KEY` | AES-256 key for file encryption |
-| `APP_TOTP_EMAIL_FROM` | Sender address for TOTP codes |
-| `MAILER_DSN` | Email transport (SMTP, etc.) |
+Copy [`.env.exemple`](.env.exemple) to `.env.local` and configure every variable below.  
+Symfony merges `.env` (defaults shipped with the repo) with `.env.local` (your machine-specific overrides).
+
+| Variable | Required | Purpose |
+|----------|:--------:|---------|
+| `APP_ENV` | yes | Runtime environment (`dev`, `prod`, `test`) |
+| `APP_DEBUG` | yes | `1` in development, `0` in production |
+| `KERNEL_CLASS` | yes | Symfony kernel class (`App\Kernel`) |
+| `APP_SECRET` | yes | CSRF, remember-me, internal signing |
+| `DATABASE_URL` | yes | Database connection (MySQL/MariaDB or PostgreSQL) |
+| `MAILER_DSN` | yes | E-mail transport (SMTP, `null://null` for tests) |
+| `DEFAULT_URI` | yes | Public base URL (absolute links from CLI) |
+| `APP_TOTP_CHALLENGE_TTL_SECONDS` | yes | TOTP code lifetime (login, profile changes) |
+| `APP_INVITATION_TOKEN_TTL_SECONDS` | yes | User invitation link lifetime |
+| `APP_TOTP_EMAIL_FROM` | yes | Sender address for TOTP and invitation e-mails |
+| `APP_PUBLIC_DOWNLOAD_CHALLENGE_TTL_SECONDS` | yes | Public download TOTP lifetime |
+| `APP_PUBLIC_DOWNLOAD_CHALLENGE_COOLDOWN_SECONDS` | yes | Delay before resending a public-download code |
+| `APP_PUBLIC_DOWNLOAD_CHALLENGE_MAX_RESEND_COUNT` | yes | Max resend attempts per public download session |
+| `APP_FILE_ENCRYPTION_KEY` | yes | AES-256 key for files encrypted at rest |
+| `APP_FILES_STORAGE_ENABLED` | yes | Enable storage module (`1` / `0`) |
+| `APP_USER_STORAGE_QUOTA_BYTES` | yes | Default user quota in bytes (`0` = unlimited) |
+
+**Generate secrets locally:**
+
+```bash
+# APP_SECRET (32 hex chars)
+php -r "echo bin2hex(random_bytes(16)), PHP_EOL;"
+
+# APP_FILE_ENCRYPTION_KEY (64 hex chars = 32 bytes)
+php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+```
+
+**Local mail catcher (dev):** point `MAILER_DSN` to Mailpit or Mailhog, e.g. `smtp://127.0.0.1:1025`.
+
+**Never commit** `.env.local`, production credentials, or a real `APP_FILE_ENCRYPTION_KEY`.
 
 ---
 
@@ -248,7 +277,8 @@ StuWebStorage/
 
 ## Security notes
 
-- Never commit `.env` or `APP_FILE_ENCRYPTION_KEY`
+- Never commit `.env.local`, production secrets, or `APP_FILE_ENCRYPTION_KEY`
+- Use [`.env.exemple`](.env.exemple) as the reference template; keep real values only in `.env.local`
 - Key rotation requires re-encrypting existing files (not automated)
 - The site access gate is an **additional** control, not a substitute for authentication
 - Public shares expire — check TTLs in configuration

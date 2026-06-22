@@ -45,7 +45,7 @@ final class StorageHomePageTest extends WebTestCase
         self::assertStringContainsString('/login', $content);
         self::assertStringNotContainsString('storage-stat-card', $content);
         self::assertStringContainsString('Per-user quota', $content);
-        self::assertStringContainsString('floating-actions-locale-toggle', $content);
+        self::assertStringContainsString('storage-nav-locale-toggle', $content);
     }
 
     /**

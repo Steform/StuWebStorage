@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
- * @brief Redirect visitors to the antibot gate when enabled.
+ * @brief Redirect visitors to the access gate when site lock is enabled.
  */
 final class SiteAccessGateSubscriber implements EventSubscriberInterface
 {

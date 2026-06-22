@@ -9,7 +9,7 @@ use App\Repository\SiteAccessGateSettingsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * @brief Resolve and persist site antibot gate settings.
+ * @brief Resolve and persist site access gate settings.
  */
 final class SiteAccessGateService
 {
@@ -39,7 +39,7 @@ final class SiteAccessGateService
     }
 
     /**
-     * @brief Check whether antibot gate enforcement is active.
+     * @brief Check whether gate enforcement is active.
      *
      * @param void No input parameter.
      * @return bool
@@ -49,19 +49,6 @@ final class SiteAccessGateService
     public function isGateEnabled(): bool
     {
         return $this->getSettings()->isEnabled();
-    }
-
-    /**
-     * @brief Get configured antibot score threshold.
-     *
-     * @param void No input parameter.
-     * @return int
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function getAntibotThreshold(): int
-    {
-        return max(0, min(100, $this->getSettings()->getAntibotThreshold()));
     }
 
     /**
@@ -82,84 +69,55 @@ final class SiteAccessGateService
     }
 
     /**
-     * @brief Grant antibot access in the current session.
+     * @brief Verify submitted bypass note and grant session access when valid.
      *
-     * @param void No input parameter.
-     * @return void
+     * @param string $submittedNote Visitor submitted note.
+     * @return bool True when note matches configured secret.
      * @date 2026-06-22
      * @author Stephane H.
      */
-    public function grantAccess(): void
+    public function verifyBypassNoteAndGrant(string $submittedNote): bool
     {
+        $expected = trim((string) $this->getSettings()->getBypassNote());
+        $submitted = trim($submittedNote);
+        if ($expected === '' || $submitted === '') {
+            return false;
+        }
+
+        if (!hash_equals($expected, $submitted)) {
+            return false;
+        }
+
         $this->sessionService->grantAccess();
+
+        return true;
     }
 
     /**
-     * @brief Update antibot gate settings from admin dashboard form.
+     * @brief Update gate settings from admin dashboard form.
      *
      * @param bool $enabled Gate enabled flag.
-     * @param int $antibotThreshold Score threshold 0-100.
+     * @param string $gateMessage Visitor message.
+     * @param string $bypassNote Secret bypass note.
      * @return string|null Translation key on validation failure or null.
      * @date 2026-06-22
      * @author Stephane H.
      */
-    public function updateSettings(bool $enabled, int $antibotThreshold): ?string
+    public function updateSettings(bool $enabled, string $gateMessage, string $bypassNote): ?string
     {
-        if ($antibotThreshold < 0 || $antibotThreshold > 100) {
-            return 'storage.access_gate.error.invalid_threshold';
+        $normalizedMessage = trim($gateMessage);
+        $normalizedNote = trim($bypassNote);
+
+        if ($enabled && $normalizedNote === '') {
+            return 'storage.access_gate.error.bypass_note_required';
         }
 
         $settings = $this->getSettings();
         $settings->setEnabled($enabled);
-        $settings->setAntibotThreshold($antibotThreshold);
+        $settings->setGateMessage($normalizedMessage !== '' ? $normalizedMessage : null);
+        $settings->setBypassNote($normalizedNote !== '' ? $normalizedNote : null);
         $this->entityManager->flush();
 
         return null;
-    }
-
-    /**
-     * @brief Check whether public maintenance mode is active.
-     *
-     * @param void No input parameter.
-     * @return bool
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function isMaintenanceModeEnabled(): bool
-    {
-        return $this->getSettings()->isMaintenanceModeEnabled();
-    }
-
-    /**
-     * @brief Get optional maintenance message for visitors.
-     *
-     * @param void No input parameter.
-     * @return string|null
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function getMaintenanceMessage(): ?string
-    {
-        $message = trim((string) $this->getSettings()->getMaintenanceMessage());
-
-        return $message !== '' ? $message : null;
-    }
-
-    /**
-     * @brief Update maintenance mode settings from admin dashboard form.
-     *
-     * @param bool $maintenanceModeEnabled Maintenance mode flag.
-     * @param string $maintenanceMessage Optional visitor message.
-     * @return null
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function updateMaintenanceSettings(bool $maintenanceModeEnabled, string $maintenanceMessage): void
-    {
-        $normalizedMessage = trim($maintenanceMessage);
-        $settings = $this->getSettings();
-        $settings->setMaintenanceModeEnabled($maintenanceModeEnabled);
-        $settings->setMaintenanceMessage($normalizedMessage !== '' ? $normalizedMessage : null);
-        $this->entityManager->flush();
     }
 }

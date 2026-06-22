@@ -14,7 +14,7 @@ final class SiteAccessGateSessionService
 {
     private const SESSION_VALID_UNTIL_KEY = 'storage_access_gate.valid_until';
 
-    private const ACCESS_TTL_SECONDS = 1800;
+    private const ACCESS_TTL_SECONDS = 86400;
 
     /**
      * @param RequestStack $requestStack Request stack.
