@@ -1,6 +1,15 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Force HTTPS in non-local environments (keep HTTP for local dev hosts).
+    RewriteCond %{HTTP_HOST} !^localhost(:\d+)?$ [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:\d+)?$ [NC]
+    RewriteCond %{HTTP_HOST} !\.loc$ [NC]
+    RewriteCond %{HTTP_HOST} !\.local$ [NC]
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
