@@ -19,7 +19,8 @@ class SetupBootstrapSubscriber implements EventSubscriberInterface
      */
     private array $allowedPathPrefixes = [
         '/setup',
-        '/access-gate',
+        '/home/access',
+        '/home/captcha',
         '/logout',
         '/locale',
         '/theme',

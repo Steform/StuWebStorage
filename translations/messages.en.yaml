@@ -731,35 +731,41 @@ admin:
       title: 'Platform settings'
     page:
       title: 'Platform configuration'
-      subtitle: 'Global site settings, access gate, and default quotas.'
+      eyebrow: Administration
+      subtitle: 'Maintenance, homepage antibot protection, and default quotas.'
     summary:
-      access_gate: 'Access gate'
-      access_gate_active_help: 'Non-admin visitors must enter the bypass note to access the site.'
-      access_gate_inactive_help: 'The site is open without a bypass note.'
+      antibot_gate: 'Antibot gate active'
       maintenance: Maintenance
-      maintenance_active_help: 'The Sign in button is hidden. Only admins can log in via /login.'
+      maintenance_active_help: 'The public homepage shows the maintenance page. Only admins can sign in via /login.'
       maintenance_inactive_help: 'Public sign-in remains available.'
       default_quota: 'Default storage quota'
-      default_quota_help: 'Applied to accounts without a personal quota (APP_USER_STORAGE_QUOTA_BYTES env var).'
-    access_gate:
-      title: 'Public access gate'
-      subtitle: 'Lock site access and allow bypass with a secret note.'
-      status_active: 'Gate active'
-      status_inactive: 'Gate inactive'
+      default_quota_help: 'Applied to accounts without a personal quota configured.'
+    antibot:
+      title: 'Antibot gate (homepage)'
+      subtitle: 'Protects the homepage from bots via behavioural scoring and captcha.'
+      status_active: 'Always active'
+      threshold_label: 'Behavioural score threshold'
+      threshold_help: 'Minimum score (0-100) to access the homepage without captcha. Below this, captcha is required.'
+      save: 'Save threshold'
+      success_updated: 'Antibot settings updated.'
     maintenance:
       title: Maintenance
       subtitle: 'Hide public sign-in and reserve /login for administrators.'
       status_active: 'Maintenance active'
       status_inactive: 'Maintenance inactive'
     storage:
-      title: 'Storage'
+      title: Storage
       default_quota_label: 'Default quota'
       per_user_label: 'Per-user quota'
       per_user_help: 'Set a personal quota on each user profile page.'
       manage_users: 'Manage users'
-    shortcuts:
-      title: 'Admin shortcuts'
-      preview_gate: 'Preview gate page'
+    server_disk:
+      title: 'Server disk'
+      subtitle: 'Free space on the volume hosting encrypted uploads.'
+      remaining_label: 'Remaining free space'
+      total_label: 'Total capacity'
+      used_label: Usage
+      unavailable: 'Unable to read server disk space.'
   bug_reports:
     meta:
       title: 'Bug tickets'
@@ -931,30 +937,21 @@ storage:
     features_subtitle: 'Secure storage, controlled sharing, and per-user quota tracking.'
     feature_quota_title: 'Per-user quota'
     feature_quota_text: 'See used space and remaining capacity based on your personal or platform quota.'
-  access_gate:
-    meta:
-      title: 'Restricted access'
-    title: 'Restricted access'
-    default_message: 'This platform is temporarily locked. Enter the access note to continue.'
-    bypass_note_label: 'Access note'
-    bypass_note_help: 'Your administrator shared this note with you.'
-    submit: 'Unlock access'
-    error:
-      csrf_invalid: 'Invalid security token.'
-      invalid_note: 'Incorrect access note.'
-      bypass_note_required: 'An access note is required when the lock is enabled.'
-    success:
-      settings_updated: 'Access gate settings updated.'
-    admin:
-      panel_aria: 'Access gate configuration'
-      title: 'Site access gate'
-      subtitle: 'Enable the lock and customize the visitor message and secret bypass note.'
-      enabled_label: 'Enable public access gate'
-      message_label: 'Message shown to visitors'
-      message_placeholder: 'Example: beta testers only.'
-      bypass_note_label: 'Bypass note'
-      bypass_note_help: 'Visitors must enter this exact note to access the site (24 h per session).'
-      save: 'Save gate settings'
+    access:
+      meta:
+        title: 'Access verification'
+      title: 'Access verification'
+      verifying: 'Please wait while we verify you are not a robot…'
+      redirecting: 'Verification successful, redirecting to the homepage…'
+      captcha_required: 'Automatic verification did not succeed. Enter the code shown to continue.'
+      dev_score: 'Technical score after verification: %score% / %threshold% (development environment).'
+      captcha_label: 'Verification code'
+      captcha_image_alt: 'Captcha image'
+      captcha_refresh: 'New image'
+      submit: Continue
+      flash:
+        denied: 'Access denied. Enter the captcha or try again in a few seconds.'
+        invalid_csrf: 'Invalid submission. Please try again.'
 
 maintenance:
   meta:

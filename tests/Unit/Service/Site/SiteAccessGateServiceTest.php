@@ -7,72 +7,14 @@ namespace App\Tests\Unit\Service\Site;
 use App\Entity\SiteAccessGateSettings;
 use App\Repository\SiteAccessGateSettingsRepository;
 use App\Service\Site\SiteAccessGateService;
-use App\Service\Site\SiteAccessGateSessionService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 /**
- * @brief Unit tests for site access gate note verification.
+ * @brief Unit tests for platform site settings service.
  */
 final class SiteAccessGateServiceTest extends TestCase
 {
-    /**
-     * @brief Valid bypass note grants session access.
-     *
-     * @return void
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function testVerifyBypassNoteAndGrantAcceptsMatchingNote(): void
-    {
-        $settings = (new SiteAccessGateSettings())->setBypassNote('beta-access');
-
-        $repository = $this->createMock(SiteAccessGateSettingsRepository::class);
-        $repository->method('getOrCreateSingleton')->willReturn($settings);
-
-        $sessionService = $this->buildSessionService();
-        $service = new SiteAccessGateService(
-            $repository,
-            $sessionService,
-            $this->createMock(EntityManagerInterface::class),
-        );
-
-        self::assertTrue($service->verifyBypassNoteAndGrant('beta-access'));
-        self::assertTrue($sessionService->isAccessGranted());
-    }
-
-    /**
-     * @brief Enabling gate without bypass note returns validation error key.
-     *
-     * @return void
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function testUpdateSettingsRequiresBypassNoteWhenEnabled(): void
-    {
-        $settings = new SiteAccessGateSettings();
-        $repository = $this->createMock(SiteAccessGateSettingsRepository::class);
-        $repository->method('getOrCreateSingleton')->willReturn($settings);
-
-        $entityManager = $this->createMock(EntityManagerInterface::class);
-        $entityManager->expects(self::never())->method('flush');
-
-        $service = new SiteAccessGateService(
-            $repository,
-            $this->buildSessionService(),
-            $entityManager,
-        );
-
-        self::assertSame(
-            'storage.access_gate.error.bypass_note_required',
-            $service->updateSettings(true, 'Locked', '')
-        );
-    }
-
     /**
      * @brief Maintenance mode flag is persisted from admin form payload.
      *
@@ -89,11 +31,7 @@ final class SiteAccessGateServiceTest extends TestCase
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('flush');
 
-        $service = new SiteAccessGateService(
-            $repository,
-            $this->buildSessionService(),
-            $entityManager,
-        );
+        $service = new SiteAccessGateService($repository, $entityManager, 50);
 
         $service->updateMaintenanceSettings(true, 'Scheduled maintenance tonight');
 
@@ -102,20 +40,47 @@ final class SiteAccessGateServiceTest extends TestCase
     }
 
     /**
-     * @brief Build session service backed by an in-memory request session.
+     * @brief Antibot threshold is clamped and persisted from admin form payload.
      *
-     * @return SiteAccessGateSessionService
-     * @date 2026-06-22
+     * @return void
+     * @date 2026-06-23
      * @author Stephane H.
      */
-    private function buildSessionService(): SiteAccessGateSessionService
+    public function testUpdateAntibotSettingsClampsThreshold(): void
     {
-        $request = Request::create('/');
-        $session = new Session(new MockArraySessionStorage());
-        $request->setSession($session);
-        $stack = new RequestStack();
-        $stack->push($request);
+        $settings = new SiteAccessGateSettings();
+        $repository = $this->createMock(SiteAccessGateSettingsRepository::class);
+        $repository->method('getOrCreateSingleton')->willReturn($settings);
 
-        return new SiteAccessGateSessionService($stack);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('flush');
+
+        $service = new SiteAccessGateService($repository, $entityManager, 50);
+
+        $service->updateAntibotSettings(120);
+
+        self::assertSame(100, $settings->getAntibotThreshold());
+    }
+
+    /**
+     * @brief Default antibot threshold is used when stored value is zero.
+     *
+     * @return void
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function testGetAntibotThresholdFallsBackToDefault(): void
+    {
+        $settings = (new SiteAccessGateSettings())->setAntibotThreshold(0);
+        $repository = $this->createMock(SiteAccessGateSettingsRepository::class);
+        $repository->method('getOrCreateSingleton')->willReturn($settings);
+
+        $service = new SiteAccessGateService(
+            $repository,
+            $this->createMock(EntityManagerInterface::class),
+            42,
+        );
+
+        self::assertSame(42, $service->getAntibotThreshold());
     }
 }

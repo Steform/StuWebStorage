@@ -1,0 +1,42 @@
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+<div class="card border-0 shadow-sm admin-settings__metric-card">
+    <div class="card-body">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="admin-settings__metric-icon admin-settings__metric-icon--server-disk" aria-hidden="true">
+                <i class="bi bi-server"></i>
+            </span>
+            <div>
+                <h2 class="h6 mb-1">{{ 'admin.settings.server_disk.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <p class="text-body-secondary small mb-0">{{ 'admin.settings.server_disk.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+            </div>
+        </div>
+
+        {% if serverDiskSpace.available %}
+            <div class="admin-settings__metric-value mb-2">
+                {{ serverDiskSpace.freeBytes|files_size_format }}
+            </div>
+            <p class="text-body-secondary small mb-3">{{ 'admin.settings.server_disk.remaining_label'|trans({}, 'messages', currentLocale) }}</p>
+
+            <div class="admin-settings__disk-progress mb-2" role="progressbar"
+                 aria-valuenow="{{ serverDiskSpace.usedPercent }}"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 aria-label="{{ 'admin.settings.server_disk.used_label'|trans({}, 'messages', currentLocale) }}">
+                <div class="admin-settings__disk-progress-bar" style="width: {{ serverDiskSpace.usedPercent }}%;"></div>
+            </div>
+
+            <dl class="admin-settings__disk-stats mb-0">
+                <div class="d-flex justify-content-between gap-2 small">
+                    <dt class="text-body-secondary">{{ 'admin.settings.server_disk.total_label'|trans({}, 'messages', currentLocale) }}</dt>
+                    <dd class="mb-0">{{ serverDiskSpace.totalBytes|files_size_format }}</dd>
+                </div>
+                <div class="d-flex justify-content-between gap-2 small mt-1">
+                    <dt class="text-body-secondary">{{ 'admin.settings.server_disk.used_label'|trans({}, 'messages', currentLocale) }}</dt>
+                    <dd class="mb-0">{{ serverDiskSpace.usedPercent }}%</dd>
+                </div>
+            </dl>
+        {% else %}
+            <p class="text-body-secondary mb-0">{{ 'admin.settings.server_disk.unavailable'|trans({}, 'messages', currentLocale) }}</p>
+        {% endif %}
+    </div>
+</div>

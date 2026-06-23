@@ -736,7 +736,7 @@ admin:
       access_gate_active_help: 'Ne admin lankytojai turi ivesti praleidimo pastaba.'
       access_gate_inactive_help: 'Svetaine prieinama be praleidimo pastabos.'
       default_quota: 'Numatyta saugyklos kvota'
-      default_quota_help: 'Taikoma paskyroms be asmenines kvotos (APP_USER_STORAGE_QUOTA_BYTES).'
+      default_quota_help: 'Taikoma paskyroms be asmenines kvotos.'
     access_gate:
       title: 'Viesieji prieigos vartai'
       subtitle: 'Uzdarykite svetaine ir leiskite praleisti slapta pastaba.'
@@ -748,9 +748,13 @@ admin:
       per_user_label: 'Naudotojo kvota'
       per_user_help: 'Asmenine kvota nustatoma naudotojo profilyje.'
       manage_users: 'Tvarkyti naudotojus'
-    shortcuts:
-      title: 'Admin nuorodos'
-      preview_gate: 'Perziureti vartu puslapi'
+    server_disk:
+      title: 'Serverio diskas'
+      subtitle: 'Laisva vieta diske, kuriame saugomi užšifruoti failai.'
+      remaining_label: 'Liko laisvos vietos'
+      total_label: 'Bendra talpa'
+      used_label: 'Naudojimas'
+      unavailable: 'Nepavyko nuskaityti serverio disko vietos.'
   bug_reports:
     meta:
       title: 'Bug tiketai'

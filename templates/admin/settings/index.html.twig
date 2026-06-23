@@ -5,122 +5,83 @@
 
 {% block flash_messages %}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('css/admin-settings.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block top_navigation %}
     {% include 'components/_storage_admin_nav.html.twig' %}
 {% endblock %}
 
-{% block main_container_class %}container py-4{% endblock %}
+{% block main_container_class %}container-fluid admin-settings py-4{% endblock %}
 
 {% block body %}
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
-        <div>
-            <h1 class="h4 mb-1">{{ 'admin.settings.page.title'|trans({}, 'messages', currentLocale) }}</h1>
-            <p class="text-body-secondary mb-0">{{ 'admin.settings.page.subtitle'|trans({}, 'messages', currentLocale) }}</p>
-        </div>
-    </div>
-
-    <div class="row row-cols-1 row-cols-md-3 g-3 mb-4">
-        <div class="col">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-shield-lock-fill text-primary fs-4" aria-hidden="true"></i>
-                        <h2 class="h6 mb-0">{{ 'admin.settings.summary.access_gate'|trans({}, 'messages', currentLocale) }}</h2>
-                    </div>
-                    {% if accessGateSettings.enabled %}
-                        <span class="badge text-bg-warning">{{ 'admin.settings.access_gate.status_active'|trans({}, 'messages', currentLocale) }}</span>
-                        <p class="text-body-secondary small mt-2 mb-0">{{ 'admin.settings.summary.access_gate_active_help'|trans({}, 'messages', currentLocale) }}</p>
-                    {% else %}
-                        <span class="badge text-bg-success">{{ 'admin.settings.access_gate.status_inactive'|trans({}, 'messages', currentLocale) }}</span>
-                        <p class="text-body-secondary small mt-2 mb-0">{{ 'admin.settings.summary.access_gate_inactive_help'|trans({}, 'messages', currentLocale) }}</p>
-                    {% endif %}
-                </div>
+    <header class="admin-settings__header mb-4">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+            <div>
+                <p class="admin-settings__eyebrow text-uppercase mb-2">{{ 'admin.settings.page.eyebrow'|trans({}, 'messages', currentLocale) }}</p>
+                <h1 class="h3 mb-2">{{ 'admin.settings.page.title'|trans({}, 'messages', currentLocale) }}</h1>
+                <p class="text-body-secondary mb-0">{{ 'admin.settings.page.subtitle'|trans({}, 'messages', currentLocale) }}</p>
             </div>
-        </div>
-        <div class="col">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-tools text-primary fs-4" aria-hidden="true"></i>
-                        <h2 class="h6 mb-0">{{ 'admin.settings.summary.maintenance'|trans({}, 'messages', currentLocale) }}</h2>
-                    </div>
+            <div class="admin-settings__status-strip d-flex flex-wrap gap-2">
+                <span class="admin-settings__status-pill {% if accessGateSettings.maintenanceModeEnabled %}admin-settings__status-pill--warning{% else %}admin-settings__status-pill--ok{% endif %}">
+                    <i class="bi bi-tools" aria-hidden="true"></i>
                     {% if accessGateSettings.maintenanceModeEnabled %}
-                        <span class="badge text-bg-warning">{{ 'admin.settings.maintenance.status_active'|trans({}, 'messages', currentLocale) }}</span>
-                        <p class="text-body-secondary small mt-2 mb-0">{{ 'admin.settings.summary.maintenance_active_help'|trans({}, 'messages', currentLocale) }}</p>
+                        {{ 'admin.settings.maintenance.status_active'|trans({}, 'messages', currentLocale) }}
                     {% else %}
-                        <span class="badge text-bg-success">{{ 'admin.settings.maintenance.status_inactive'|trans({}, 'messages', currentLocale) }}</span>
-                        <p class="text-body-secondary small mt-2 mb-0">{{ 'admin.settings.summary.maintenance_inactive_help'|trans({}, 'messages', currentLocale) }}</p>
+                        {{ 'admin.settings.maintenance.status_inactive'|trans({}, 'messages', currentLocale) }}
                     {% endif %}
-                </div>
+                </span>
+                <span class="admin-settings__status-pill admin-settings__status-pill--info">
+                    <i class="bi bi-shield-check" aria-hidden="true"></i>
+                    {{ 'admin.settings.summary.antibot_gate'|trans({}, 'messages', currentLocale) }}
+                </span>
             </div>
         </div>
-        <div class="col">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-hdd-stack-fill text-primary fs-4" aria-hidden="true"></i>
-                        <h2 class="h6 mb-0">{{ 'admin.settings.summary.default_quota'|trans({}, 'messages', currentLocale) }}</h2>
-                    </div>
-                    <div class="fs-5 fw-semibold">
-                        {% if defaultQuotaBytes > 0 %}
-                            {{ defaultQuotaBytes|files_size_format }}
-                        {% else %}
-                            {{ 'storage.home.stat_space_unlimited'|trans({}, 'messages', currentLocale) }}
-                        {% endif %}
-                    </div>
-                    <p class="text-body-secondary small mb-0">{{ 'admin.settings.summary.default_quota_help'|trans({}, 'messages', currentLocale) }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    </header>
+
+    {% include 'components/_flash_messages.html.twig' %}
 
     <div class="row g-4">
         <div class="col-12 col-xl-8">
-            {% include 'admin/settings/_access_gate_card.html.twig' %}
-            <div class="mt-4">
-                {% include 'admin/settings/_maintenance_card.html.twig' %}
+            <div class="row g-4">
+                <div class="col-12">
+                    {% include 'admin/settings/_maintenance_card.html.twig' %}
+                </div>
+                <div class="col-12">
+                    {% include 'admin/settings/_antibot_card.html.twig' %}
+                </div>
             </div>
         </div>
+
         <div class="col-12 col-xl-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5 mb-3">{{ 'admin.settings.storage.title'|trans({}, 'messages', currentLocale) }}</h2>
-                    <dl class="mb-3">
-                        <dt class="small text-body-secondary">{{ 'admin.settings.storage.default_quota_label'|trans({}, 'messages', currentLocale) }}</dt>
-                        <dd class="mb-2">
+            <div class="admin-settings__sidebar d-grid gap-4">
+                <div class="card border-0 shadow-sm admin-settings__metric-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <span class="admin-settings__metric-icon admin-settings__metric-icon--quota" aria-hidden="true">
+                                <i class="bi bi-hdd-stack-fill"></i>
+                            </span>
+                            <div>
+                                <h2 class="h6 mb-1">{{ 'admin.settings.summary.default_quota'|trans({}, 'messages', currentLocale) }}</h2>
+                                <p class="text-body-secondary small mb-0">{{ 'admin.settings.summary.default_quota_help'|trans({}, 'messages', currentLocale) }}</p>
+                            </div>
+                        </div>
+                        <div class="admin-settings__metric-value">
                             {% if defaultQuotaBytes > 0 %}
                                 {{ defaultQuotaBytes|files_size_format }}
                             {% else %}
                                 {{ 'storage.home.stat_space_unlimited'|trans({}, 'messages', currentLocale) }}
                             {% endif %}
-                        </dd>
-                        <dt class="small text-body-secondary">{{ 'admin.settings.storage.per_user_label'|trans({}, 'messages', currentLocale) }}</dt>
-                        <dd class="mb-0">{{ 'admin.settings.storage.per_user_help'|trans({}, 'messages', currentLocale) }}</dd>
-                    </dl>
-                    <a class="btn btn-outline-primary btn-sm" href="{{ path('admin_users_index') }}">{{ 'admin.settings.storage.manage_users'|trans({}, 'messages', currentLocale) }}</a>
-                </div>
-            </div>
-            <div class="card shadow-sm mt-4">
-                <div class="card-body">
-                    <h2 class="h5 mb-3">{{ 'admin.settings.shortcuts.title'|trans({}, 'messages', currentLocale) }}</h2>
-                    <div class="d-grid gap-2">
-                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('admin_files_index') }}">
-                            <i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{{ 'app.nav.files_admin'|trans({}, 'messages', currentLocale) }}
-                        </a>
-                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('admin_users_index') }}">
-                            <i class="bi bi-people me-1" aria-hidden="true"></i>{{ 'app.nav.security_users'|trans({}, 'messages', currentLocale) }}
-                        </a>
-                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('admin_users_invite') }}">
-                            <i class="bi bi-person-plus me-1" aria-hidden="true"></i>{{ 'app.nav.security_invite'|trans({}, 'messages', currentLocale) }}
-                        </a>
-                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('admin_bug_reports_index') }}">
-                            <i class="bi bi-bug-fill me-1" aria-hidden="true"></i>{{ 'app.nav.bug_reports'|trans({}, 'messages', currentLocale) }}
-                        </a>
-                        <a class="btn btn-outline-secondary btn-sm text-start" href="{{ path('storage_access_gate') }}" target="_blank" rel="noopener noreferrer">
-                            <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>{{ 'admin.settings.shortcuts.preview_gate'|trans({}, 'messages', currentLocale) }}
+                        </div>
+                        <a class="btn btn-outline-primary btn-sm mt-3" href="{{ path('admin_users_index') }}">
+                            {{ 'admin.settings.storage.manage_users'|trans({}, 'messages', currentLocale) }}
                         </a>
                     </div>
                 </div>
+
+                {% include 'admin/settings/_server_disk_card.html.twig' %}
             </div>
         </div>
     </div>

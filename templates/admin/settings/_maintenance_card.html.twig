@@ -1,17 +1,23 @@
 {% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
-<div class="card shadow-sm h-100" id="settings-maintenance">
-    <div class="card-body">
-        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
-            <div>
-                <h2 class="h5 mb-1">{{ 'admin.settings.maintenance.title'|trans({}, 'messages', currentLocale) }}</h2>
-                <p class="text-body-secondary small mb-0">{{ 'admin.settings.maintenance.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+<article class="card border-0 shadow-sm admin-settings__panel" id="settings-maintenance">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+            <div class="d-flex align-items-start gap-3">
+                <span class="admin-settings__panel-icon admin-settings__panel-icon--maintenance" aria-hidden="true">
+                    <i class="bi bi-tools"></i>
+                </span>
+                <div>
+                    <h2 class="h5 mb-1">{{ 'admin.settings.maintenance.title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <p class="text-body-secondary small mb-0">{{ 'admin.settings.maintenance.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
             </div>
             {% if accessGateSettings.maintenanceModeEnabled %}
-                <span class="badge text-bg-warning">{{ 'admin.settings.maintenance.status_active'|trans({}, 'messages', currentLocale) }}</span>
+                <span class="badge rounded-pill text-bg-warning">{{ 'admin.settings.maintenance.status_active'|trans({}, 'messages', currentLocale) }}</span>
             {% else %}
-                <span class="badge text-bg-success">{{ 'admin.settings.maintenance.status_inactive'|trans({}, 'messages', currentLocale) }}</span>
+                <span class="badge rounded-pill text-bg-success">{{ 'admin.settings.maintenance.status_inactive'|trans({}, 'messages', currentLocale) }}</span>
             {% endif %}
         </div>
+
         <form method="post" action="{{ path('admin_settings_maintenance_update') }}" class="row g-3">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token(maintenanceCsrfToken) }}">
             <div class="col-12">
@@ -30,4 +36,4 @@
             </div>
         </form>
     </div>
-</div>
+</article>

@@ -34,18 +34,13 @@ final class StorageHomePageTest extends WebTestCase
      * @date 2026-06-22
      * @author Stephane H.
      */
-    public function testAnonymousHomePageShowsLoginWithoutStats(): void
+    public function testAnonymousHomePageRedirectsToAntibotGate(): void
     {
         $client = static::createClient();
         $client->request('GET', '/');
 
-        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
-        $content = (string) $client->getResponse()->getContent();
-        self::assertStringContainsString('Your encrypted cloud storage', $content);
-        self::assertStringContainsString('/login', $content);
-        self::assertStringNotContainsString('storage-stat-card', $content);
-        self::assertStringContainsString('Per-user quota', $content);
-        self::assertStringContainsString('storage-nav-locale-toggle', $content);
+        self::assertTrue($client->getResponse()->isRedirect());
+        self::assertStringContainsString('/home/access', (string) $client->getResponse()->headers->get('Location'));
     }
 
     /**

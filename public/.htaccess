@@ -4,8 +4,8 @@
     # Force HTTPS in non-local environments (keep HTTP for local dev hosts).
     RewriteCond %{HTTP_HOST} !^localhost(:\d+)?$ [NC]
     RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:\d+)?$ [NC]
-    RewriteCond %{HTTP_HOST} !\.loc$ [NC]
-    RewriteCond %{HTTP_HOST} !\.local$ [NC]
+    RewriteCond %{HTTP_HOST} !\.loc(:\d+)?$ [NC]
+    RewriteCond %{HTTP_HOST} !\.local(:\d+)?$ [NC]
     RewriteCond %{HTTPS} !=on
     RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
@@ -18,7 +18,7 @@
 </IfModule>
 
 <IfModule mod_php.c>
-    ; mod_php only (not PHP-FPM). For FPM, see public/.user.ini
+    # mod_php only (not PHP-FPM). For FPM, see public/.user.ini
     php_value upload_max_filesize 32M
     php_value post_max_size 36M
     php_value max_input_time 3600

@@ -36,7 +36,8 @@ security:
         target: app_home
 
   access_control:
-    - { path: ^/access-gate, roles: PUBLIC_ACCESS }
+    - { path: ^/home/access, roles: PUBLIC_ACCESS }
+    - { path: ^/home/captcha, roles: PUBLIC_ACCESS }
     - { path: ^/setup, roles: PUBLIC_ACCESS }
     - { path: ^/invite/activate, roles: PUBLIC_ACCESS }
     - { path: ^/login/totp, roles: ROLE_USER }

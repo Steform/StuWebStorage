@@ -1,0 +1,115 @@
+.admin-settings {
+    max-width: 1200px;
+}
+
+.admin-settings__eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--bs-secondary-color);
+}
+
+.admin-settings__header {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.admin-settings__status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border: 1px solid var(--bs-border-color);
+    background: var(--bs-body-bg);
+}
+
+.admin-settings__status-pill--ok {
+    border-color: rgba(var(--bs-success-rgb), 0.35);
+    color: var(--bs-success);
+    background: rgba(var(--bs-success-rgb), 0.08);
+}
+
+.admin-settings__status-pill--warning {
+    border-color: rgba(var(--bs-warning-rgb), 0.45);
+    color: var(--bs-warning-text-emphasis, #664d03);
+    background: rgba(var(--bs-warning-rgb), 0.12);
+}
+
+.admin-settings__status-pill--info {
+    border-color: rgba(var(--bs-primary-rgb), 0.35);
+    color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), 0.08);
+}
+
+.admin-settings__panel {
+    overflow: hidden;
+}
+
+.admin-settings__panel-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.admin-settings__panel-icon--maintenance {
+    color: var(--bs-warning-text-emphasis, #664d03);
+    background: rgba(var(--bs-warning-rgb), 0.15);
+}
+
+.admin-settings__panel-icon--antibot {
+    color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), 0.12);
+}
+
+.admin-settings__metric-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.85rem;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.admin-settings__metric-icon--quota {
+    color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.admin-settings__metric-icon--server-disk {
+    color: var(--bs-info);
+    background: rgba(var(--bs-info-rgb), 0.12);
+}
+
+.admin-settings__metric-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.admin-settings__disk-progress {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--bs-secondary-bg);
+    overflow: hidden;
+}
+
+.admin-settings__disk-progress-bar {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(var(--bs-primary-rgb), 0.85), rgba(var(--bs-info-rgb), 0.9));
+    transition: width 0.2s ease;
+}
+
+.admin-settings__disk-stats dd {
+    font-weight: 500;
+}

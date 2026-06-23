@@ -1,0 +1,29 @@
+{% extends 'layouts/storage_landing.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'maintenance.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('css/maintenance.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block main_container_class %}maintenance-page container py-5{% endblock %}
+
+{% block body %}
+    <section class="maintenance-page__card card border-0 shadow-sm mx-auto">
+        <div class="card-body text-center p-4 p-md-5">
+            <div class="maintenance-page__icon mb-3" aria-hidden="true">
+                <i class="bi bi-tools"></i>
+            </div>
+            <h1 class="h3 mb-3">{{ 'maintenance.title'|trans({}, 'messages', currentLocale) }}</h1>
+            <p class="text-body-secondary mb-0">
+                {% if maintenanceMessage %}
+                    {{ maintenanceMessage }}
+                {% else %}
+                    {{ 'maintenance.description'|trans({}, 'messages', currentLocale) }}
+                {% endif %}
+            </p>
+        </div>
+    </section>
+{% endblock %}

@@ -8,7 +8,7 @@ use App\Repository\SiteAccessGateSettingsRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @brief Singleton settings for the public site access gate.
+ * @brief Singleton platform settings (maintenance mode and antibot threshold).
  */
 #[ORM\Entity(repositoryClass: SiteAccessGateSettingsRepository::class)]
 #[ORM\Table(name: 'site_access_gate_settings')]
@@ -20,19 +20,13 @@ class SiteAccessGateSettings
     private ?int $id = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
-    private bool $enabled = false;
-
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $gateMessage = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $bypassNote = null;
-
-    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $maintenanceModeEnabled = false;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $maintenanceMessage = null;
+
+    #[ORM\Column(type: 'smallint', options: ['default' => 50])]
+    private int $antibotThreshold = 50;
 
     /**
      * @brief Get row identifier.
@@ -45,90 +39,6 @@ class SiteAccessGateSettings
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    /**
-     * @brief Check whether the access gate is active.
-     *
-     * @param void No input parameter.
-     * @return bool
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function isEnabled(): bool
-    {
-        return $this->enabled;
-    }
-
-    /**
-     * @brief Enable or disable the access gate.
-     *
-     * @param bool $enabled Gate active flag.
-     * @return self
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function setEnabled(bool $enabled): self
-    {
-        $this->enabled = $enabled;
-
-        return $this;
-    }
-
-    /**
-     * @brief Get visitor message shown on the gate page.
-     *
-     * @param void No input parameter.
-     * @return string|null
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function getGateMessage(): ?string
-    {
-        return $this->gateMessage;
-    }
-
-    /**
-     * @brief Set visitor message shown on the gate page.
-     *
-     * @param string|null $gateMessage Gate message.
-     * @return self
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function setGateMessage(?string $gateMessage): self
-    {
-        $this->gateMessage = $gateMessage;
-
-        return $this;
-    }
-
-    /**
-     * @brief Get secret bypass note required to unlock the site.
-     *
-     * @param void No input parameter.
-     * @return string|null
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function getBypassNote(): ?string
-    {
-        return $this->bypassNote;
-    }
-
-    /**
-     * @brief Set secret bypass note required to unlock the site.
-     *
-     * @param string|null $bypassNote Bypass note.
-     * @return self
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function setBypassNote(?string $bypassNote): self
-    {
-        $this->bypassNote = $bypassNote;
-
-        return $this;
     }
 
     /**
@@ -183,6 +93,34 @@ class SiteAccessGateSettings
     public function setMaintenanceMessage(?string $maintenanceMessage): self
     {
         $this->maintenanceMessage = $maintenanceMessage;
+
+        return $this;
+    }
+
+    /**
+     * @brief Get minimum behavioural score required to pass the homepage antibot gate.
+     *
+     * @param void No input parameter.
+     * @return int Score between 0 and 100.
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function getAntibotThreshold(): int
+    {
+        return $this->antibotThreshold;
+    }
+
+    /**
+     * @brief Set minimum behavioural score required to pass the homepage antibot gate.
+     *
+     * @param int $antibotThreshold Score between 0 and 100.
+     * @return self
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function setAntibotThreshold(int $antibotThreshold): self
+    {
+        $this->antibotThreshold = max(0, min(100, $antibotThreshold));
 
         return $this;
     }

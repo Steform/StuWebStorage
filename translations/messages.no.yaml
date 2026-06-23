@@ -736,7 +736,7 @@ admin:
       access_gate_active_help: 'Ikke-admin besokende ma skrive inn bypass-notatet.'
       access_gate_inactive_help: 'Nettstedet er apent uten bypass-notat.'
       default_quota: 'Standard lagringskvote'
-      default_quota_help: 'Gjelder kontoer uten personlig kvote (APP_USER_STORAGE_QUOTA_BYTES).'
+      default_quota_help: 'Gjelder kontoer uten personlig kvote.'
     access_gate:
       title: 'Offentlig tilgangssperre'
       subtitle: 'Laas nettstedet og tillat bypass med hemmelig notat.'
@@ -748,9 +748,13 @@ admin:
       per_user_label: Brukerkvote
       per_user_help: 'Personlig kvote settes pa brukerprofilen.'
       manage_users: 'Administrer brukere'
-    shortcuts:
-      title: Admin-snarveier
-      preview_gate: 'Forhandsvis sperreside'
+    server_disk:
+      title: Serverdisk
+      subtitle: 'Ledig plass på volumet som lagrer krypterte filer.'
+      remaining_label: 'Gjenværende ledig plass'
+      total_label: 'Total kapasitet'
+      used_label: Bruk
+      unavailable: 'Kunne ikke lese serverdiskplass.'
   bug_reports:
     meta:
       title: 'Bug-billetter'

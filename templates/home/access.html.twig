@@ -1,0 +1,118 @@
+{% extends 'layouts/storage_landing.html.twig' %}
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+{% set accessPhase = accessPhase|default('checking') %}
+
+{% block title %}{{ 'storage.home.access.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('css/home-access.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+    <section class="home-access py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div
+                            class="card-body home-access__root text-center"
+                            data-home-access-root
+                            data-initial-phase="{{ accessPhase }}"
+                            data-target-path="{{ target }}"
+                        >
+                            <form
+                                id="home-access-form"
+                                method="post"
+                                action="{{ path('storage_home_access') }}"
+                                class="home-access__form"
+                            >
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('storage_home_access') }}">
+                                <input type="hidden" name="target" value="{{ target }}">
+                                <input type="hidden" name="pointer_moves" id="home-access-pointer-moves" value="0">
+                                <input type="hidden" name="focus_events" id="home-access-focus-events" value="0">
+                                <input type="hidden" name="time_on_page_ms" id="home-access-time-on-page" value="0">
+                                <input type="hidden" name="webdriver" id="home-access-webdriver" value="0">
+
+                                <div
+                                    class="home-access__phase{% if accessPhase == 'checking' %} home-access__phase--active{% else %} d-none{% endif %}"
+                                    data-home-access-phase="checking"
+                                    role="status"
+                                    aria-live="polite"
+                                >
+                                    <div class="spinner-border text-primary mb-3" aria-hidden="true"></div>
+                                    <h1 class="h4 mb-2">{{ 'storage.home.access.title'|trans({}, 'messages', currentLocale) }}</h1>
+                                    <p class="text-body-secondary mb-0">{{ 'storage.home.access.verifying'|trans({}, 'messages', currentLocale) }}</p>
+                                </div>
+
+                                <div
+                                    class="home-access__phase d-none"
+                                    data-home-access-phase="success"
+                                    role="status"
+                                    aria-live="polite"
+                                >
+                                    <div class="spinner-border text-success mb-3" aria-hidden="true"></div>
+                                    <p class="mb-0">{{ 'storage.home.access.redirecting'|trans({}, 'messages', currentLocale) }}</p>
+                                </div>
+
+                                <div
+                                    class="home-access__phase home-access__phase--captcha text-start{% if accessPhase == 'captcha' %} home-access__phase--active{% else %} d-none{% endif %}"
+                                    data-home-access-phase="captcha"
+                                    aria-live="polite"
+                                >
+                                    <h1 class="h4 mb-3 text-center">{{ 'storage.home.access.title'|trans({}, 'messages', currentLocale) }}</h1>
+                                    <p class="text-body-secondary mb-3 text-center">{{ 'storage.home.access.captcha_required'|trans({}, 'messages', currentLocale) }}</p>
+
+                                    {% if app_debug and devAccessScore is not null %}
+                                        <p class="alert alert-secondary small home-access__dev-score text-center" role="status">
+                                            {{ 'storage.home.access.dev_score'|trans({
+                                                '%score%': devAccessScore.score,
+                                                '%threshold%': devAccessScore.threshold
+                                            }, 'messages', currentLocale) }}
+                                        </p>
+                                    {% endif %}
+
+                                    {% include 'components/_flash_messages.html.twig' %}
+
+                                    <div class="mb-3">
+                                        <label class="form-label" for="captcha-code">{{ 'storage.home.access.captcha_label'|trans({}, 'messages', currentLocale) }}</label>
+                                        <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+                                            <img
+                                                data-src="{{ path('storage_home_captcha') }}"
+                                                alt="{{ 'storage.home.access.captcha_image_alt'|trans({}, 'messages', currentLocale) }}"
+                                                width="100"
+                                                height="40"
+                                                class="home-access__captcha-image"
+                                            >
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="home-access-captcha-refresh">
+                                                {{ 'storage.home.access.captcha_refresh'|trans({}, 'messages', currentLocale) }}
+                                            </button>
+                                        </div>
+                                        <input
+                                            class="form-control"
+                                            id="captcha-code"
+                                            name="captcha_code"
+                                            type="text"
+                                            inputmode="numeric"
+                                            autocomplete="off"
+                                            maxlength="8"
+                                        >
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        {{ 'storage.home.access.submit'|trans({}, 'messages', currentLocale) }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_scripts %}
+    {{ parent() }}
+    <script src="{{ asset('js/home-antibot-detection.js') }}" defer></script>
+{% endblock %}

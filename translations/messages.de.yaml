@@ -736,7 +736,7 @@ admin:
       access_gate_active_help: 'Nicht-Admin-Besucher muessen die Notiz eingeben, um die Seite zu oeffnen.'
       access_gate_inactive_help: 'Die Seite ist ohne Bypass-Notiz erreichbar.'
       default_quota: 'Standard-Speicherkontingent'
-      default_quota_help: 'Gilt fuer Konten ohne persoenliches Kontingent (Umgebungsvariable APP_USER_STORAGE_QUOTA_BYTES).'
+      default_quota_help: 'Gilt fuer Konten ohne persoenliches Kontingent.'
     access_gate:
       title: 'Oeffentliche Zugangssperre'
       subtitle: 'Sperren Sie den Zugang und erlauben Sie Bypass per Geheimnotiz.'
@@ -748,9 +748,13 @@ admin:
       per_user_label: Benutzer-Kontingent
       per_user_help: 'Persoenliches Kontingent auf der Benutzerdetailseite setzen.'
       manage_users: 'Benutzer verwalten'
-    shortcuts:
-      title: Admin-Shortcuts
-      preview_gate: 'Sperrseite anzeigen'
+    server_disk:
+      title: Server-Speicher
+      subtitle: 'Freier Speicher auf dem Volume der verschluesselten Dateien.'
+      remaining_label: 'Verbleibender freier Speicher'
+      total_label: Gesamtkapazitaet
+      used_label: Auslastung
+      unavailable: 'Server-Speicher konnte nicht gelesen werden.'
   bug_reports:
     meta:
       title: 'Bug-Tickets'

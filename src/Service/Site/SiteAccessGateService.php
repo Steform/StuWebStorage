@@ -9,24 +9,24 @@ use App\Repository\SiteAccessGateSettingsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * @brief Resolve and persist site access gate settings.
+ * @brief Resolve and persist platform-wide site settings.
  */
 final class SiteAccessGateService
 {
     /**
-     * @param SiteAccessGateSettingsRepository $settingsRepository Gate settings repository.
-     * @param SiteAccessGateSessionService $sessionService Gate session helper.
+     * @param SiteAccessGateSettingsRepository $settingsRepository Settings repository.
      * @param EntityManagerInterface $entityManager Doctrine entity manager.
+     * @param int $defaultAntibotThreshold Fallback antibot threshold from configuration.
      */
     public function __construct(
         private readonly SiteAccessGateSettingsRepository $settingsRepository,
-        private readonly SiteAccessGateSessionService $sessionService,
         private readonly EntityManagerInterface $entityManager,
+        private readonly int $defaultAntibotThreshold,
     ) {
     }
 
     /**
-     * @brief Load singleton gate settings.
+     * @brief Load singleton platform settings.
      *
      * @param void No input parameter.
      * @return SiteAccessGateSettings
@@ -36,89 +36,6 @@ final class SiteAccessGateService
     public function getSettings(): SiteAccessGateSettings
     {
         return $this->settingsRepository->getOrCreateSingleton();
-    }
-
-    /**
-     * @brief Check whether gate enforcement is active.
-     *
-     * @param void No input parameter.
-     * @return bool
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function isGateEnabled(): bool
-    {
-        return $this->getSettings()->isEnabled();
-    }
-
-    /**
-     * @brief Check whether current visitor may browse without seeing the gate.
-     *
-     * @param bool $adminBypass Whether caller has ROLE_ADMIN.
-     * @return bool
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function isBypassGranted(bool $adminBypass): bool
-    {
-        if ($adminBypass) {
-            return true;
-        }
-
-        return $this->sessionService->isAccessGranted();
-    }
-
-    /**
-     * @brief Verify submitted bypass note and grant session access when valid.
-     *
-     * @param string $submittedNote Visitor submitted note.
-     * @return bool True when note matches configured secret.
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function verifyBypassNoteAndGrant(string $submittedNote): bool
-    {
-        $expected = trim((string) $this->getSettings()->getBypassNote());
-        $submitted = trim($submittedNote);
-        if ($expected === '' || $submitted === '') {
-            return false;
-        }
-
-        if (!hash_equals($expected, $submitted)) {
-            return false;
-        }
-
-        $this->sessionService->grantAccess();
-
-        return true;
-    }
-
-    /**
-     * @brief Update gate settings from admin dashboard form.
-     *
-     * @param bool $enabled Gate enabled flag.
-     * @param string $gateMessage Visitor message.
-     * @param string $bypassNote Secret bypass note.
-     * @return string|null Translation key on validation failure or null.
-     * @date 2026-06-22
-     * @author Stephane H.
-     */
-    public function updateSettings(bool $enabled, string $gateMessage, string $bypassNote): ?string
-    {
-        $normalizedMessage = trim($gateMessage);
-        $normalizedNote = trim($bypassNote);
-
-        if ($enabled && $normalizedNote === '') {
-            return 'storage.access_gate.error.bypass_note_required';
-        }
-
-        $settings = $this->getSettings();
-        $settings->setEnabled($enabled);
-        $settings->setGateMessage($normalizedMessage !== '' ? $normalizedMessage : null);
-        $settings->setBypassNote($normalizedNote !== '' ? $normalizedNote : null);
-        $this->entityManager->flush();
-
-        return null;
     }
 
     /**
@@ -150,6 +67,21 @@ final class SiteAccessGateService
     }
 
     /**
+     * @brief Get configured antibot threshold for the homepage gate.
+     *
+     * @param void No input parameter.
+     * @return int Score between 0 and 100.
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function getAntibotThreshold(): int
+    {
+        $threshold = $this->getSettings()->getAntibotThreshold();
+
+        return $threshold > 0 ? $threshold : $this->defaultAntibotThreshold;
+    }
+
+    /**
      * @brief Update maintenance mode settings from admin dashboard form.
      *
      * @param bool $maintenanceModeEnabled Maintenance mode flag.
@@ -164,6 +96,21 @@ final class SiteAccessGateService
         $settings = $this->getSettings();
         $settings->setMaintenanceModeEnabled($maintenanceModeEnabled);
         $settings->setMaintenanceMessage($normalizedMessage !== '' ? $normalizedMessage : null);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * @brief Update antibot threshold from admin dashboard form.
+     *
+     * @param int $antibotThreshold Score between 0 and 100.
+     * @return void
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function updateAntibotSettings(int $antibotThreshold): void
+    {
+        $settings = $this->getSettings();
+        $settings->setAntibotThreshold($antibotThreshold);
         $this->entityManager->flush();
     }
 }

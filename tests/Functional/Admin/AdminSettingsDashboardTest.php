@@ -65,14 +65,15 @@ final class AdminSettingsDashboardTest extends WebTestCase
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
         $content = (string) $client->getResponse()->getContent();
         self::assertStringContainsString('Platform configuration', $content);
-        self::assertStringContainsString('access_gate_enabled', $content);
-        self::assertStringContainsString('/admin/settings/access-gate', $content);
+        self::assertStringContainsString('antibot_threshold', $content);
+        self::assertStringContainsString('/admin/settings/antibot', $content);
         self::assertStringContainsString('maintenance_mode_enabled', $content);
         self::assertStringContainsString('/admin/settings/maintenance', $content);
         self::assertStringContainsString('Dashboard', $content);
         self::assertStringContainsString('floating-actions', $content);
-        self::assertStringContainsString('/admin/bug-reports', $content);
-        self::assertStringContainsString('bi-bug-fill', $content);
+        self::assertStringContainsString('admin-settings__disk-progress', $content);
+        self::assertStringContainsString('bi-server', $content);
+        self::assertStringNotContainsString('admin-settings__shortcut-link', $content);
     }
 
     /**

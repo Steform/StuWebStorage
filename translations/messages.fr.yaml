@@ -731,21 +731,23 @@ admin:
       title: 'Configuration plateforme'
     page:
       title: 'Configuration de la plateforme'
-      subtitle: 'Parametres globaux du site, verrou d''accès et quotas par defaut.'
+      eyebrow: 'Administration'
+      subtitle: 'Maintenance, protection anti-robot de l''accueil et quotas par defaut.'
     summary:
-      access_gate: 'Verrou d''accès'
-      access_gate_active_help: 'Les visiteurs non admin doivent saisir la note pour acceder au site.'
-      access_gate_inactive_help: 'Le site est accessible sans note de contournement.'
+      antibot_gate: 'Gate anti-robot active'
       maintenance: Maintenance
-      maintenance_active_help: 'Le bouton Connexion est masque. Seuls les admins peuvent se connecter via /login.'
+      maintenance_active_help: 'L''accueil public affiche la page de maintenance. Seuls les admins peuvent se connecter via /login.'
       maintenance_inactive_help: 'La connexion publique reste disponible.'
       default_quota: 'Quota stockage par defaut'
-      default_quota_help: 'Valeur appliquee aux comptes sans quota personnel (variable APP_USER_STORAGE_QUOTA_BYTES).'
-    access_gate:
-      title: 'Verrou d''accès public'
-      subtitle: 'Bloquez l''accès au site et autorisez le contournement via une note secrete.'
-      status_active: 'Verrou actif'
-      status_inactive: 'Verrou inactif'
+      default_quota_help: 'Valeur appliquee aux comptes sans quota personnel defini.'
+    antibot:
+      title: 'Gate anti-robot (accueil)'
+      subtitle: 'Protege la page d''accueil contre les robots via scoring comportemental et captcha.'
+      status_active: 'Toujours active'
+      threshold_label: 'Seuil de score comportemental'
+      threshold_help: 'Score minimum (0-100) pour acceder a l''accueil sans captcha. En dessous, le captcha est requis.'
+      save: 'Enregistrer le seuil'
+      success_updated: 'Parametres anti-robot mis a jour.'
     maintenance:
       title: Maintenance
       subtitle: 'Masquez la connexion publique et reservez /login aux administrateurs.'
@@ -757,9 +759,13 @@ admin:
       per_user_label: 'Quota par utilisateur'
       per_user_help: 'Definissez un quota personnel sur la fiche de chaque utilisateur.'
       manage_users: 'Gerer les utilisateurs'
-    shortcuts:
-      title: 'Raccourcis admin'
-      preview_gate: 'Previsualiser la page de verrou'
+    server_disk:
+      title: 'Espace serveur'
+      subtitle: 'Capacite libre sur le volume qui heberge les fichiers chiffres.'
+      remaining_label: 'Espace libre restant'
+      total_label: 'Capacite totale'
+      used_label: 'Utilisation'
+      unavailable: 'Impossible de lire l''espace disque du serveur.'
   bug_reports:
     meta:
       title: 'Tickets bug'
@@ -931,30 +937,21 @@ storage:
     features_subtitle: 'Stockage securise, partage controle et suivi de quota par utilisateur.'
     feature_quota_title: 'Quota par utilisateur'
     feature_quota_text: 'Visualisez l''espace utilise et le volume restant selon votre quota personnel ou celui de la plateforme.'
-  access_gate:
-    meta:
-      title: 'Acces restreint'
-    title: 'Acces restreint'
-    default_message: 'Cette plateforme est temporairement verrouillee. Saisissez la note d''accès pour continuer.'
-    bypass_note_label: 'Note d''accès'
-    bypass_note_help: 'La note vous a été communiquée par l''administrateur de la plateforme.'
-    submit: 'Deverrouiller l''accès'
-    error:
-      csrf_invalid: 'Jeton de securite invalide.'
-      invalid_note: 'Note d''accès incorrecte.'
-      bypass_note_required: 'Une note d''accès est requise lorsque le verrou est actif.'
-    success:
-      settings_updated: 'Parametres du verrou d''accès mis a jour.'
-    admin:
-      panel_aria: 'Configuration du verrou d''accès'
-      title: 'Verrou d''accès du site'
-      subtitle: 'Activez le verrou et personnalisez le message visiteur ainsi que la note secrete de contournement.'
-      enabled_label: 'Activer le verrou d''accès public'
-      message_label: 'Message affiche aux visiteurs'
-      message_placeholder: 'Exemple : acces réservé aux beta-testeurs.'
-      bypass_note_label: 'Note de contournement'
-      bypass_note_help: 'Les visiteurs devront saisir exactement cette note pour acceder au site (24 h par session).'
-      save: 'Enregistrer le verrou'
+    access:
+      meta:
+        title: 'Verification d''accès'
+      title: 'Verification d''accès'
+      verifying: 'Veuillez patienter pendant la verification anti-robot…'
+      redirecting: 'Verification reussie, redirection vers l''accueil…'
+      captcha_required: 'La verification automatique a echoue. Saisissez le code affiche pour continuer.'
+      dev_score: 'Score technique apres verification : %score% / %threshold% (environnement de developpement).'
+      captcha_label: 'Code de verification'
+      captcha_image_alt: 'Image captcha'
+      captcha_refresh: 'Nouvelle image'
+      submit: Continuer
+      flash:
+        denied: 'Acces refuse. Saisissez le captcha ou reessayez dans quelques secondes.'
+        invalid_csrf: 'Soumission invalide. Veuillez reessayer.'
 
 maintenance:
   meta:

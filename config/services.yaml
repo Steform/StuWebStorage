@@ -21,6 +21,8 @@ parameters:
   app.upload_chunk_bytes: 8388608
   app.version: ''
   app.site_title: 'StuWebStorage'
+  app.antibot_threshold: 50
+  app.storage_bot_attestation_ttl_seconds: 2700
 
 services:
   _defaults:
@@ -119,6 +121,10 @@ services:
     arguments:
       $defaultQuotaBytes: '%app.user_storage_quota_bytes%'
 
+  App\Service\Admin\ServerDiskSpaceService:
+    arguments:
+      $projectDir: '%kernel.project_dir%'
+
   App\Controller\FilesController:
     arguments:
       $projectDir: '%kernel.project_dir%'
@@ -156,6 +162,15 @@ services:
   App\Controller\BugReportController:
     arguments:
       $appVersion: '%app.version%'
+
+  App\Service\Site\SiteAccessGateService:
+    arguments:
+      $defaultAntibotThreshold: '%app.antibot_threshold%'
+
+  App\Service\Security\StorageBotAttestationService:
+    arguments:
+      $secret: '%kernel.secret%'
+      $ttlSeconds: '%app.storage_bot_attestation_ttl_seconds%'
 
   App\Twig\StorageSiteExtension:
     arguments:

@@ -1,0 +1,38 @@
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+<article class="card border-0 shadow-sm admin-settings__panel" id="settings-antibot">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+            <div class="d-flex align-items-start gap-3">
+                <span class="admin-settings__panel-icon admin-settings__panel-icon--antibot" aria-hidden="true">
+                    <i class="bi bi-shield-check"></i>
+                </span>
+                <div>
+                    <h2 class="h5 mb-1">{{ 'admin.settings.antibot.title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <p class="text-body-secondary small mb-0">{{ 'admin.settings.antibot.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+                </div>
+            </div>
+            <span class="badge rounded-pill text-bg-primary">{{ 'admin.settings.antibot.status_active'|trans({}, 'messages', currentLocale) }}</span>
+        </div>
+
+        <form method="post" action="{{ path('admin_settings_antibot_update') }}" class="row g-3">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token(antibotCsrfToken) }}">
+            <div class="col-12 col-md-6">
+                <label class="form-label" for="antibot_threshold">{{ 'admin.settings.antibot.threshold_label'|trans({}, 'messages', currentLocale) }}</label>
+                <input
+                    id="antibot_threshold"
+                    name="antibot_threshold"
+                    type="number"
+                    class="form-control"
+                    min="0"
+                    max="100"
+                    value="{{ accessGateSettings.antibotThreshold }}"
+                    required
+                >
+                <div class="form-text">{{ 'admin.settings.antibot.threshold_help'|trans({}, 'messages', currentLocale) }}</div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">{{ 'admin.settings.antibot.save'|trans({}, 'messages', currentLocale) }}</button>
+            </div>
+        </form>
+    </div>
+</article>
