@@ -582,6 +582,7 @@ files:
     target_owner_not_found: 'No active user with this exact pseudonym matches this input.'
     upload_invalid: 'Upload failed or file unreadable.'
     upload_too_large: 'File exceeds the maximum allowed size.'
+    upload_chunk_too_large: 'Upload chunk exceeds the server PHP limit (raise upload_max_filesize and post_max_size).'
     quota_exceeded: 'Storage quota reached for this user.'
     public_not_allowed: 'Your roles do not allow public visibility.'
     storage_failed: 'Could not store the encrypted file.'

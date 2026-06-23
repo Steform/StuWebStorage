@@ -1161,7 +1161,7 @@ class FilesController extends AbstractController
             'csrfFolderSharePublic' => self::CSRF_FOLDER_SHARE_PUBLIC,
             'csrfFolderShareFriends' => self::CSRF_FOLDER_SHARE_FRIENDS,
             'csrfFolderRename' => self::CSRF_FOLDER_RENAME,
-            'maxUploadBytes' => $this->resolveEffectiveMaxUploadBytes(),
+            'maxUploadBytes' => $this->resolveAppMaxUploadBytes(),
         ];
     }
 
@@ -1390,7 +1390,7 @@ class FilesController extends AbstractController
 
             return $this->uploadJsonErrorOrRedirect($request, $translator, 'files.flash.upload_invalid');
         }
-        $maxUploadBytes = $this->resolveEffectiveMaxUploadBytes();
+        $maxUploadBytes = $this->resolveSingleRequestMaxUploadBytes();
         if ($uploaded->getSize() > $maxUploadBytes) {
             return $this->uploadJsonErrorOrRedirect($request, $translator, 'files.flash.upload_too_large');
         }
@@ -1498,7 +1498,7 @@ class FilesController extends AbstractController
         }
         $folderRetain = $resolvedFolder['folderId'];
 
-        $maxUploadBytes = $this->resolveEffectiveMaxUploadBytes();
+        $maxUploadBytes = $this->resolveAppMaxUploadBytes();
         if ($expectedBytes < 0 || $expectedBytes > $maxUploadBytes) {
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_too_large', 400);
         }
@@ -1542,6 +1542,17 @@ class FilesController extends AbstractController
         if ($uploadId === '' || $chunkIndex < 0 || !$chunk instanceof UploadedFile) {
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_invalid', 400);
         }
+        if (!$chunk->isValid()) {
+            if (\in_array((int) $chunk->getError(), [\UPLOAD_ERR_INI_SIZE, \UPLOAD_ERR_FORM_SIZE], true)) {
+                return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_chunk_too_large', 413);
+            }
+
+            return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_invalid', 400);
+        }
+        $maxChunkBytes = $this->resolveMaxChunkRequestBytes();
+        if ((int) $chunk->getSize() > $maxChunkBytes) {
+            return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_chunk_too_large', 413);
+        }
 
         try {
             $progress = $this->chunkedUploadService->appendChunk($uploadId, $ownerId, $chunkIndex, $chunk);
@@ -1580,7 +1591,7 @@ class FilesController extends AbstractController
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_invalid', 400);
         }
 
-        $maxUploadBytes = $this->resolveEffectiveMaxUploadBytes();
+        $maxUploadBytes = $this->resolveAppMaxUploadBytes();
 
         try {
             $sharedFile = $this->chunkedUploadService->finalizeAndPersist($ownerId, $uploadId, $maxUploadBytes);
@@ -4773,13 +4784,25 @@ class FilesController extends AbstractController
     }
 
     /**
-     * @brief Resolve effective upload size limit in bytes using app and PHP ini caps.
+     * @brief Application-level max assembled upload size (chunked uploads).
+     * @param void No input parameter.
+     * @return int
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    private function resolveAppMaxUploadBytes(): int
+    {
+        return self::MAX_UPLOAD_BYTES;
+    }
+
+    /**
+     * @brief Resolve max bytes for a single whole-file HTTP upload (legacy endpoint).
      * @param void No input parameter.
      * @return int
      * @date 2026-04-27
      * @author Stephane H.
      */
-    private function resolveEffectiveMaxUploadBytes(): int
+    private function resolveSingleRequestMaxUploadBytes(): int
     {
         $limits = [self::MAX_UPLOAD_BYTES];
         $phpUploadMax = $this->parseIniSizeToBytes((string) ini_get('upload_max_filesize'));
@@ -4789,6 +4812,32 @@ class FilesController extends AbstractController
         }
         if ($phpPostMax > 0) {
             $limits[] = $phpPostMax;
+        }
+
+        return max(1, min($limits));
+    }
+
+    /**
+     * @brief Resolve max bytes allowed per chunk HTTP request from PHP ini caps.
+     * @param void No input parameter.
+     * @return int
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    private function resolveMaxChunkRequestBytes(): int
+    {
+        $limits = [];
+        $phpUploadMax = $this->parseIniSizeToBytes((string) ini_get('upload_max_filesize'));
+        $phpPostMax = $this->parseIniSizeToBytes((string) ini_get('post_max_size'));
+        if ($phpUploadMax > 0) {
+            $limits[] = $phpUploadMax;
+        }
+        if ($phpPostMax > 0) {
+            $limits[] = $phpPostMax;
+        }
+
+        if ($limits === []) {
+            return 32 * 1024 * 1024;
         }
 
         return max(1, min($limits));

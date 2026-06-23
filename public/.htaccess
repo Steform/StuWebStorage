@@ -18,8 +18,9 @@
 </IfModule>
 
 <IfModule mod_php.c>
-    php_value upload_max_filesize 100G
-    php_value post_max_size 100G
+    ; mod_php only (not PHP-FPM). For FPM, see public/.user.ini
+    php_value upload_max_filesize 32M
+    php_value post_max_size 36M
     php_value max_input_time 3600
     php_value max_execution_time 3600
     php_value memory_limit 1024M

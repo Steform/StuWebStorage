@@ -582,6 +582,7 @@ files:
     target_owner_not_found: 'Aucun utilisateur actif avec ce pseudo exact ne correspond a cette saisie.'
     upload_invalid: 'Envoi echoue ou fichier illisible.'
     upload_too_large: 'Fichier trop volumineux.'
+    upload_chunk_too_large: 'Morceau d''envoi trop volumineux pour la configuration PHP du serveur (augmentez upload_max_filesize et post_max_size).'
     quota_exceeded: 'Quota de stockage atteint pour cet utilisateur.'
     public_not_allowed: 'Vos roles ne permettent pas la visibilite publique.'
     storage_failed: 'Impossible d''enregistrer le fichier chiffre.'
