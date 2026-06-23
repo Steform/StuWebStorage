@@ -11,12 +11,24 @@
         </div>
         <h1 id="storage-hero-title" class="display-5 fw-semibold mb-3">{{ 'storage.home.title'|trans({}, 'messages', currentLocale) }}</h1>
         <p class="lead text-body-secondary col-lg-8 mx-auto mb-4">{{ 'storage.home.subtitle'|trans({}, 'messages', currentLocale) }}</p>
+        {% if storage_maintenance_mode_enabled() and not app.user %}
+            <div class="alert alert-warning col-lg-8 mx-auto text-start mb-4" role="status">
+                <strong>{{ 'maintenance.banner.title'|trans({}, 'messages', currentLocale) }}</strong>
+                <p class="mb-0 mt-2">
+                    {% if storage_maintenance_message() %}
+                        {{ storage_maintenance_message() }}
+                    {% else %}
+                        {{ 'maintenance.banner.default_message'|trans({}, 'messages', currentLocale) }}
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
         <div class="d-flex flex-wrap justify-content-center gap-2">
             {% if app.user and is_granted('ROLE_SHARE') %}
                 <a class="btn btn-primary btn-lg" href="{{ path('files_index') }}">{{ 'storage.home.cta_files'|trans({}, 'messages', currentLocale) }}</a>
             {% elseif app.user %}
                 <span class="btn btn-secondary btn-lg disabled" aria-disabled="true">{{ 'storage.home.no_share_role'|trans({}, 'messages', currentLocale) }}</span>
-            {% else %}
+            {% elseif not storage_maintenance_mode_enabled() %}
                 <a class="btn btn-primary btn-lg" href="{{ path('app_login') }}">{{ 'storage.home.cta_login'|trans({}, 'messages', currentLocale) }}</a>
             {% endif %}
             {% if is_granted('ROLE_ADMIN') %}

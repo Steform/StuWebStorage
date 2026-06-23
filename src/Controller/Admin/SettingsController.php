@@ -21,6 +21,8 @@ final class SettingsController extends AbstractController
 {
     private const CSRF_ACCESS_GATE = 'storage_access_gate_admin';
 
+    private const CSRF_MAINTENANCE = 'storage_maintenance_admin';
+
     /**
      * @param SiteAccessGateService $siteAccessGateService Gate settings service.
      * @param CsrfTokenManagerInterface $csrfTokenManager CSRF token manager.
@@ -49,6 +51,7 @@ final class SettingsController extends AbstractController
             'accessGateSettings' => $accessGateSettings,
             'defaultQuotaBytes' => $this->defaultQuotaBytes,
             'accessGateCsrfToken' => self::CSRF_ACCESS_GATE,
+            'maintenanceCsrfToken' => self::CSRF_MAINTENANCE,
         ]);
     }
 
@@ -81,6 +84,34 @@ final class SettingsController extends AbstractController
         } else {
             $this->addFlash('success', 'storage.access_gate.success.settings_updated');
         }
+
+        return $this->redirectToRoute('admin_settings_index');
+    }
+
+    /**
+     * @brief Persist maintenance mode settings from admin dashboard.
+     *
+     * @param Request $request Current HTTP request.
+     * @return Response
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    #[Route('/admin/settings/maintenance', name: 'admin_settings_maintenance_update', methods: ['POST'])]
+    public function updateMaintenance(Request $request): Response
+    {
+        $tokenValue = $request->request->getString('_csrf_token');
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_MAINTENANCE, $tokenValue))) {
+            $this->addFlash('danger', 'storage.access_gate.error.csrf_invalid');
+
+            return $this->redirectToRoute('admin_settings_index');
+        }
+
+        $this->siteAccessGateService->updateMaintenanceSettings(
+            $request->request->getBoolean('maintenance_mode_enabled'),
+            $request->request->getString('maintenance_message'),
+        );
+
+        $this->addFlash('success', 'maintenance.success.settings_updated');
 
         return $this->redirectToRoute('admin_settings_index');
     }

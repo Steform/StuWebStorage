@@ -735,6 +735,9 @@ admin:
       access_gate: 'Verrou d''accès'
       access_gate_active_help: 'Les visiteurs non admin doivent saisir la note pour acceder au site.'
       access_gate_inactive_help: 'Le site est accessible sans note de contournement.'
+      maintenance: Maintenance
+      maintenance_active_help: 'Le bouton Connexion est masque. Seuls les admins peuvent se connecter via /login.'
+      maintenance_inactive_help: 'La connexion publique reste disponible.'
       default_quota: 'Quota stockage par defaut'
       default_quota_help: 'Valeur appliquee aux comptes sans quota personnel (variable APP_USER_STORAGE_QUOTA_BYTES).'
     access_gate:
@@ -742,6 +745,11 @@ admin:
       subtitle: 'Bloquez l''accès au site et autorisez le contournement via une note secrete.'
       status_active: 'Verrou actif'
       status_inactive: 'Verrou inactif'
+    maintenance:
+      title: Maintenance
+      subtitle: 'Masquez la connexion publique et reservez /login aux administrateurs.'
+      status_active: 'Maintenance active'
+      status_inactive: 'Maintenance inactive'
     storage:
       title: 'Stockage'
       default_quota_label: 'Quota par defaut'
@@ -946,3 +954,24 @@ storage:
       bypass_note_label: 'Note de contournement'
       bypass_note_help: 'Les visiteurs devront saisir exactement cette note pour acceder au site (24 h par session).'
       save: 'Enregistrer le verrou'
+
+maintenance:
+  meta:
+    title: Maintenance
+  title: 'Maintenance en cours'
+  description: 'La plateforme est temporairement indisponible pour les connexions publiques.'
+  banner:
+    title: 'Maintenance en cours'
+    default_message: 'Les connexions sont temporairement suspendues. Revenez plus tard.'
+  login:
+    notice: 'Mode maintenance actif : seuls les comptes administrateur peuvent se connecter.'
+  error:
+    login_forbidden: 'Connexion refusee : seuls les administrateurs peuvent se connecter pendant la maintenance.'
+  success:
+    settings_updated: 'Parametres de maintenance mis a jour.'
+  admin:
+    enabled_label: 'Activer le mode maintenance'
+    message_label: 'Message affiche sur l''accueil'
+    message_placeholder: 'Exemple : maintenance planifiee ce soir de 22h a minuit.'
+    message_help: 'Optionnel. Affiche sur l''accueil lorsque la maintenance est active.'
+    save: 'Enregistrer la maintenance'

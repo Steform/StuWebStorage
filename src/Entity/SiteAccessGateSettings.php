@@ -28,6 +28,12 @@ class SiteAccessGateSettings
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $bypassNote = null;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $maintenanceModeEnabled = false;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $maintenanceMessage = null;
+
     /**
      * @brief Get row identifier.
      *
@@ -121,6 +127,62 @@ class SiteAccessGateSettings
     public function setBypassNote(?string $bypassNote): self
     {
         $this->bypassNote = $bypassNote;
+
+        return $this;
+    }
+
+    /**
+     * @brief Check whether public maintenance mode is active.
+     *
+     * @param void No input parameter.
+     * @return bool
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function isMaintenanceModeEnabled(): bool
+    {
+        return $this->maintenanceModeEnabled;
+    }
+
+    /**
+     * @brief Enable or disable public maintenance mode.
+     *
+     * @param bool $maintenanceModeEnabled Maintenance mode flag.
+     * @return self
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function setMaintenanceModeEnabled(bool $maintenanceModeEnabled): self
+    {
+        $this->maintenanceModeEnabled = $maintenanceModeEnabled;
+
+        return $this;
+    }
+
+    /**
+     * @brief Get optional maintenance message for visitors.
+     *
+     * @param void No input parameter.
+     * @return string|null
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function getMaintenanceMessage(): ?string
+    {
+        return $this->maintenanceMessage;
+    }
+
+    /**
+     * @brief Set optional maintenance message for visitors.
+     *
+     * @param string|null $maintenanceMessage Maintenance message.
+     * @return self
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function setMaintenanceMessage(?string $maintenanceMessage): self
+    {
+        $this->maintenanceMessage = $maintenanceMessage;
 
         return $this;
     }

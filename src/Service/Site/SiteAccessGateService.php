@@ -120,4 +120,50 @@ final class SiteAccessGateService
 
         return null;
     }
+
+    /**
+     * @brief Check whether public maintenance mode is active.
+     *
+     * @param void No input parameter.
+     * @return bool
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function isMaintenanceModeEnabled(): bool
+    {
+        return $this->getSettings()->isMaintenanceModeEnabled();
+    }
+
+    /**
+     * @brief Get optional maintenance message for visitors.
+     *
+     * @param void No input parameter.
+     * @return string|null
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function getMaintenanceMessage(): ?string
+    {
+        $message = trim((string) $this->getSettings()->getMaintenanceMessage());
+
+        return $message !== '' ? $message : null;
+    }
+
+    /**
+     * @brief Update maintenance mode settings from admin dashboard form.
+     *
+     * @param bool $maintenanceModeEnabled Maintenance mode flag.
+     * @param string $maintenanceMessage Optional visitor message.
+     * @return void
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function updateMaintenanceSettings(bool $maintenanceModeEnabled, string $maintenanceMessage): void
+    {
+        $normalizedMessage = trim($maintenanceMessage);
+        $settings = $this->getSettings();
+        $settings->setMaintenanceModeEnabled($maintenanceModeEnabled);
+        $settings->setMaintenanceMessage($normalizedMessage !== '' ? $normalizedMessage : null);
+        $this->entityManager->flush();
+    }
 }

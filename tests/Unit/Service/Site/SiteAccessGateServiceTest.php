@@ -74,6 +74,34 @@ final class SiteAccessGateServiceTest extends TestCase
     }
 
     /**
+     * @brief Maintenance mode flag is persisted from admin form payload.
+     *
+     * @return void
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function testUpdateMaintenanceSettingsPersistsFlag(): void
+    {
+        $settings = new SiteAccessGateSettings();
+        $repository = $this->createMock(SiteAccessGateSettingsRepository::class);
+        $repository->method('getOrCreateSingleton')->willReturn($settings);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('flush');
+
+        $service = new SiteAccessGateService(
+            $repository,
+            $this->buildSessionService(),
+            $entityManager,
+        );
+
+        $service->updateMaintenanceSettings(true, 'Scheduled maintenance tonight');
+
+        self::assertTrue($settings->isMaintenanceModeEnabled());
+        self::assertSame('Scheduled maintenance tonight', $settings->getMaintenanceMessage());
+    }
+
+    /**
      * @brief Build session service backed by an in-memory request session.
      *
      * @return SiteAccessGateSessionService

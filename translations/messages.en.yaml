@@ -735,6 +735,9 @@ admin:
       access_gate: 'Access gate'
       access_gate_active_help: 'Non-admin visitors must enter the bypass note to access the site.'
       access_gate_inactive_help: 'The site is open without a bypass note.'
+      maintenance: Maintenance
+      maintenance_active_help: 'The Sign in button is hidden. Only admins can log in via /login.'
+      maintenance_inactive_help: 'Public sign-in remains available.'
       default_quota: 'Default storage quota'
       default_quota_help: 'Applied to accounts without a personal quota (APP_USER_STORAGE_QUOTA_BYTES env var).'
     access_gate:
@@ -742,6 +745,11 @@ admin:
       subtitle: 'Lock site access and allow bypass with a secret note.'
       status_active: 'Gate active'
       status_inactive: 'Gate inactive'
+    maintenance:
+      title: Maintenance
+      subtitle: 'Hide public sign-in and reserve /login for administrators.'
+      status_active: 'Maintenance active'
+      status_inactive: 'Maintenance inactive'
     storage:
       title: 'Storage'
       default_quota_label: 'Default quota'
@@ -946,3 +954,24 @@ storage:
       bypass_note_label: 'Bypass note'
       bypass_note_help: 'Visitors must enter this exact note to access the site (24 h per session).'
       save: 'Save gate settings'
+
+maintenance:
+  meta:
+    title: Maintenance
+  title: 'Maintenance in progress'
+  description: 'The platform is temporarily unavailable for public sign-in.'
+  banner:
+    title: 'Maintenance in progress'
+    default_message: 'Sign-in is temporarily suspended. Please check back later.'
+  login:
+    notice: 'Maintenance mode is active: only administrator accounts can sign in.'
+  error:
+    login_forbidden: 'Sign-in denied: only administrators can log in during maintenance.'
+  success:
+    settings_updated: 'Maintenance settings updated.'
+  admin:
+    enabled_label: 'Enable maintenance mode'
+    message_label: 'Message shown on the home page'
+    message_placeholder: 'Example: scheduled maintenance tonight from 10 PM to midnight.'
+    message_help: 'Optional. Displayed on the home page while maintenance is active.'
+    save: 'Save maintenance settings'

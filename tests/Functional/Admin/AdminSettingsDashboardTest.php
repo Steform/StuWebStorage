@@ -67,6 +67,8 @@ final class AdminSettingsDashboardTest extends WebTestCase
         self::assertStringContainsString('Platform configuration', $content);
         self::assertStringContainsString('access_gate_enabled', $content);
         self::assertStringContainsString('/admin/settings/access-gate', $content);
+        self::assertStringContainsString('maintenance_mode_enabled', $content);
+        self::assertStringContainsString('/admin/settings/maintenance', $content);
         self::assertStringContainsString('Dashboard', $content);
         self::assertStringContainsString('floating-actions', $content);
         self::assertStringContainsString('/admin/bug-reports', $content);

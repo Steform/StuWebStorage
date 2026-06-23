@@ -14,6 +14,12 @@
                     <h1 class="h4 mb-3">{{ 'security.login.title'|trans({}, 'messages', currentLocale) }}</h1>
                     <p class="text-muted">{{ 'security.login.subtitle'|trans({}, 'messages', currentLocale) }}</p>
 
+                    {% if storage_maintenance_mode_enabled() %}
+                        <div class="alert alert-warning" role="status">
+                            {{ 'maintenance.login.notice'|trans({}, 'messages', currentLocale) }}
+                        </div>
+                    {% endif %}
+
                     {% if error %}
                         <div class="alert alert-danger" role="alert">
                             {{ error.messageKey|trans(error.messageData, 'messages', currentLocale) }}

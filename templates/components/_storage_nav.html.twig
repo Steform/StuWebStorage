@@ -28,9 +28,11 @@
                         </li>
                     {% endif %}
                 {% else %}
-                    <li class="nav-item">
-                        <a class="btn btn-primary btn-sm" href="{{ path('app_login') }}">{{ 'storage.home.cta_login'|trans({}, 'messages', currentLocale) }}</a>
-                    </li>
+                    {% if not storage_maintenance_mode_enabled() %}
+                        <li class="nav-item">
+                            <a class="btn btn-primary btn-sm" href="{{ path('app_login') }}">{{ 'storage.home.cta_login'|trans({}, 'messages', currentLocale) }}</a>
+                        </li>
+                    {% endif %}
                 {% endif %}
             </ul>
         </div>
