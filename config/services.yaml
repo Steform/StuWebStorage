@@ -160,6 +160,7 @@ services:
   App\Twig\StorageSiteExtension:
     arguments:
       $siteTitle: '%app.site_title%'
+      $siteAccessGateService: '@App\Service\Site\SiteAccessGateService'
 
   App\Monolog\RequestContextProcessor:
     tags:
