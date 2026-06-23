@@ -735,6 +735,7 @@ admin:
       subtitle: 'Maintenance, protection anti-robot de l''accueil et quotas par defaut.'
     summary:
       antibot_gate: 'Gate anti-robot active'
+      antibot_gate_inactive: 'Gate anti-robot desactivee'
       maintenance: Maintenance
       maintenance_active_help: 'L''accueil public affiche la page de maintenance. Seuls les admins peuvent se connecter via /login.'
       maintenance_inactive_help: 'La connexion publique reste disponible.'
@@ -743,10 +744,13 @@ admin:
     antibot:
       title: 'Gate anti-robot (accueil)'
       subtitle: 'Protege la page d''accueil contre les robots via scoring comportemental et captcha.'
-      status_active: 'Toujours active'
+      status_active: 'Gate active'
+      status_inactive: 'Gate inactive'
+      enabled_label: 'Activer la gate anti-robot sur l''accueil'
+      enabled_help: 'Lorsqu''elle est desactivee, les visiteurs anonymes accedent directement a la page d''accueil.'
       threshold_label: 'Seuil de score comportemental'
       threshold_help: 'Score minimum (0-100) pour acceder a l''accueil sans captcha. En dessous, le captcha est requis.'
-      save: 'Enregistrer le seuil'
+      save: 'Enregistrer la gate'
       success_updated: 'Parametres anti-robot mis a jour.'
     maintenance:
       title: Maintenance

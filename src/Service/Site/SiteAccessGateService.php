@@ -67,6 +67,19 @@ final class SiteAccessGateService
     }
 
     /**
+     * @brief Check whether the homepage antibot gate is enforced.
+     *
+     * @param void No input parameter.
+     * @return bool
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function isAntibotGateEnabled(): bool
+    {
+        return $this->getSettings()->isAntibotGateEnabled();
+    }
+
+    /**
      * @brief Get configured antibot threshold for the homepage gate.
      *
      * @param void No input parameter.
@@ -100,16 +113,18 @@ final class SiteAccessGateService
     }
 
     /**
-     * @brief Update antibot threshold from admin dashboard form.
+     * @brief Update antibot gate settings from admin dashboard form.
      *
+     * @param bool $antibotGateEnabled Gate enabled flag.
      * @param int $antibotThreshold Score between 0 and 100.
      * @return void
      * @date 2026-06-23
      * @author Stephane H.
      */
-    public function updateAntibotSettings(int $antibotThreshold): void
+    public function updateAntibotSettings(bool $antibotGateEnabled, int $antibotThreshold): void
     {
         $settings = $this->getSettings();
+        $settings->setAntibotGateEnabled($antibotGateEnabled);
         $settings->setAntibotThreshold($antibotThreshold);
         $this->entityManager->flush();
     }

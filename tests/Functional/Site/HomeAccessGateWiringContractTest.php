@@ -39,6 +39,10 @@ final class HomeAccessGateWiringContractTest extends TestCase
             (string) file_get_contents($root.'/templates/admin/settings/_antibot_card.html.twig')
         );
         self::assertStringContainsString(
+            'antibot_gate_enabled',
+            (string) file_get_contents($root.'/templates/admin/settings/_antibot_card.html.twig')
+        );
+        self::assertStringContainsString(
             '_antibot_card.html.twig',
             (string) file_get_contents($root.'/templates/admin/settings/index.html.twig')
         );

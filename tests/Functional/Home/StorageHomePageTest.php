@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Home;
 
 use App\Entity\User;
+use App\Repository\SiteAccessGateSettingsRepository;
 use App\Tests\Stub\TestUserProvider;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -41,6 +43,36 @@ final class StorageHomePageTest extends WebTestCase
 
         self::assertTrue($client->getResponse()->isRedirect());
         self::assertStringContainsString('/home/access', (string) $client->getResponse()->headers->get('Location'));
+    }
+
+    /**
+     * @brief Anonymous visitors reach homepage when antibot gate is disabled.
+     *
+     * @return void
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function testAnonymousHomePageSkipsGateWhenDisabled(): void
+    {
+        $client = static::createClient();
+        $container = static::getContainer();
+        $repository = $container->get(SiteAccessGateSettingsRepository::class);
+        $entityManager = $container->get(EntityManagerInterface::class);
+
+        $settings = $repository->getOrCreateSingleton();
+        $previousEnabled = $settings->isAntibotGateEnabled();
+        $settings->setAntibotGateEnabled(false);
+        $entityManager->flush();
+
+        try {
+            $client->request('GET', '/');
+
+            self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+            self::assertStringNotContainsString('/home/access', (string) $client->getResponse()->headers->get('Location'));
+        } finally {
+            $settings->setAntibotGateEnabled($previousEnabled);
+            $entityManager->flush();
+        }
     }
 
     /**

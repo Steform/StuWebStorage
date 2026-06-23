@@ -66,6 +66,7 @@ final class AdminSettingsDashboardTest extends WebTestCase
         $content = (string) $client->getResponse()->getContent();
         self::assertStringContainsString('Platform configuration', $content);
         self::assertStringContainsString('antibot_threshold', $content);
+        self::assertStringContainsString('antibot_gate_enabled', $content);
         self::assertStringContainsString('/admin/settings/antibot', $content);
         self::assertStringContainsString('maintenance_mode_enabled', $content);
         self::assertStringContainsString('/admin/settings/maintenance', $content);

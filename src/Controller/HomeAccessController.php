@@ -9,6 +9,7 @@ use App\Service\Home\HomeAccessTargetResolver;
 use App\Service\Home\HomeBotSignalEvaluator;
 use App\Service\Security\CaptchaService;
 use App\Service\Security\StorageBotAttestationService;
+use App\Service\Site\SiteAccessGateService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,6 +37,7 @@ final class HomeAccessController extends AbstractController
      * @param HomeBotSignalEvaluator $homeBotSignalEvaluator Bot signal scorer.
      * @param CaptchaService $captchaService Captcha verifier.
      * @param StorageBotAttestationService $storageBotAttestation Signed session attestation helper.
+     * @param SiteAccessGateService $siteAccessGateService Platform settings service.
      * @return Response Redirect on grant, or gate HTML with accessPhase for GET.
      * @date 2026-06-23
      * @author Stephane H.
@@ -48,10 +50,15 @@ final class HomeAccessController extends AbstractController
         HomeBotSignalEvaluator $homeBotSignalEvaluator,
         CaptchaService $captchaService,
         StorageBotAttestationService $storageBotAttestation,
+        SiteAccessGateService $siteAccessGateService,
     ): Response {
         $target = $homeAccessTargetResolver->resolveSafeTarget(
             (string) $request->query->get('target', $request->request->get('target', ''))
         );
+
+        if (!$siteAccessGateService->isAntibotGateEnabled()) {
+            return $this->redirect($target);
+        }
 
         if ($homeAccessSessionService->isBypassGranted() || $homeAccessSessionService->isAccessGranted()) {
             return $this->redirect($target);

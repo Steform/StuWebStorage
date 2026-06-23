@@ -57,9 +57,55 @@ final class SiteAccessGateServiceTest extends TestCase
 
         $service = new SiteAccessGateService($repository, $entityManager, 50);
 
-        $service->updateAntibotSettings(120);
+        $service->updateAntibotSettings(true, 120);
 
+        self::assertTrue($settings->isAntibotGateEnabled());
         self::assertSame(100, $settings->getAntibotThreshold());
+    }
+
+    /**
+     * @brief Antibot gate can be disabled from admin form payload.
+     *
+     * @return void
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function testUpdateAntibotSettingsCanDisableGate(): void
+    {
+        $settings = (new SiteAccessGateSettings())->setAntibotGateEnabled(true);
+        $repository = $this->createMock(SiteAccessGateSettingsRepository::class);
+        $repository->method('getOrCreateSingleton')->willReturn($settings);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('flush');
+
+        $service = new SiteAccessGateService($repository, $entityManager, 50);
+
+        $service->updateAntibotSettings(false, 50);
+
+        self::assertFalse($settings->isAntibotGateEnabled());
+    }
+
+    /**
+     * @brief isAntibotGateEnabled reflects persisted settings flag.
+     *
+     * @return void
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function testIsAntibotGateEnabledReadsSettings(): void
+    {
+        $settings = (new SiteAccessGateSettings())->setAntibotGateEnabled(false);
+        $repository = $this->createMock(SiteAccessGateSettingsRepository::class);
+        $repository->method('getOrCreateSingleton')->willReturn($settings);
+
+        $service = new SiteAccessGateService(
+            $repository,
+            $this->createMock(EntityManagerInterface::class),
+            50,
+        );
+
+        self::assertFalse($service->isAntibotGateEnabled());
     }
 
     /**

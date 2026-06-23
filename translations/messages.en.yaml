@@ -735,6 +735,7 @@ admin:
       subtitle: 'Maintenance, homepage antibot protection, and default quotas.'
     summary:
       antibot_gate: 'Antibot gate active'
+      antibot_gate_inactive: 'Antibot gate disabled'
       maintenance: Maintenance
       maintenance_active_help: 'The public homepage shows the maintenance page. Only admins can sign in via /login.'
       maintenance_inactive_help: 'Public sign-in remains available.'
@@ -743,10 +744,13 @@ admin:
     antibot:
       title: 'Antibot gate (homepage)'
       subtitle: 'Protects the homepage from bots via behavioural scoring and captcha.'
-      status_active: 'Always active'
+      status_active: 'Gate active'
+      status_inactive: 'Gate inactive'
+      enabled_label: 'Enable antibot gate on homepage'
+      enabled_help: 'When disabled, anonymous visitors reach the homepage directly.'
       threshold_label: 'Behavioural score threshold'
       threshold_help: 'Minimum score (0-100) to access the homepage without captcha. Below this, captcha is required.'
-      save: 'Save threshold'
+      save: 'Save gate settings'
       success_updated: 'Antibot settings updated.'
     maintenance:
       title: Maintenance

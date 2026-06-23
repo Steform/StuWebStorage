@@ -33,9 +33,13 @@
                         {{ 'admin.settings.maintenance.status_inactive'|trans({}, 'messages', currentLocale) }}
                     {% endif %}
                 </span>
-                <span class="admin-settings__status-pill admin-settings__status-pill--info">
+                <span class="admin-settings__status-pill {% if accessGateSettings.antibotGateEnabled %}admin-settings__status-pill--info{% else %}admin-settings__status-pill--ok{% endif %}">
                     <i class="bi bi-shield-check" aria-hidden="true"></i>
-                    {{ 'admin.settings.summary.antibot_gate'|trans({}, 'messages', currentLocale) }}
+                    {% if accessGateSettings.antibotGateEnabled %}
+                        {{ 'admin.settings.antibot.status_active'|trans({}, 'messages', currentLocale) }}
+                    {% else %}
+                        {{ 'admin.settings.antibot.status_inactive'|trans({}, 'messages', currentLocale) }}
+                    {% endif %}
                 </span>
             </div>
         </div>

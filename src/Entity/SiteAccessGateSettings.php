@@ -28,6 +28,9 @@ class SiteAccessGateSettings
     #[ORM\Column(type: 'smallint', options: ['default' => 50])]
     private int $antibotThreshold = 50;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $antibotGateEnabled = true;
+
     /**
      * @brief Get row identifier.
      *
@@ -121,6 +124,34 @@ class SiteAccessGateSettings
     public function setAntibotThreshold(int $antibotThreshold): self
     {
         $this->antibotThreshold = max(0, min(100, $antibotThreshold));
+
+        return $this;
+    }
+
+    /**
+     * @brief Check whether the homepage antibot gate is enabled.
+     *
+     * @param void No input parameter.
+     * @return bool
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function isAntibotGateEnabled(): bool
+    {
+        return $this->antibotGateEnabled;
+    }
+
+    /**
+     * @brief Enable or disable the homepage antibot gate.
+     *
+     * @param bool $antibotGateEnabled Gate active flag.
+     * @return self
+     * @date 2026-06-23
+     * @author Stephane H.
+     */
+    public function setAntibotGateEnabled(bool $antibotGateEnabled): self
+    {
+        $this->antibotGateEnabled = $antibotGateEnabled;
 
         return $this;
     }

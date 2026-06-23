@@ -105,7 +105,10 @@ final class SettingsController extends AbstractController
             return $this->redirectToRoute('admin_settings_index');
         }
 
-        $this->siteAccessGateService->updateAntibotSettings($request->request->getInt('antibot_threshold', 50));
+        $this->siteAccessGateService->updateAntibotSettings(
+            $request->request->getBoolean('antibot_gate_enabled'),
+            $request->request->getInt('antibot_threshold', 50),
+        );
 
         $this->addFlash('success', 'admin.settings.antibot.success_updated');
 

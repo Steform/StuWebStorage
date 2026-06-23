@@ -11,11 +11,22 @@
                     <p class="text-body-secondary small mb-0">{{ 'admin.settings.antibot.subtitle'|trans({}, 'messages', currentLocale) }}</p>
                 </div>
             </div>
-            <span class="badge rounded-pill text-bg-primary">{{ 'admin.settings.antibot.status_active'|trans({}, 'messages', currentLocale) }}</span>
+            {% if accessGateSettings.antibotGateEnabled %}
+                <span class="badge rounded-pill text-bg-primary">{{ 'admin.settings.antibot.status_active'|trans({}, 'messages', currentLocale) }}</span>
+            {% else %}
+                <span class="badge rounded-pill text-bg-secondary">{{ 'admin.settings.antibot.status_inactive'|trans({}, 'messages', currentLocale) }}</span>
+            {% endif %}
         </div>
 
         <form method="post" action="{{ path('admin_settings_antibot_update') }}" class="row g-3">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token(antibotCsrfToken) }}">
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="antibot_gate_enabled" name="antibot_gate_enabled" value="1" {% if accessGateSettings.antibotGateEnabled %}checked{% endif %}>
+                    <label class="form-check-label" for="antibot_gate_enabled">{{ 'admin.settings.antibot.enabled_label'|trans({}, 'messages', currentLocale) }}</label>
+                </div>
+                <div class="form-text">{{ 'admin.settings.antibot.enabled_help'|trans({}, 'messages', currentLocale) }}</div>
+            </div>
             <div class="col-12 col-md-6">
                 <label class="form-label" for="antibot_threshold">{{ 'admin.settings.antibot.threshold_label'|trans({}, 'messages', currentLocale) }}</label>
                 <input

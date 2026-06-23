@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use App\Service\Home\HomeAccessSessionService;
+use App\Service\Site\SiteAccessGateService;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -27,11 +28,13 @@ final class HomeAccessGateSubscriber implements EventSubscriberInterface
 
     /**
      * @param HomeAccessSessionService $homeAccessSessionService Session access helper.
+     * @param SiteAccessGateService $siteAccessGateService Platform settings service.
      * @param Security $security Security helper for authenticated user bypass.
      * @param UrlGeneratorInterface $urlGenerator Route URL generator.
      */
     public function __construct(
         private readonly HomeAccessSessionService $homeAccessSessionService,
+        private readonly SiteAccessGateService $siteAccessGateService,
         private readonly Security $security,
         private readonly UrlGeneratorInterface $urlGenerator,
     ) {
@@ -72,6 +75,10 @@ final class HomeAccessGateSubscriber implements EventSubscriberInterface
 
         $pathInfo = $event->getRequest()->getPathInfo();
         if ($pathInfo !== '/') {
+            return;
+        }
+
+        if (!$this->siteAccessGateService->isAntibotGateEnabled()) {
             return;
         }
 
