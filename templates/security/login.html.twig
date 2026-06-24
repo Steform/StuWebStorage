@@ -42,6 +42,9 @@
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
                         <button type="submit" class="btn btn-primary w-100">{{ 'security.login.submit'|trans({}, 'messages', currentLocale) }}</button>
                     </form>
+                    <div class="text-center mt-3">
+                        <a href="{{ path('app_password_forgot') }}">{{ 'security.password_reset.forgot.link'|trans({}, 'messages', currentLocale) }}</a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -75,6 +75,23 @@ security:
     submit: Continue
     remember_me: 'Trust this device for 6 months'
     error_invalid_credentials: 'Invalid credentials or TOTP code.'
+  password_reset:
+    back_to_login: 'Back to sign in'
+    forgot:
+      link: 'Forgot your password?'
+      meta:
+        title: 'Forgot password'
+      title: 'Reset your password'
+      subtitle: 'Enter your email. If an active account exists, you will receive a reset link.'
+      email: Email
+      submit: 'Send reset link'
+    reset:
+      meta:
+        title: 'New password'
+      title: 'Choose a new password'
+      subtitle: 'Set your new password to regain access to your account.'
+      password: 'New password'
+      submit: 'Save password'
   totp:
     meta:
       title: 'TOTP validation'
@@ -96,12 +113,22 @@ auth:
 mail:
   invite:
     subject: 'Your user invitation'
+    brand: StuWebStorage
     title: 'Invitation to join the platform'
     intro: 'You received an invitation. Use the link below to activate your account and set your password.'
     cta: 'Activate my account'
     expiry_hint: 'This link expires quickly. Request a new invitation if needed.'
     security_hint: 'Never share this link. Our team will never ask for it.'
     footer: 'Automated invitation email - please do not reply.'
+  password_reset:
+    subject: 'Reset your password'
+    brand: StuWebStorage
+    title: 'Password reset'
+    intro: 'You requested a password reset. Use the link below to set a new password.'
+    cta: 'Reset my password'
+    expiry_hint: 'This link expires quickly. Request a new link if needed.'
+    security_hint: 'If you did not request this, you can safely ignore this email.'
+    footer: 'Automated email - please do not reply.'
   totp:
     subject: 'Your TOTP verification code'
     brand: StuWebStorage
@@ -629,10 +656,13 @@ admin:
     intro: 'Send an email invitation. An activation link will be provided.'
     email: Email
     pseudonym: Pseudonym
+    locale: 'Invitation email language'
+    locale_help: 'Language the recipient will receive the invitation in. English is used when the selected language is not supported.'
     submit: 'Send invitation'
     back_users: 'Back to list'
     flash:
       sent: 'Invitation sent.'
+      resent: 'Invitation resent.'
   users:
     meta:
       title: 'User administration'
@@ -687,6 +717,7 @@ admin:
       revoke_all_devices: 'Revoke all devices'
       force_password_reset: 'Force password reset'
       invalidate_sessions: 'Invalidate active sessions'
+      resend_invitation: 'Resend invitation'
       hard_delete: 'Permanent deletion'
     help:
       hard_delete: 'This action permanently removes functional data, with encrypted snapshot support for admin rollback.'
@@ -694,6 +725,7 @@ admin:
     status:
       active: Active
       inactive: Inactive
+      invitation_pending: 'Invitation pending'
     devices:
       empty: 'No trusted device.'
     success:
@@ -832,7 +864,11 @@ invite:
   invalid_payload: 'Invalid invitation payload.'
   unauthorized: 'Unauthorized action.'
   created: 'Invitation created.'
+  resent: 'Invitation resent.'
   user_already_exists: 'A user already exists with this email.'
+  user_not_found: 'User not found.'
+  already_activated: 'This account has already been activated.'
+  not_invited: 'This account was not created via invitation.'
   user_persist_failed: 'Unable to create invited account.'
   email_send_failed: 'Unable to send the invitation email.'
   rate_limited: 'Too many attempts. Please try again later.'
@@ -846,6 +882,14 @@ invite:
     subtitle: 'Set your password to complete activation.'
     password: 'New password'
     submit: 'Activate my account'
+password_reset:
+  invalid_payload: 'Invalid payload.'
+  requested: 'If an active account exists for this email, a reset link has been sent.'
+  completed: 'Password updated. You can now sign in.'
+  invalid_or_expired: 'The link is invalid, expired, or already used.'
+  password_required: 'Password is required.'
+  email_send_failed: 'Unable to send the password reset email.'
+  rate_limited: 'Too many attempts. Please try again later.'
 locale:
   invalid: 'Unsupported language.'
   name:

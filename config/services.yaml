@@ -2,6 +2,7 @@ parameters:
   app.remember_me_lifetime: 2592000
   app.totp_challenge_ttl_seconds: '%env(int:APP_TOTP_CHALLENGE_TTL_SECONDS)%'
   app.invitation_token_ttl_seconds: '%env(int:APP_INVITATION_TOKEN_TTL_SECONDS)%'
+  app.password_reset_token_ttl_seconds: '%env(int:APP_PASSWORD_RESET_TOKEN_TTL_SECONDS)%'
   app.totp_email_from: '%env(APP_TOTP_EMAIL_FROM)%'
   app.public_download_challenge_ttl_seconds: '%env(int:APP_PUBLIC_DOWNLOAD_CHALLENGE_TTL_SECONDS)%'
   app.public_download_challenge_cooldown_seconds: '%env(int:APP_PUBLIC_DOWNLOAD_CHALLENGE_COOLDOWN_SECONDS)%'
@@ -46,14 +47,21 @@ services:
     arguments:
       $tokenTtlSeconds: '%app.invitation_token_ttl_seconds%'
       $supportedLocales: '%app.supported_locales%'
-      $defaultLocale: '%app.default_locale%'
-      $fallbackLocale: '%app.fallback_locale%'
+
+  App\Service\Auth\UserPasswordResetService:
+    arguments:
+      $tokenTtlSeconds: '%app.password_reset_token_ttl_seconds%'
+      $supportedLocales: '%app.supported_locales%'
 
   App\Service\Notification\InvitationEmailNotificationService:
     arguments:
       $supportedLocales: '%app.supported_locales%'
       $defaultLocale: '%app.default_locale%'
       $fallbackLocale: '%app.fallback_locale%'
+
+  App\Service\Notification\PasswordResetEmailNotificationService:
+    arguments:
+      $supportedLocales: '%app.supported_locales%'
 
   App\Service\Site\SiteMailTemplateResolverService:
     arguments:
@@ -79,10 +87,20 @@ services:
   App\Controller\Admin\UserInvitationController:
     arguments:
       $adminInviteLimiter: '@limiter.admin_invite'
+      $supportedLocales: '%app.supported_locales%'
+
+  App\Controller\Admin\UserController:
+    arguments:
+      $supportedLocales: '%app.supported_locales%'
 
   App\Controller\InvitationActivationController:
     arguments:
       $inviteActivationLimiter: '@limiter.invite_activation'
+
+  App\Controller\PasswordResetController:
+    arguments:
+      $passwordResetRequestLimiter: '@limiter.password_reset_request'
+      $passwordResetCompleteLimiter: '@limiter.password_reset_complete'
 
   App\EventSubscriber\LocaleSubscriber:
     arguments:

@@ -81,7 +81,22 @@ final class SiteMailTemplateDefaultContentService
                     'footer' => $this->wrapParagraph($this->trans('mail.invite.footer', $locale)),
                 ],
                 'labels' => [
+                    'brand' => $this->trans('mail.invite.brand', $locale),
                     'cta' => $this->trans('mail.invite.cta', $locale),
+                ],
+            ],
+            SiteMailTemplatesContract::TYPE_PASSWORD_RESET => [
+                'subject' => $this->trans('mail.password_reset.subject', $locale),
+                'blocks' => [
+                    'title' => $this->wrapHeading($this->trans('mail.password_reset.title', $locale), 2),
+                    'intro' => $this->wrapParagraph($this->trans('mail.password_reset.intro', $locale)),
+                    'expiry_hint' => $this->wrapParagraph($this->trans('mail.password_reset.expiry_hint', $locale)),
+                    'security_hint' => $this->wrapParagraph($this->trans('mail.password_reset.security_hint', $locale)),
+                    'footer' => $this->wrapParagraph($this->trans('mail.password_reset.footer', $locale)),
+                ],
+                'labels' => [
+                    'brand' => $this->trans('mail.password_reset.brand', $locale),
+                    'cta' => $this->trans('mail.password_reset.cta', $locale),
                 ],
             ],
             default => [

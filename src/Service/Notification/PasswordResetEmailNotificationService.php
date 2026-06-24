@@ -9,73 +9,59 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 
 /**
- * Service InvitationEmailNotificationService.
+ * Service PasswordResetEmailNotificationService.
  */
-class InvitationEmailNotificationService
+class PasswordResetEmailNotificationService
 {
     /**
-     * @var list<array{email: string, activationUrl: string}>
-     */
-    private array $messages = [];
-
-    /**
-     * @brief Build invitation email notification service.
+     * @brief Build password reset email notification service.
      * @param MailerInterface|null $mailer Mailer transport service.
      * @param SiteMailTemplateResolverService|null $mailTemplateResolver Mail template resolver.
      * @param list<string> $supportedLocales Supported locale codes.
-     * @param string $defaultLocale Default locale fallback.
-     * @param string $fallbackLocale Secondary locale fallback.
      * @return void
-     * @date 2026-06-16
+     * @date 2026-06-24
      * @author Stephane H.
      */
     public function __construct(
         private readonly ?MailerInterface $mailer = null,
         private readonly ?SiteMailTemplateResolverService $mailTemplateResolver = null,
         private readonly array $supportedLocales = ['fr', 'en', 'de', 'lt', 'no'],
-        private readonly string $defaultLocale = 'en',
-        private readonly string $fallbackLocale = 'fr'
     ) {
     }
 
     /**
-     * @brief Register and send invitation email payload.
+     * @brief Send password reset email payload.
      * @param string $email Target email.
-     * @param string $activationUrl Activation URL.
+     * @param string $resetUrl Reset URL.
      * @param string|null $locale Preferred recipient locale.
      * @return void
-     * @date 2026-06-16
+     * @date 2026-06-24
      * @author Stephane H.
      */
-    public function sendInvitation(string $email, string $activationUrl, ?string $locale = null): void
+    public function sendPasswordReset(string $email, string $resetUrl, ?string $locale = null): void
     {
         $normalizedEmail = strtolower(trim($email));
-        $normalizedActivationUrl = trim($activationUrl);
-        if ($normalizedEmail === '' || $normalizedActivationUrl === '') {
+        $normalizedResetUrl = trim($resetUrl);
+        if ($normalizedEmail === '' || $normalizedResetUrl === '') {
             return;
         }
-        $resolvedLocale = $this->resolveSupportedLocale($locale);
-
-        $this->messages[] = [
-            'email' => $normalizedEmail,
-            'activationUrl' => $normalizedActivationUrl,
-        ];
 
         if (!$this->mailer instanceof MailerInterface || !$this->mailTemplateResolver instanceof SiteMailTemplateResolverService) {
             return;
         }
 
-        $resolved = $this->mailTemplateResolver->resolve(SiteMailTemplatesContract::TYPE_INVITATION, $resolvedLocale);
+        $resolvedLocale = $this->resolveSupportedLocale($locale);
+        $resolved = $this->mailTemplateResolver->resolve(SiteMailTemplatesContract::TYPE_PASSWORD_RESET, $resolvedLocale);
         $plainBlocks = $this->buildPlainBlocks($resolved['blocks']);
 
         $emailMessage = (new TemplatedEmail())
             ->from(new Address($resolved['fromEmail'], $resolved['fromName']))
             ->to(new Address($normalizedEmail))
             ->subject($resolved['subject'])
-            ->htmlTemplate('emails/invitation.html.twig')
-            ->textTemplate('emails/invitation.txt.twig')
+            ->htmlTemplate('emails/password_reset.html.twig')
+            ->textTemplate('emails/password_reset.txt.twig')
             ->context([
-                'activationUrl' => $normalizedActivationUrl,
+                'resetUrl' => $normalizedResetUrl,
                 'locale' => $resolved['locale'],
                 'blocks' => $resolved['blocks'],
                 'labels' => $resolved['labels'],
@@ -85,10 +71,10 @@ class InvitationEmailNotificationService
     }
 
     /**
-     * @brief Resolve a supported locale with fallback strategy.
+     * @brief Resolve a supported locale with English fallback.
      * @param string|null $locale Preferred locale candidate.
      * @return string
-     * @date 2026-04-28
+     * @date 2026-06-24
      * @author Stephane H.
      */
     private function resolveSupportedLocale(?string $locale): string
@@ -102,23 +88,10 @@ class InvitationEmailNotificationService
     }
 
     /**
-     * @brief Return all queued invitation messages.
-     * @param void No input parameter.
-     * @return list<array{email: string, activationUrl: string}>
-     * @date 2026-04-28
-     * @author Stephane H.
-     */
-    public function getMessages(): array
-    {
-        return $this->messages;
-    }
-
-    /**
      * @brief Convert resolved HTML blocks to plain text for text templates.
-     *
      * @param array<string, string> $blocks Resolved HTML blocks.
      * @return array<string, string> Plain-text blocks.
-     * @date 2026-06-16
+     * @date 2026-06-24
      * @author Stephane H.
      */
     private function buildPlainBlocks(array $blocks): array

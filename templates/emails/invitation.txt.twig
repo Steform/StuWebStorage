@@ -1,0 +1,10 @@
+{{ plainBlocks.title|default('mail.invite.title'|trans({}, 'messages', locale|default('en'))) }}
+
+{{ plainBlocks.intro|default('mail.invite.intro'|trans({}, 'messages', locale|default('en'))) }}
+
+{{ labels.cta|default('mail.invite.cta'|trans({}, 'messages', locale|default('en'))) }}: {{ activationUrl }}
+
+{{ plainBlocks.expiry_hint|default('mail.invite.expiry_hint'|trans({}, 'messages', locale|default('en'))) }}
+{{ plainBlocks.security_hint|default('mail.invite.security_hint'|trans({}, 'messages', locale|default('en'))) }}
+
+{{ plainBlocks.footer|default('mail.invite.footer'|trans({}, 'messages', locale|default('en'))) }}

@@ -221,6 +221,7 @@ final class SiteMailTemplateResolverService
         $key = match ($type) {
             SiteMailTemplatesContract::TYPE_TOTP => 'mail.totp.subject',
             SiteMailTemplatesContract::TYPE_INVITATION => 'mail.invite.subject',
+            SiteMailTemplatesContract::TYPE_PASSWORD_RESET => 'mail.password_reset.subject',
             default => '',
         };
         if ($key === '') {
@@ -243,7 +244,8 @@ final class SiteMailTemplateResolverService
     {
         $key = match ($type) {
             SiteMailTemplatesContract::TYPE_TOTP => 'mail.totp.brand',
-            SiteMailTemplatesContract::TYPE_INVITATION => 'mail.totp.brand',
+            SiteMailTemplatesContract::TYPE_INVITATION => 'mail.invite.brand',
+            SiteMailTemplatesContract::TYPE_PASSWORD_RESET => 'mail.password_reset.brand',
             default => 'mail.totp.brand',
         };
 

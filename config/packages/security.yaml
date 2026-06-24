@@ -40,6 +40,8 @@ security:
     - { path: ^/home/captcha, roles: PUBLIC_ACCESS }
     - { path: ^/setup, roles: PUBLIC_ACCESS }
     - { path: ^/invite/activate, roles: PUBLIC_ACCESS }
+    - { path: ^/password/forgot, roles: PUBLIC_ACCESS }
+    - { path: ^/password/reset, roles: PUBLIC_ACCESS }
     - { path: ^/login/totp, roles: ROLE_USER }
     - { path: ^/login/check, roles: PUBLIC_ACCESS }
     - { path: ^/login, roles: PUBLIC_ACCESS }

@@ -75,6 +75,23 @@ security:
     submit: Fortsett
     remember_me: 'Stol pa denne enheten i 6 maneder'
     error_invalid_credentials: 'Ugyldige legitimasjoner eller TOTP-kode.'
+  password_reset:
+    back_to_login: 'Tilbake til innlogging'
+    forgot:
+      link: 'Glemt passordet?'
+      meta:
+        title: 'Glemt passord'
+      title: 'Tilbakestill passordet'
+      subtitle: 'Skriv inn e-posten din. Hvis en aktiv konto finnes, mottar du en tilbakestillingslenke.'
+      email: E-post
+      submit: 'Send lenke'
+    reset:
+      meta:
+        title: 'Nytt passord'
+      title: 'Velg et nytt passord'
+      subtitle: 'Sett et nytt passord for aa fa tilgang til kontoen igjen.'
+      password: 'Nytt passord'
+      submit: 'Lagre passord'
   totp:
     meta:
       title: TOTP-validering
@@ -96,12 +113,22 @@ auth:
 mail:
   invite:
     subject: 'Din brukerinvitasjon'
+    brand: StuWebStorage
     title: 'Invitasjon til plattformen'
     intro: 'Du har mottatt en invitasjon. Bruk lenken under for a aktivere kontoen din og sette passordet ditt.'
     cta: 'Aktiver kontoen min'
     expiry_hint: 'Lenken utløper raskt. Be om en ny invitasjon ved behov.'
     security_hint: 'Del aldri denne lenken. Teamet vart vil aldri be om den.'
     footer: 'Automatisk invitasjons-epost - vennligst ikke svar.'
+  password_reset:
+    subject: 'Tilbakestill passordet ditt'
+    brand: StuWebStorage
+    title: 'Tilbakestill passord'
+    intro: 'Du ba om tilbakestilling av passord. Bruk lenken under for aa sette et nytt passord.'
+    cta: 'Tilbakestill passordet mitt'
+    expiry_hint: 'Lenken utloper raskt. Be om en ny lenke ved behov.'
+    security_hint: 'Hvis du ikke ba om dette, kan du ignorere e-posten.'
+    footer: 'Automatisk e-post - ikke svar.'
   totp:
     subject: 'Din TOTP-verifiseringskode'
     brand: StuWebStorage
@@ -628,10 +655,13 @@ admin:
     intro: 'Send en e-postinvitasjon. Aktiveringslenke blir levert.'
     email: E-post
     pseudonym: Pseudonym
+    locale: 'Sprak for invitasjons-e-post'
+    locale_help: 'Spraket mottakeren far invitasjonen pa. Engelsk brukes hvis valgt sprak ikke stottes.'
     submit: 'Send invitasjon'
     back_users: 'Tilbake til liste'
     flash:
       sent: 'Invitasjon sendt.'
+      resent: 'Invitasjon sendt pa nytt.'
   users:
     meta:
       title: Brukeradministrasjon
@@ -686,6 +716,7 @@ admin:
       revoke_all_devices: 'Tilbakekall alle enheter'
       force_password_reset: 'Tving passordnullstilling'
       invalidate_sessions: 'Invalider aktive sesjoner'
+      resend_invitation: 'Send invitasjon pa nytt'
       hard_delete: 'Slett permanent'
     help:
       hard_delete: 'Denne handlingen fjerner funksjonelle data permanent; kryptert snapshot muliggjør admin-rollback.'
@@ -693,6 +724,7 @@ admin:
     status:
       active: Aktiv
       inactive: Inaktiv
+      invitation_pending: 'Invitasjon venter'
     devices:
       empty: 'Ingen paalitelige enheter.'
     success:
@@ -817,7 +849,11 @@ invite:
   invalid_payload: 'Ugyldige invitasjonsdata.'
   unauthorized: 'Uautorisert handling.'
   created: 'Invitasjon opprettet.'
+  resent: 'Invitasjon sendt pa nytt.'
   user_already_exists: 'En bruker finnes allerede med denne e-postadressen.'
+  user_not_found: 'Bruker ikke funnet.'
+  already_activated: 'Denne kontoen er allerede aktivert.'
+  not_invited: 'Denne kontoen ble ikke opprettet via invitasjon.'
   user_persist_failed: 'Kunne ikke opprette invitert konto.'
   email_send_failed: 'Kunne ikke sende invitasjons-eposten.'
   rate_limited: 'For mange forsok. Prov igjen senere.'
@@ -831,6 +867,14 @@ invite:
     subtitle: 'Sett passordet ditt for å fullføre aktiveringen.'
     password: 'Nytt passord'
     submit: 'Aktiver kontoen min'
+password_reset:
+  invalid_payload: 'Ugyldige data.'
+  requested: 'Hvis en aktiv konto finnes for denne e-posten, er en tilbakestillingslenke sendt.'
+  completed: 'Passord oppdatert. Du kan logge inn naa.'
+  invalid_or_expired: 'Lenken er ugyldig, utlopt eller allerede brukt.'
+  password_required: 'Passord er pakrevd.'
+  email_send_failed: 'Kunne ikke sende tilbakestillings-eposten.'
+  rate_limited: 'For mange forsok. Prov igjen senere.'
 locale:
   invalid: 'Språket støttes ikke.'
   name:

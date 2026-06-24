@@ -40,6 +40,9 @@ class UserInvitationToken
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $consumedAt = null;
 
+    #[ORM\Column(length: 5)]
+    private string $locale = 'en';
+
     /**
      * @brief Build invitation token aggregate.
      * @param int $userId Invited user identifier.
@@ -48,6 +51,7 @@ class UserInvitationToken
      * @param int $invitedByUserId Inviter user identifier.
      * @param DateTimeImmutable $createdAt Creation date.
      * @param DateTimeImmutable $expiresAt Expiration date.
+     * @param string $locale Invitation email locale code.
      * @return void
      * @date 2026-04-23
      * @author Stephane H.
@@ -58,7 +62,8 @@ class UserInvitationToken
         string $tokenHash,
         int $invitedByUserId,
         DateTimeImmutable $createdAt,
-        DateTimeImmutable $expiresAt
+        DateTimeImmutable $expiresAt,
+        string $locale = 'en'
     ) {
         $this->userId = $userId;
         $this->email = $email;
@@ -66,6 +71,7 @@ class UserInvitationToken
         $this->invitedByUserId = $invitedByUserId;
         $this->createdAt = $createdAt;
         $this->expiresAt = $expiresAt;
+        $this->locale = $locale;
     }
 
     /**
@@ -138,6 +144,18 @@ class UserInvitationToken
     public function getConsumedAt(): ?DateTimeImmutable
     {
         return $this->consumedAt;
+    }
+
+    /**
+     * @brief Get invitation email locale code.
+     * @param void No input parameter.
+     * @return string
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    public function getLocale(): string
+    {
+        return $this->locale;
     }
 
     /**

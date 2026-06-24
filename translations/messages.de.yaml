@@ -75,6 +75,23 @@ security:
     submit: Fortfahren
     remember_me: 'Diesem Geraet fuer 6 Monate vertrauen'
     error_invalid_credentials: 'Ungueltige Zugangsdaten oder TOTP-Code.'
+  password_reset:
+    back_to_login: 'Zurueck zur Anmeldung'
+    forgot:
+      link: 'Passwort vergessen?'
+      meta:
+        title: 'Passwort vergessen'
+      title: 'Passwort zuruecksetzen'
+      subtitle: 'Geben Sie Ihre E-Mail ein. Bei einem aktiven Konto erhalten Sie einen Reset-Link.'
+      email: E-Mail
+      submit: 'Link senden'
+    reset:
+      meta:
+        title: 'Neues Passwort'
+      title: 'Neues Passwort waehlen'
+      subtitle: 'Legen Sie ein neues Passwort fest, um wieder Zugriff zu erhalten.'
+      password: 'Neues Passwort'
+      submit: 'Passwort speichern'
   totp:
     meta:
       title: TOTP-Bestaetigung
@@ -96,12 +113,22 @@ auth:
 mail:
   invite:
     subject: 'Ihre Benutzereinladung'
+    brand: StuWebStorage
     title: 'Einladung zur Plattform'
     intro: 'Sie haben eine Einladung erhalten. Nutzen Sie den untenstehenden Link, um Ihr Konto zu aktivieren und Ihr Passwort festzulegen.'
     cta: 'Mein Konto aktivieren'
     expiry_hint: 'Dieser Link laeuft schnell ab. Fordern Sie bei Bedarf eine neue Einladung an.'
     security_hint: 'Teilen Sie diesen Link niemals. Unser Team wird Sie nie danach fragen.'
     footer: 'Automatische Einladungs-E-Mail - bitte nicht antworten.'
+  password_reset:
+    subject: 'Zuruecksetzen Ihres Passworts'
+    brand: StuWebStorage
+    title: 'Passwort zuruecksetzen'
+    intro: 'Sie haben eine Passwort-Zuruecksetzung angefordert. Nutzen Sie den Link unten, um ein neues Passwort festzulegen.'
+    cta: 'Passwort zuruecksetzen'
+    expiry_hint: 'Dieser Link laeuft schnell ab. Fordern Sie bei Bedarf einen neuen Link an.'
+    security_hint: 'Wenn Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail.'
+    footer: 'Automatische E-Mail - bitte nicht antworten.'
   totp:
     subject: 'Ihr TOTP-Bestaetigungscode'
     brand: StuWebStorage
@@ -628,10 +655,13 @@ admin:
     intro: 'Senden Sie eine E-Mail-Einladung. Ein Aktivierungslink wird bereitgestellt.'
     email: E-Mail
     pseudonym: Pseudonym
+    locale: 'Sprache der Einladungs-E-Mail'
+    locale_help: 'Sprache, in der der Empfaenger die Einladung erhaelt. Englisch wird verwendet, wenn die gewaehlte Sprache nicht unterstuetzt wird.'
     submit: 'Einladung senden'
     back_users: 'Zurueck zur Liste'
     flash:
       sent: 'Einladung gesendet.'
+      resent: 'Einladung erneut gesendet.'
   users:
     meta:
       title: Benutzerverwaltung
@@ -686,6 +716,7 @@ admin:
       revoke_all_devices: 'Alle Geraete widerrufen'
       force_password_reset: 'Passwort-Reset erzwingen'
       invalidate_sessions: 'Aktive Sitzungen invalidieren'
+      resend_invitation: 'Einladung erneut senden'
       hard_delete: 'Endgueltig loeschen'
     help:
       hard_delete: 'Diese Aktion entfernt funktionale Daten endgueltig; ein verschluesselter Snapshot ermoeglicht Admin-Rollback.'
@@ -693,6 +724,7 @@ admin:
     status:
       active: Aktiv
       inactive: Inaktiv
+      invitation_pending: 'Einladung ausstehend'
     devices:
       empty: 'Kein Vertrauensgeraet.'
     success:
@@ -817,7 +849,11 @@ invite:
   invalid_payload: 'Ungueltige Einladungsdaten.'
   unauthorized: 'Unzulaessige Aktion.'
   created: 'Einladung erstellt.'
+  resent: 'Einladung erneut gesendet.'
   user_already_exists: 'Ein Benutzer mit dieser E-Mail existiert bereits.'
+  user_not_found: 'Benutzer nicht gefunden.'
+  already_activated: 'Dieses Konto wurde bereits aktiviert.'
+  not_invited: 'Dieses Konto wurde nicht per Einladung erstellt.'
   user_persist_failed: 'Eingeladenes Konto konnte nicht erstellt werden.'
   email_send_failed: 'Einladungs-E-Mail konnte nicht gesendet werden.'
   rate_limited: 'Zu viele Versuche. Bitte spaeter erneut versuchen.'
@@ -831,6 +867,14 @@ invite:
     subtitle: 'Legen Sie Ihr Passwort fest, um die Aktivierung abzuschliessen.'
     password: 'Neues Passwort'
     submit: 'Mein Konto aktivieren'
+password_reset:
+  invalid_payload: 'Ungueltige Daten.'
+  requested: 'Wenn ein aktives Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet.'
+  completed: 'Passwort aktualisiert. Sie koennen sich jetzt anmelden.'
+  invalid_or_expired: 'Der Link ist ungueltig, abgelaufen oder bereits verwendet.'
+  password_required: 'Passwort ist erforderlich.'
+  email_send_failed: 'Die Reset-E-Mail konnte nicht gesendet werden.'
+  rate_limited: 'Zu viele Versuche. Bitte spaeter erneut versuchen.'
 locale:
   invalid: 'Nicht unterstuetzte Sprache.'
   name:

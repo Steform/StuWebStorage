@@ -29,6 +29,9 @@
                     <label class="form-label" for="invite_pseudonym">{{ 'admin.invite.pseudonym'|trans({}, 'messages', currentLocale) }}</label>
                     <input id="invite_pseudonym" class="form-control" type="text" name="pseudonym" autocomplete="nickname">
                 </div>
+                {% include 'admin/users/_invitation_locale_select.html.twig' with {
+                    invitationLocaleFieldId: 'invite_locale'
+                } %}
                 <div class="col-12">
                     <button class="btn btn-primary" type="submit">{{ 'admin.invite.submit'|trans({}, 'messages', currentLocale) }}</button>
                 </div>

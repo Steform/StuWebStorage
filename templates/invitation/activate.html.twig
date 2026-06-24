@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% set invitationLocale = invitationLocale|default(app.request.locale|default('en')) %}
+
+{% block title %}{{ 'invite.activate.meta.title'|trans({}, 'messages', invitationLocale) }}{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h4 mb-3">{{ 'invite.activate.title'|trans({}, 'messages', invitationLocale) }}</h1>
+                    <p class="text-muted">{{ 'invite.activate.subtitle'|trans({}, 'messages', invitationLocale) }}</p>
+
+                    <form method="post" action="{{ path('invite_activate_submit', {token: token}) }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfActivate) }}">
+                        <input type="hidden" name="lang" value="{{ invitationLocale }}">
+                        <div class="mb-3">
+                            <label for="invite_password" class="form-label">{{ 'invite.activate.password'|trans({}, 'messages', invitationLocale) }}</label>
+                            <input id="invite_password" name="password" type="password" class="form-control" autocomplete="new-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">{{ 'invite.activate.submit'|trans({}, 'messages', invitationLocale) }}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -22,6 +22,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class UserInvitationController extends AbstractController
 {
     private const CSRF_INVITE = 'admin_user_invite';
+    private const CSRF_RESEND = 'admin_user_resend_invite';
 
     /**
      * @brief Build user invitation admin controller.
@@ -29,6 +30,7 @@ class UserInvitationController extends AbstractController
      * @param Security $security Security helper.
      * @param CsrfTokenManagerInterface $csrfTokenManager CSRF token manager.
      * @param RateLimiterFactory $adminInviteLimiter Admin invitation limiter factory.
+     * @param list<string> $supportedLocales Supported invitation email locales.
      * @return void
      * @date 2026-04-28
      * @author Stephane H.
@@ -37,7 +39,8 @@ class UserInvitationController extends AbstractController
         private readonly UserInvitationService $userInvitationService,
         private readonly Security $security,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
-        private readonly RateLimiterFactory $adminInviteLimiter
+        private readonly RateLimiterFactory $adminInviteLimiter,
+        private readonly array $supportedLocales = ['fr', 'en', 'de', 'lt', 'no'],
     ) {
     }
 
@@ -55,6 +58,8 @@ class UserInvitationController extends AbstractController
         return $this->render('admin/users/invite.html.twig', [
             'currentLocale' => $request->getLocale(),
             'csrfInvite' => self::CSRF_INVITE,
+            'supportedLocales' => $this->supportedLocales,
+            'selectedInvitationLocale' => $this->resolveDefaultInvitationLocaleForForm($request),
         ]);
     }
 
@@ -89,9 +94,10 @@ class UserInvitationController extends AbstractController
             }
         }
 
-        $email = trim((string) $request->request->get('email', ''));
-        $pseudonym = trim((string) $request->request->get('pseudonym', ''));
-        $requestedLocale = trim((string) $request->request->get('locale', ''));
+        $payload = $this->resolveInvitePayload($request);
+        $email = $payload['email'];
+        $pseudonym = $payload['pseudonym'];
+        $invitationLocale = $this->resolveInvitationLocaleFromRequest($request);
         if ($email === '') {
             if ($wantsJson) {
                 return new JsonResponse(['status' => 'error', 'message' => 'invite.invalid_payload'], 400);
@@ -116,7 +122,7 @@ class UserInvitationController extends AbstractController
                 $email,
                 $pseudonym,
                 (int) $user->getId(),
-                $requestedLocale !== '' ? $requestedLocale : $request->getLocale()
+                $invitationLocale
             );
         } catch (\RuntimeException $exception) {
             $mappedKey = $this->mapInvitationExceptionToTranslationKey($exception->getMessage());
@@ -142,6 +148,78 @@ class UserInvitationController extends AbstractController
     }
 
     /**
+     * @brief Resend invitation email for a user with pending activation.
+     * @param int $id Invited user identifier.
+     * @param Request $request HTTP request payload.
+     * @return JsonResponse|RedirectResponse
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/admin/users/{id}/resend-invitation', name: 'admin_user_resend_invitation', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function resend(int $id, Request $request): JsonResponse|RedirectResponse
+    {
+        $wantsJson = $this->wantsJsonResponse($request);
+        $limiter = $this->adminInviteLimiter->create($request->getClientIp() ?? 'unknown');
+        if (!$limiter->consume()->isAccepted()) {
+            if ($wantsJson) {
+                return new JsonResponse(['status' => 'error', 'message' => 'invite.rate_limited'], 429);
+            }
+            $this->addFlash('danger', 'invite.rate_limited');
+
+            return $this->redirectToRoute('admin_users_show', ['id' => $id]);
+        }
+
+        if (!$wantsJson) {
+            $tokenValue = (string) $request->request->get('_csrf_token', '');
+            if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_RESEND, $tokenValue))) {
+                $this->addFlash('danger', 'admin.users.error.invalid_payload');
+
+                return $this->redirectToRoute('admin_users_show', ['id' => $id]);
+            }
+        }
+
+        $user = $this->security->getUser();
+        if (!$user instanceof User || $user->getId() === null) {
+            if ($wantsJson) {
+                return new JsonResponse(['status' => 'error', 'message' => 'invite.unauthorized'], 403);
+            }
+            $this->addFlash('danger', 'invite.unauthorized');
+
+            return $this->redirectToRoute('admin_users_show', ['id' => $id]);
+        }
+
+        $invitationLocale = $this->resolveInvitationLocaleFromRequest($request);
+        try {
+            $activationUrl = $this->userInvitationService->resendInvitation(
+                $id,
+                (int) $user->getId(),
+                $invitationLocale
+            );
+        } catch (\RuntimeException $exception) {
+            $mappedKey = $this->mapInvitationExceptionToTranslationKey($exception->getMessage());
+            if ($wantsJson) {
+                return new JsonResponse(['status' => 'error', 'message' => $mappedKey], 409);
+            }
+            $this->addFlash('danger', $mappedKey);
+
+            return $this->redirectToRoute('admin_users_show', ['id' => $id]);
+        }
+
+        if ($wantsJson) {
+            return new JsonResponse([
+                'status' => 'ok',
+                'message' => 'invite.resent',
+                'activationUrl' => $activationUrl,
+            ], 200);
+        }
+
+        $this->addFlash('success', 'admin.invite.flash.resent');
+
+        return $this->redirectToRoute('admin_users_show', ['id' => $id]);
+    }
+
+    /**
      * @brief Map invitation runtime messages to translation keys.
      * @param string $message Raw exception message.
      * @return string
@@ -154,8 +232,67 @@ class UserInvitationController extends AbstractController
             'invitation.user_already_exists' => 'invite.user_already_exists',
             'invitation.user_persist_failed' => 'invite.user_persist_failed',
             'invitation.email_send_failed' => 'invite.email_send_failed',
+            'invitation.user_not_found' => 'invite.user_not_found',
+            'invitation.already_activated' => 'invite.already_activated',
+            'invitation.not_invited' => 'invite.not_invited',
             default => 'invite.invalid_payload',
         };
+    }
+
+    /**
+     * @brief Resolve default locale pre-selection for invitation forms.
+     * @param Request $request HTTP request.
+     * @return string Supported locale code, falling back to English.
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function resolveDefaultInvitationLocaleForForm(Request $request): string
+    {
+        $uiLocale = strtolower(trim($request->getLocale()));
+        if (in_array($uiLocale, $this->supportedLocales, true)) {
+            return $uiLocale;
+        }
+
+        return 'en';
+    }
+
+    /**
+     * @brief Resolve invitation email locale from request payload.
+     * @param Request $request HTTP request.
+     * @return string Supported locale code, falling back to English.
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function resolveInvitationLocaleFromRequest(Request $request): string
+    {
+        $payload = $this->resolveInvitePayload($request);
+        $requestedLocale = strtolower(trim($payload['locale']));
+        if ($requestedLocale !== '' && in_array($requestedLocale, $this->supportedLocales, true)) {
+            return $requestedLocale;
+        }
+
+        return 'en';
+    }
+
+    /**
+     * @brief Resolve invite payload from form or JSON request body.
+     * @param Request $request HTTP request.
+     * @return array{email: string, pseudonym: string, locale: string}
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function resolveInvitePayload(Request $request): array
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            $payload = $request->request->all();
+        }
+
+        return [
+            'email' => trim((string) ($payload['email'] ?? '')),
+            'pseudonym' => trim((string) ($payload['pseudonym'] ?? '')),
+            'locale' => trim((string) ($payload['locale'] ?? '')),
+        ];
     }
 
     /**

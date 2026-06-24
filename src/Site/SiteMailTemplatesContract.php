@@ -16,10 +16,13 @@ final class SiteMailTemplatesContract
 
     public const TYPE_INVITATION = 'invitation';
 
+    public const TYPE_PASSWORD_RESET = 'password_reset';
+
     /** @var list<string> */
     public const TEMPLATE_TYPES = [
         self::TYPE_TOTP,
         self::TYPE_INVITATION,
+        self::TYPE_PASSWORD_RESET,
     ];
 
     /** @var list<string> */
@@ -29,10 +32,16 @@ final class SiteMailTemplatesContract
     public const INVITATION_BLOCKS = ['title', 'intro', 'expiry_hint', 'security_hint', 'footer'];
 
     /** @var list<string> */
+    public const PASSWORD_RESET_BLOCKS = ['title', 'intro', 'expiry_hint', 'security_hint', 'footer'];
+
+    /** @var list<string> */
     public const TOTP_LABELS = ['brand', 'code_label'];
 
     /** @var list<string> */
-    public const INVITATION_LABELS = ['cta'];
+    public const INVITATION_LABELS = ['brand', 'cta'];
+
+    /** @var list<string> */
+    public const PASSWORD_RESET_LABELS = ['brand', 'cta'];
 
     /**
      * @brief Whether a template type supports a customizable recipient email.
@@ -60,6 +69,7 @@ final class SiteMailTemplatesContract
         return match ($type) {
             self::TYPE_TOTP => self::TOTP_BLOCKS,
             self::TYPE_INVITATION => self::INVITATION_BLOCKS,
+            self::TYPE_PASSWORD_RESET => self::PASSWORD_RESET_BLOCKS,
             default => [],
         };
     }
@@ -77,6 +87,7 @@ final class SiteMailTemplatesContract
         return match ($type) {
             self::TYPE_TOTP => self::TOTP_LABELS,
             self::TYPE_INVITATION => self::INVITATION_LABELS,
+            self::TYPE_PASSWORD_RESET => self::PASSWORD_RESET_LABELS,
             default => [],
         };
     }

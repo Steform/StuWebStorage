@@ -75,6 +75,23 @@ security:
     submit: Testi
     remember_me: 'Pasitiketi siuo irenginiu 6 menesius'
     error_invalid_credentials: 'Neteisingi prisijungimo duomenys arba TOTP kodas.'
+  password_reset:
+    back_to_login: 'Grizti i prisijungima'
+    forgot:
+      link: 'Pamirsote slaptazodi?'
+      meta:
+        title: 'Pamirsote slaptazodi'
+      title: 'Atkurkite slaptazodi'
+      subtitle: 'Iveskite el. pasta. Jei aktyvi paskyra egzistuoja, gausite atkurimo nuoroda.'
+      email: 'El. pastas'
+      submit: 'Siusti nuoroda'
+    reset:
+      meta:
+        title: 'Naujas slaptazodis'
+      title: 'Pasirinkite nauja slaptazodi'
+      subtitle: 'Nustatykite nauja slaptazodi, kad vel pasiektumete paskyra.'
+      password: 'Naujas slaptazodis'
+      submit: 'Issaugoti slaptazodi'
   totp:
     meta:
       title: 'TOTP patvirtinimas'
@@ -96,12 +113,22 @@ auth:
 mail:
   invite:
     subject: 'Jusu naudotojo kvietimas'
+    brand: StuWebStorage
     title: 'Kvietimas prisijungti prie platformos'
     intro: 'Gavote kvietima. Naudokite zemiau esancia nuoroda, kad aktyvuotumete paskyra ir nustatytumete slaptazodi.'
     cta: 'Aktyvuoti mano paskyra'
     expiry_hint: 'Si nuoroda greitai nustoja galioti. Jei reikia, paprasykite naujo kvietimo.'
     security_hint: 'Niekada nesidalykite sia nuoroda. Musu komanda jos niekada neprasys.'
     footer: 'Automatinis kvietimo laiskas - prasome neatsakyti.'
+  password_reset:
+    subject: 'Slaptazodzio atkurimas'
+    brand: StuWebStorage
+    title: 'Slaptazodzio atkurimas'
+    intro: 'Prasete atkurti slaptazodi. Naudokite zemiau esancia nuoroda naujam slaptazodziui nustatyti.'
+    cta: 'Atkurti slaptazodi'
+    expiry_hint: 'Si nuoroda greitai pasibaigia. Prireikus prasykite naujos.'
+    security_hint: 'Jei to neprasete, ignoruokite si laiska.'
+    footer: 'Automatinis el. laiskas - neatsakykite.'
   totp:
     subject: 'Jusu TOTP patvirtinimo kodas'
     brand: StuWebStorage
@@ -628,10 +655,13 @@ admin:
     intro: 'Issiuskite pakvietima el. pastu. Bus pateikta aktyvavimo nuoroda.'
     email: 'El. pastas'
     pseudonym: Pseudonimas
+    locale: 'Pakvietimo el. laisko kalba'
+    locale_help: 'Kalba, kuria gavėjas gaus pakvietima. Anglu naudojama, jei pasirinkta kalba nepalaikoma.'
     submit: 'Siųsti pakvietima'
     back_users: 'Grizti i sarasa'
     flash:
       sent: 'Pakvietimas issiustas.'
+      resent: 'Pakvietimas pakartotinai issiustas.'
   users:
     meta:
       title: 'Naudotoju administravimas'
@@ -686,6 +716,7 @@ admin:
       revoke_all_devices: 'Panaikinti visus irenginius'
       force_password_reset: 'Priverstinis slaptazodzio atkurimas'
       invalidate_sessions: 'Atjungti aktyvias sesijas'
+      resend_invitation: 'Pakartoti kvietima'
       hard_delete: 'Negriztamai salinti'
     help:
       hard_delete: 'Sis veiksmas negriztamai pasalina funkcinius duomenis; uzkoduotas snapshot leidzia admin rollback.'
@@ -693,6 +724,7 @@ admin:
     status:
       active: Aktyvus
       inactive: Neaktyvus
+      invitation_pending: 'Laukiamas kvietimas'
     devices:
       empty: 'Patikimu irenginiu nera.'
     success:
@@ -817,7 +849,11 @@ invite:
   invalid_payload: 'Neteisingi kvietimo duomenys.'
   unauthorized: 'Veiksmas neleidziamas.'
   created: 'Kvietimas sukurtas.'
+  resent: 'Kvietimas pakartotinai issiustas.'
   user_already_exists: 'Naudotojas su siuo el. pastu jau egzistuoja.'
+  user_not_found: 'Naudotojas nerastas.'
+  already_activated: 'Si paskyra jau aktyvuota.'
+  not_invited: 'Si paskyra nebuvo sukurta per kvietima.'
   user_persist_failed: 'Nepavyko sukurti pakviestos paskyros.'
   email_send_failed: 'Nepavyko issiusti kvietimo el. laisko.'
   rate_limited: 'Per daug bandymu. Bandykite veliau.'
@@ -831,6 +867,14 @@ invite:
     subtitle: 'Nustatykite slaptazodi, kad uzbaigtumete aktyvavima.'
     password: 'Naujas slaptazodis'
     submit: 'Aktyvuoti mano paskyra'
+password_reset:
+  invalid_payload: 'Neteisingi duomenys.'
+  requested: 'Jei su siuo el. pastu yra aktyvi paskyra, atkurimo nuoroda issiusta.'
+  completed: 'Slaptazodis atnaujintas. Dabar galite prisijungti.'
+  invalid_or_expired: 'Nuoroda negalioja, pasibaigusi arba jau panaudota.'
+  password_required: 'Slaptazodis privalomas.'
+  email_send_failed: 'Nepavyko issiusti atkurimo el. laisko.'
+  rate_limited: 'Per daug bandymu. Bandykite veliau.'
 locale:
   invalid: 'Nepalaikoma kalba.'
   name:

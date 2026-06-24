@@ -43,9 +43,15 @@
                             <td>{{ user.pseudonym }}</td>
                             <td>{{ user.roles|join(', ') }}</td>
                             <td>
-                                <span class="badge {{ user.active ? 'text-bg-success' : 'text-bg-secondary' }}">
-                                    {{ (user.active ? 'admin.users.status.active' : 'admin.users.status.inactive')|trans({}, 'messages', currentLocale) }}
-                                </span>
+                                {% if pendingInvitationUserIds[user.id] is defined %}
+                                    <span class="badge text-bg-warning">
+                                        {{ 'admin.users.status.invitation_pending'|trans({}, 'messages', currentLocale) }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge {{ user.active ? 'text-bg-success' : 'text-bg-secondary' }}">
+                                        {{ (user.active ? 'admin.users.status.active' : 'admin.users.status.inactive')|trans({}, 'messages', currentLocale) }}
+                                    </span>
+                                {% endif %}
                             </td>
                             <td class="text-end">
                                 <a href="{{ path('admin_users_show', {id: user.id}) }}" class="btn btn-sm btn-outline-primary">{{ 'admin.users.actions.manage'|trans({}, 'messages', currentLocale) }}</a>

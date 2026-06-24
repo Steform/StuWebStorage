@@ -8,3 +8,11 @@ framework:
       policy: fixed_window
       limit: 15
       interval: '1 hour'
+    password_reset_request:
+      policy: fixed_window
+      limit: 10
+      interval: '1 hour'
+    password_reset_complete:
+      policy: fixed_window
+      limit: 15
+      interval: '1 hour'

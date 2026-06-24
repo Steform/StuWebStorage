@@ -75,6 +75,23 @@ security:
     submit: Continuer
     remember_me: 'Se souvenir de cet appareil'
     error_invalid_credentials: 'Identifiants ou code TOTP invalide.'
+  password_reset:
+    back_to_login: 'Retour a la connexion'
+    forgot:
+      link: 'Mot de passe oublie ?'
+      meta:
+        title: 'Mot de passe oublie'
+      title: 'Reinitialiser votre mot de passe'
+      subtitle: 'Saisissez votre email. Si un compte actif existe, vous recevrez un lien de reinitialisation.'
+      email: Email
+      submit: 'Envoyer le lien'
+    reset:
+      meta:
+        title: 'Nouveau mot de passe'
+      title: 'Choisissez un nouveau mot de passe'
+      subtitle: 'Definissez votre nouveau mot de passe pour retrouver l''acces a votre compte.'
+      password: 'Nouveau mot de passe'
+      submit: 'Enregistrer le mot de passe'
   totp:
     meta:
       title: 'Validation TOTP'
@@ -96,12 +113,22 @@ auth:
 mail:
   invite:
     subject: 'Votre invitation utilisateur'
+    brand: StuWebStorage
     title: 'Invitation a rejoindre la plateforme'
     intro: 'Vous avez recu une invitation. Utilisez le lien ci-dessous pour activer votre compte et definir votre mot de passe.'
     cta: 'Activer mon compte'
     expiry_hint: 'Ce lien expire rapidement. Demandez une nouvelle invitation si necessaire.'
     security_hint: 'Ne partagez jamais ce lien. Notre equipe ne vous le demandera jamais.'
     footer: 'Email automatique d''invitation - merci de ne pas repondre.'
+  password_reset:
+    subject: 'Reinitialisation de votre mot de passe'
+    brand: StuWebStorage
+    title: 'Reinitialisation de mot de passe'
+    intro: 'Vous avez demande une reinitialisation de mot de passe. Utilisez le lien ci-dessous pour definir un nouveau mot de passe.'
+    cta: 'Reinitialiser mon mot de passe'
+    expiry_hint: 'Ce lien expire rapidement. Demandez un nouveau lien si necessaire.'
+    security_hint: 'Si vous n''etes pas a l''origine de cette demande, ignorez cet email.'
+    footer: 'Email automatique - merci de ne pas repondre.'
   totp:
     subject: 'Votre code de validation TOTP'
     brand: StuWebStorage
@@ -629,10 +656,13 @@ admin:
     intro: 'Envoyez une invitation par email. Un lien d''activation sera fourni.'
     email: Email
     pseudonym: Pseudonyme
+    locale: 'Langue de l''email d''invitation'
+    locale_help: 'Langue dans laquelle le destinataire recevra l''invitation. Anglais si la langue choisie n''est pas supportee.'
     submit: 'Envoyer l''invitation'
     back_users: 'Retour a la liste'
     flash:
       sent: 'Invitation envoyee.'
+      resent: 'Invitation renvoyee.'
   users:
     meta:
       title: 'Administration utilisateurs'
@@ -687,6 +717,7 @@ admin:
       revoke_all_devices: 'Revoquer tous les appareils'
       force_password_reset: 'Forcer reset mot de passe'
       invalidate_sessions: 'Invalider sessions actives'
+      resend_invitation: 'Renvoyer l''invitation'
       hard_delete: 'Suppression definitive'
     help:
       hard_delete: 'Cette action supprime definitivement les donnees fonctionnelles, avec snapshot chiffre pour rollback admin.'
@@ -694,6 +725,7 @@ admin:
     status:
       active: Actif
       inactive: Inactif
+      invitation_pending: 'Invitation en attente'
     devices:
       empty: 'Aucun appareil de confiance.'
     success:
@@ -832,7 +864,11 @@ invite:
   invalid_payload: 'Données d’invitation invalides.'
   unauthorized: 'Action non autorisée.'
   created: 'Invitation créée.'
+  resent: 'Invitation renvoyée.'
   user_already_exists: 'Un utilisateur existe déjà avec cet email.'
+  user_not_found: 'Utilisateur introuvable.'
+  already_activated: 'Ce compte a déjà été activé.'
+  not_invited: 'Ce compte n''a pas été créé par invitation.'
   user_persist_failed: 'Impossible de créer le compte invité.'
   email_send_failed: 'Impossible d''envoyer l''invitation par email.'
   rate_limited: 'Trop de tentatives. Veuillez reessayer plus tard.'
@@ -846,6 +882,14 @@ invite:
     subtitle: 'Définissez votre mot de passe pour finaliser l’activation.'
     password: 'Nouveau mot de passe'
     submit: 'Activer mon compte'
+password_reset:
+  invalid_payload: 'Donnees invalides.'
+  requested: 'Si un compte actif existe avec cet email, un lien de reinitialisation vient d''etre envoye.'
+  completed: 'Mot de passe mis a jour. Vous pouvez vous connecter.'
+  invalid_or_expired: 'Le lien est invalide, expire, ou deja utilise.'
+  password_required: 'Le mot de passe est requis.'
+  email_send_failed: 'Impossible d''envoyer l''email de reinitialisation.'
+  rate_limited: 'Trop de tentatives. Veuillez reessayer plus tard.'
 locale:
   invalid: 'Langue non supportée.'
   name:

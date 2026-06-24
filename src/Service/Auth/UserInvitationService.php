@@ -26,8 +26,6 @@ class UserInvitationService
      * @param InvitationEmailNotificationService $invitationEmailNotificationService Invitation email sender.
      * @param int $tokenTtlSeconds Invitation token lifetime.
      * @param array<int, string> $supportedLocales Supported locale list.
-     * @param string $defaultLocale Default locale.
-     * @param string $fallbackLocale Fallback locale.
      * @return void
      * @date 2026-06-17
      * @author Stephane H.
@@ -40,8 +38,6 @@ class UserInvitationService
         private readonly InvitationEmailNotificationService $invitationEmailNotificationService,
         private readonly int $tokenTtlSeconds = 86400,
         private readonly array $supportedLocales = ['fr', 'en', 'de', 'lt', 'no'],
-        private readonly string $defaultLocale = 'en',
-        private readonly string $fallbackLocale = 'fr'
     ) {
     }
 
@@ -78,12 +74,12 @@ class UserInvitationService
             throw new \RuntimeException('invitation.user_persist_failed');
         }
 
+        $resolvedLocale = $this->resolveInvitationLocale($requestedLocale);
         $token = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $token);
         $now = new DateTimeImmutable();
         $expiresAt = $now->add(new DateInterval(sprintf('PT%dS', max(1, $this->tokenTtlSeconds))));
 
-        // Any new invitation revokes previous active tokens for the same user.
         $this->revokePendingInvitationsForUser((int) $user->getId(), $now);
 
         $invitation = new UserInvitationToken(
@@ -92,13 +88,13 @@ class UserInvitationService
             $tokenHash,
             $inviterUserId,
             $now,
-            $expiresAt
+            $expiresAt,
+            $resolvedLocale
         );
         $this->entityManager->persist($invitation);
         $this->entityManager->flush();
 
-        $activationUrl = $this->urlGenerator->generate('invite_activate', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
-        $resolvedLocale = $this->resolveInvitationLocale($requestedLocale);
+        $activationUrl = $this->buildActivationUrl($token, $resolvedLocale);
         try {
             $this->invitationEmailNotificationService->sendInvitation($normalizedEmail, $activationUrl, $resolvedLocale);
         } catch (\Throwable) {
@@ -109,38 +105,156 @@ class UserInvitationService
     }
 
     /**
+     * @brief Check whether user still has a pending invitation.
+     * @param int $userId Invited user identifier.
+     * @return bool
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    public function hasPendingInvitation(int $userId): bool
+    {
+        return $this->invitationTokenRepository->hasPendingInvitationForUser($userId);
+    }
+
+    /**
+     * @brief Return locale of latest pending invitation for one user.
+     * @param int $userId Invited user identifier.
+     * @return string|null
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    public function resolvePendingInvitationLocale(int $userId): ?string
+    {
+        $locale = $this->invitationTokenRepository->findLatestPendingLocaleForUser($userId);
+        if ($locale === null) {
+            return null;
+        }
+
+        return $this->resolveInvitationLocale($locale);
+    }
+
+    /**
+     * @brief Return user identifiers with pending invitation among candidates.
+     * @param list<int> $userIds Candidate user identifiers.
+     * @return list<int>
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    public function findUserIdsWithPendingInvitation(array $userIds): array
+    {
+        return $this->invitationTokenRepository->findUserIdsWithPendingInvitation($userIds);
+    }
+
+    /**
+     * @brief Resend invitation email for a user who has not activated yet.
+     * @param int $userId Invited user identifier.
+     * @param int $inviterUserId Inviter identifier.
+     * @param string|null $requestedLocale Requested invitation locale.
+     * @return string Activation URL.
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    public function resendInvitation(int $userId, int $inviterUserId, ?string $requestedLocale = null): string
+    {
+        /** @var User|null $user */
+        $user = $this->entityManager->getRepository(User::class)->find($userId);
+        if (!$user instanceof User) {
+            throw new \RuntimeException('invitation.user_not_found');
+        }
+
+        if (!$this->invitationTokenRepository->hasPendingInvitationForUser($userId)) {
+            if ($this->invitationTokenRepository->countByUserId($userId) > 0) {
+                throw new \RuntimeException('invitation.already_activated');
+            }
+
+            throw new \RuntimeException('invitation.not_invited');
+        }
+
+        $resolvedLocale = $this->resolveInvitationLocale($requestedLocale);
+        $token = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $token);
+        $now = new DateTimeImmutable();
+        $expiresAt = $now->add(new DateInterval(sprintf('PT%dS', max(1, $this->tokenTtlSeconds))));
+
+        $this->revokePendingInvitationsForUser($userId, $now);
+
+        $invitation = new UserInvitationToken(
+            $userId,
+            strtolower(trim($user->getEmail())),
+            $tokenHash,
+            $inviterUserId,
+            $now,
+            $expiresAt,
+            $resolvedLocale
+        );
+        $this->entityManager->persist($invitation);
+        $this->entityManager->flush();
+
+        $activationUrl = $this->buildActivationUrl($token, $resolvedLocale);
+        try {
+            $this->invitationEmailNotificationService->sendInvitation($user->getEmail(), $activationUrl, $resolvedLocale);
+        } catch (\Throwable) {
+            throw new \RuntimeException('invitation.email_send_failed');
+        }
+
+        return $activationUrl;
+    }
+
+    /**
+     * @brief Resolve activation page locale from token and optional request hint.
+     * @param string $plainToken Plain invitation token.
+     * @param string|null $requestedLocale Requested locale candidate.
+     * @return string
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    public function resolveActivationLocaleForToken(string $plainToken, ?string $requestedLocale = null): string
+    {
+        $normalizedToken = trim($plainToken);
+        if ($normalizedToken !== '') {
+            $invitation = $this->invitationTokenRepository->findByTokenHash(hash('sha256', $normalizedToken));
+            if ($invitation instanceof UserInvitationToken && !$invitation->isConsumed()) {
+                return $this->resolveInvitationLocale($invitation->getLocale());
+            }
+        }
+
+        return $this->resolveInvitationLocale($requestedLocale);
+    }
+
+    /**
      * @brief Activate invited account from plain token.
      * @param string $token Plain invitation token.
      * @param string $newPassword New user password.
-     * @return bool
+     * @return string|null Invitation locale on success, null on failure.
      * @date 2026-06-17
      * @author Stephane H.
      */
-    public function activateInvitation(string $token, string $newPassword): bool
+    public function activateInvitation(string $token, string $newPassword): ?string
     {
         $normalizedToken = trim($token);
         $password = trim($newPassword);
         if ($normalizedToken === '' || $password === '') {
-            return false;
+            return null;
         }
 
         $tokenHash = hash('sha256', $normalizedToken);
         $invitation = $this->invitationTokenRepository->findActiveByTokenHash($tokenHash, new DateTimeImmutable());
         if (!$invitation instanceof UserInvitationToken) {
-            return false;
+            return null;
         }
 
         /** @var User|null $user */
         $user = $this->entityManager->getRepository(User::class)->find($invitation->getUserId());
         if (!$user instanceof User) {
-            return false;
+            return null;
         }
 
+        $resolvedLocale = $this->resolveInvitationLocale($invitation->getLocale());
         $user->setPassword($this->passwordHasher->hashPassword($user, $password));
         $invitation->consume(new DateTimeImmutable());
         $this->entityManager->flush();
 
-        return true;
+        return $resolvedLocale;
     }
 
     /**
@@ -165,7 +279,23 @@ class UserInvitationService
     }
 
     /**
-     * @brief Resolve invitation locale with strict supported fallback.
+     * @brief Build absolute activation URL with invitation locale query parameter.
+     * @param string $token Plain invitation token.
+     * @param string $locale Invitation locale code.
+     * @return string
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function buildActivationUrl(string $token, string $locale): string
+    {
+        $resolvedLocale = $this->resolveInvitationLocale($locale);
+        $baseUrl = $this->urlGenerator->generate('invite_activate', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        return $baseUrl.(str_contains($baseUrl, '?') ? '&' : '?').'lang='.rawurlencode($resolvedLocale);
+    }
+
+    /**
+     * @brief Resolve invitation locale with English fallback.
      * @param string|null $requestedLocale Requested locale candidate.
      * @return string
      * @date 2026-04-28
@@ -177,13 +307,7 @@ class UserInvitationService
         if (in_array($normalizedLocale, $this->supportedLocales, true)) {
             return $normalizedLocale;
         }
-        if (in_array($this->defaultLocale, $this->supportedLocales, true)) {
-            return $this->defaultLocale;
-        }
-        if (in_array($this->fallbackLocale, $this->supportedLocales, true)) {
-            return $this->fallbackLocale;
-        }
 
-        return $this->supportedLocales[0] ?? 'en';
+        return 'en';
     }
 }

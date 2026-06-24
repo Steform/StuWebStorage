@@ -126,6 +126,17 @@
         <div class="card-body">
             <h2 class="h6">{{ 'admin.users.sections.security'|trans({}, 'messages', currentLocale) }}</h2>
             <div class="d-flex gap-2 flex-wrap">
+                {% if hasPendingInvitation %}
+                    <form method="post" action="{{ path('admin_user_resend_invitation', {id: targetUser.id}) }}" class="row g-2 align-items-end w-100">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfResendInvite) }}">
+                        {% include 'admin/users/_invitation_locale_select.html.twig' with {
+                            invitationLocaleFieldId: 'resend_invite_locale'
+                        } %}
+                        <div class="col-12 col-md-auto">
+                            <button class="btn btn-outline-primary btn-sm" type="submit">{{ 'admin.users.actions.resend_invitation'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                    </form>
+                {% endif %}
                 <form method="post" action="{{ path('admin_users_force_password_reset', {id: targetUser.id}) }}">
                     <button class="btn btn-outline-warning btn-sm" type="submit">{{ 'admin.users.actions.force_password_reset'|trans({}, 'messages', currentLocale) }}</button>
                 </form>

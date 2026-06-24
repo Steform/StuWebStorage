@@ -1,0 +1,14 @@
+{% set invitationLocales = supportedLocales|default(['fr', 'en', 'de', 'lt', 'no']) %}
+{% set selectedLocale = selectedInvitationLocale|default('en') %}
+{% set fieldId = invitationLocaleFieldId|default('invite_locale') %}
+<div class="col-12 col-md-6">
+    <label class="form-label" for="{{ fieldId }}">{{ 'admin.invite.locale'|trans({}, 'messages', currentLocale) }}</label>
+    <select id="{{ fieldId }}" class="form-select" name="locale" required>
+        {% for localeCode in invitationLocales %}
+            <option value="{{ localeCode }}" {{ localeCode == selectedLocale ? 'selected' : '' }}>
+                {{ ('locale.name.' ~ localeCode)|trans({}, 'messages', currentLocale) }}
+            </option>
+        {% endfor %}
+    </select>
+    <div class="form-text">{{ 'admin.invite.locale_help'|trans({}, 'messages', currentLocale) }}</div>
+</div>
