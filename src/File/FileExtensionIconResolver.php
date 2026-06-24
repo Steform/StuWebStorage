@@ -265,50 +265,50 @@ final class FileExtensionIconResolver
   ];
 
   /**
-   * @var array<FileIconCategory, string>
+   * @var array<string, string> category value => icon suffix
    */
   private const CATEGORY_ICON_MAP = [
-    FileIconCategory::OfficeWord => 'file-type-word',
-    FileIconCategory::OfficeExcel => 'file-type-excel',
-    FileIconCategory::OfficePowerpoint => 'file-type-powerpoint',
-    FileIconCategory::Pdf => 'file-type-pdf',
-    FileIconCategory::Image => 'file-type-image',
-    FileIconCategory::Video => 'file-type-video',
-    FileIconCategory::Audio => 'file-type-audio',
-    FileIconCategory::Archive => 'file-type-zip',
-    FileIconCategory::Code => 'file-type-code',
-    FileIconCategory::Text => 'file-type-text',
-    FileIconCategory::Database => 'file-type-sqlite',
-    FileIconCategory::Email => 'file-type-email',
-    FileIconCategory::Font => 'file-type-font',
-    FileIconCategory::Executable => 'file-type-exe',
-    FileIconCategory::Certificate => 'file-type-cert',
-    FileIconCategory::Cad => 'file-type-3d',
-    FileIconCategory::Binary => 'file-type-binary',
-    FileIconCategory::Default => 'default-file',
+    'office_word' => 'file-type-word',
+    'office_excel' => 'file-type-excel',
+    'office_powerpoint' => 'file-type-powerpoint',
+    'pdf' => 'file-type-pdf',
+    'image' => 'file-type-image',
+    'video' => 'file-type-video',
+    'audio' => 'file-type-audio',
+    'archive' => 'file-type-zip',
+    'code' => 'file-type-code',
+    'text' => 'file-type-text',
+    'database' => 'file-type-sqlite',
+    'email' => 'file-type-email',
+    'font' => 'file-type-font',
+    'executable' => 'file-type-exe',
+    'certificate' => 'file-type-cert',
+    'cad' => 'file-type-3d',
+    'binary' => 'file-type-binary',
+    'default' => 'default-file',
   ];
 
   /**
-   * @var array<FileIconCategory, list<string>>
+   * @var array<string, list<string>> category value => extensions
    */
   private const CATEGORY_EXTENSIONS = [
-    FileIconCategory::OfficeWord => ['doc', 'docx', 'docm', 'dot', 'dotx', 'odt', 'pages'],
-    FileIconCategory::OfficeExcel => ['xls', 'xlsx', 'xlsm', 'xlsb', 'ods', 'csv', 'tsv', 'numbers'],
-    FileIconCategory::OfficePowerpoint => ['ppt', 'pptx', 'pptm', 'odp', 'key', 'one', 'onetoc2'],
-    FileIconCategory::Pdf => ['pdf'],
-    FileIconCategory::Image => ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico', 'tif', 'tiff', 'heic', 'heif', 'psd', 'raw'],
-    FileIconCategory::Video => ['mp4', 'webm', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'ogv', 'mpeg', 'mpg', 'm4v', '3gp'],
-    FileIconCategory::Audio => ['mp3', 'wav', 'flac', 'ogg', 'aac', 'm4a', 'wma', 'opus', 'midi', 'mid'],
-    FileIconCategory::Archive => ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz', 'iso', 'dmg', 'deb', 'rpm'],
-    FileIconCategory::Code => ['php', 'js', 'ts', 'html', 'css', 'json', 'xml', 'yml', 'yaml', 'py', 'java', 'go', 'rs', 'c', 'cpp', 'cs', 'sh', 'rb'],
-    FileIconCategory::Text => ['txt', 'log', 'md', 'markdown', 'rtf', 'tex', 'ini', 'conf', 'cfg'],
-    FileIconCategory::Database => ['db', 'sqlite', 'sqlite3', 'sql'],
-    FileIconCategory::Email => ['eml', 'msg', 'ics', 'vcf'],
-    FileIconCategory::Font => ['ttf', 'otf', 'woff', 'woff2', 'eot'],
-    FileIconCategory::Executable => ['exe', 'com', 'dll', 'msi', 'apk', 'bat', 'cmd'],
-    FileIconCategory::Certificate => ['pem', 'crt', 'cer', 'key', 'p12', 'pfx'],
-    FileIconCategory::Cad => ['dwg', 'dxf', 'stl', 'obj', 'blend'],
-    FileIconCategory::Binary => ['bin', 'dat', 'bak', 'tmp', 'vmdk', 'vdi'],
+    'office_word' => ['doc', 'docx', 'docm', 'dot', 'dotx', 'odt', 'pages'],
+    'office_excel' => ['xls', 'xlsx', 'xlsm', 'xlsb', 'ods', 'csv', 'tsv', 'numbers'],
+    'office_powerpoint' => ['ppt', 'pptx', 'pptm', 'odp', 'key', 'one', 'onetoc2'],
+    'pdf' => ['pdf'],
+    'image' => ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico', 'tif', 'tiff', 'heic', 'heif', 'psd', 'raw'],
+    'video' => ['mp4', 'webm', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'ogv', 'mpeg', 'mpg', 'm4v', '3gp'],
+    'audio' => ['mp3', 'wav', 'flac', 'ogg', 'aac', 'm4a', 'wma', 'opus', 'midi', 'mid'],
+    'archive' => ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz', 'iso', 'dmg', 'deb', 'rpm'],
+    'code' => ['php', 'js', 'ts', 'html', 'css', 'json', 'xml', 'yml', 'yaml', 'py', 'java', 'go', 'rs', 'c', 'cpp', 'cs', 'sh', 'rb'],
+    'text' => ['txt', 'log', 'md', 'markdown', 'rtf', 'tex', 'ini', 'conf', 'cfg'],
+    'database' => ['db', 'sqlite', 'sqlite3', 'sql'],
+    'email' => ['eml', 'msg', 'ics', 'vcf'],
+    'font' => ['ttf', 'otf', 'woff', 'woff2', 'eot'],
+    'executable' => ['exe', 'com', 'dll', 'msi', 'apk', 'bat', 'cmd'],
+    'certificate' => ['pem', 'crt', 'cer', 'key', 'p12', 'pfx'],
+    'cad' => ['dwg', 'dxf', 'stl', 'obj', 'blend'],
+    'binary' => ['bin', 'dat', 'bak', 'tmp', 'vmdk', 'vdi'],
   ];
 
   /**
@@ -336,12 +336,12 @@ final class FileExtensionIconResolver
       );
     }
 
-    foreach (self::CATEGORY_EXTENSIONS as $category => $extensions) {
+    foreach (self::CATEGORY_EXTENSIONS as $categoryValue => $extensions) {
       if (\in_array($normalized, $extensions, true)) {
         return $this->buildDescriptor(
-          self::CATEGORY_ICON_MAP[$category],
+          self::CATEGORY_ICON_MAP[$categoryValue],
           strtoupper($normalized),
-          $category,
+          FileIconCategory::from($categoryValue),
         );
       }
     }
@@ -418,9 +418,9 @@ final class FileExtensionIconResolver
    */
   private function categoryForExtension(string $extension): FileIconCategory
   {
-    foreach (self::CATEGORY_EXTENSIONS as $category => $extensions) {
+    foreach (self::CATEGORY_EXTENSIONS as $categoryValue => $extensions) {
       if (\in_array($extension, $extensions, true)) {
-        return $category;
+        return FileIconCategory::from($categoryValue);
       }
     }
 
