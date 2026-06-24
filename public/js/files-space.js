@@ -6168,6 +6168,42 @@
     var extractZipPollTimer = null;
     var extractZipActiveJobId = '';
     var extractZipBusy = false;
+    var extractZipTickInFlight = false;
+    var EXTRACT_ZIP_POLL_DELAY_MS = 2000;
+
+    /**
+     * @brief Stop scheduled extraction tick polling.
+     * @return {void}
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    function stopExtractZipPolling() {
+        if (extractZipPollTimer !== null) {
+            window.clearTimeout(extractZipPollTimer);
+            extractZipPollTimer = null;
+        }
+    }
+
+    /**
+     * @brief Schedule the next extraction tick when a job is still active.
+     * @param {HTMLElement} modalEl Modal root.
+     * @param {HTMLFormElement} formEl Extraction form.
+     * @param {number} [delayMs] Delay before the next tick.
+     * @return {void}
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    function scheduleExtractZipTick(modalEl, formEl, delayMs) {
+        stopExtractZipPolling();
+        if (extractZipActiveJobId === '') {
+            return;
+        }
+        var waitMs = typeof delayMs === 'number' && delayMs >= 0 ? delayMs : EXTRACT_ZIP_POLL_DELAY_MS;
+        extractZipPollTimer = window.setTimeout(function () {
+            extractZipPollTimer = null;
+            postExtractZipTick(modalEl, formEl);
+        }, waitMs);
+    }
 
     /**
      * @brief Open the ZIP extraction modal for one owned file row.
@@ -6193,10 +6229,8 @@
         }
         extractZipActiveJobId = '';
         extractZipBusy = false;
-        if (extractZipPollTimer !== null) {
-            window.clearInterval(extractZipPollTimer);
-            extractZipPollTimer = null;
-        }
+        extractZipTickInFlight = false;
+        stopExtractZipPolling();
         var startTemplate = modalEl.getAttribute('data-files-extract-start-url-template') || '';
         formEl.action = startTemplate.replace('999999', String(fileId));
         if (nameEl) {
@@ -6375,7 +6409,12 @@
      * @date 2026-06-24
      * @author Stephane H.
      */
-    function postExtractZipTick(modalEl, formEl, jobId) {
+    function postExtractZipTick(modalEl, formEl) {
+        if (extractZipActiveJobId === '' || extractZipTickInFlight) {
+            return;
+        }
+        extractZipTickInFlight = true;
+        var jobId = extractZipActiveJobId;
         var tickTemplate = modalEl.getAttribute('data-files-extract-tick-url-template') || '';
         var tickUrl = tickTemplate.replace('00000000000000000000000000000000', jobId);
         var csrfInput = formEl.querySelector('[data-files-extract-csrf-input]');
@@ -6404,16 +6443,14 @@
                 return { ok: response.ok, json: json };
             });
         }).then(function (pack) {
+            extractZipTickInFlight = false;
             var payload = pack.json || {};
             if (pack.ok && payload.status === 'ok') {
                 updateExtractZipProgressUi(modalEl, payload);
                 if (payload.done) {
                     extractZipBusy = false;
                     extractZipActiveJobId = '';
-                    if (extractZipPollTimer !== null) {
-                        window.clearInterval(extractZipPollTimer);
-                        extractZipPollTimer = null;
-                    }
+                    stopExtractZipPolling();
                     if (payload.phase === 'done') {
                         if (window.bootstrap && window.bootstrap.Modal) {
                             window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
@@ -6439,15 +6476,14 @@
                             submitBtn.disabled = false;
                         }
                     }
+                    return;
                 }
+                scheduleExtractZipTick(modalEl, formEl);
                 return;
             }
             extractZipBusy = false;
             extractZipActiveJobId = '';
-            if (extractZipPollTimer !== null) {
-                window.clearInterval(extractZipPollTimer);
-                extractZipPollTimer = null;
-            }
+            stopExtractZipPolling();
             var errorElFail = document.getElementById('files-extract-error');
             var submitBtnFail = formEl.querySelector('[data-files-extract-submit]');
             if (errorElFail) {
@@ -6458,11 +6494,10 @@
                 submitBtnFail.disabled = false;
             }
         }).catch(function () {
+            extractZipTickInFlight = false;
             extractZipBusy = false;
-            if (extractZipPollTimer !== null) {
-                window.clearInterval(extractZipPollTimer);
-                extractZipPollTimer = null;
-            }
+            extractZipActiveJobId = '';
+            stopExtractZipPolling();
             var errorElNet = document.getElementById('files-extract-error');
             if (errorElNet) {
                 errorElNet.textContent = modalEl.getAttribute('data-msg-error') || '';
@@ -6578,15 +6613,7 @@
                     total: pack.json.total_entries || 0,
                     current_entry: ''
                 });
-                postExtractZipTick(extractZipModal, extractZipForm, extractZipActiveJobId);
-                if (extractZipPollTimer !== null) {
-                    window.clearInterval(extractZipPollTimer);
-                }
-                extractZipPollTimer = window.setInterval(function () {
-                    if (extractZipActiveJobId !== '') {
-                        postExtractZipTick(extractZipModal, extractZipForm, extractZipActiveJobId);
-                    }
-                }, 800);
+                postExtractZipTick(extractZipModal, extractZipForm);
             }).catch(function () {
                 extractZipBusy = false;
                 if (submitBtn) {
@@ -6608,10 +6635,7 @@
                 event.preventDefault();
                 return;
             }
-            if (extractZipPollTimer !== null) {
-                window.clearInterval(extractZipPollTimer);
-                extractZipPollTimer = null;
-            }
+            stopExtractZipPolling();
             cancelExtractZipJob(extractZipModal, extractZipForm);
         });
     }
