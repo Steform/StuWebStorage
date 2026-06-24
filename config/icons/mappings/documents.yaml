@@ -1,0 +1,76 @@
+extensions:
+  azw:
+    icon: file-type-epub
+    category: ebook
+  azw3:
+    icon: file-type-epub
+    category: ebook
+  cfg:
+    icon: file-type-config
+    category: text
+  chm:
+    icon: file-type-text
+    category: ebook
+  conf:
+    icon: file-type-config
+    category: text
+  djvu:
+    icon: file-type-epub
+    category: ebook
+  djv:
+    icon: file-type-epub
+    category: ebook
+  epub:
+    icon: file-type-epub
+    category: ebook
+  fb2:
+    icon: file-type-epub
+    category: ebook
+  ini:
+    icon: file-type-config
+    category: text
+  lit:
+    icon: file-type-epub
+    category: ebook
+  log:
+    icon: file-type-text
+    category: text
+  markdown:
+    icon: file-type-markdown
+    category: text
+  md:
+    icon: file-type-markdown
+    category: text
+  mobi:
+    icon: file-type-epub
+    category: ebook
+  oxps:
+    icon: file-type-pdf2
+    category: ebook
+  pdb:
+    icon: file-type-epub
+    category: ebook
+  pdf:
+    icon: file-type-pdf2
+    category: pdf
+  prc:
+    icon: file-type-epub
+    category: ebook
+  rst:
+    icon: file-type-markdown
+    category: text
+  rtf:
+    icon: file-type-word
+    category: text
+  tex:
+    icon: file-type-tex
+    category: text
+  txt:
+    icon: file-type-text
+    category: text
+  wiki:
+    icon: file-type-wikitext
+    category: text
+  xps:
+    icon: file-type-pdf2
+    category: ebook

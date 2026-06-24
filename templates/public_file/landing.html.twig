@@ -45,7 +45,7 @@
                                 <img src="{{ path('file_public_preview', { publicToken: publicToken }) }}" alt="{{ 'files.public_landing.preview_alt'|trans({ '%name%': sharedFile.originalFileName }, 'messages', currentLocale) }}" class="img-fluid public-landing__preview-img rounded" loading="lazy" width="400" height="300" data-public-landing-preview-main>
                                 {% else %}
                                 <div class="public-landing__type-icon" data-public-landing-fallback-icon data-public-landing-fallback-type="file" aria-hidden="true">
-                                    {% include 'components/_file_type_icon.html.twig' with { extension: sharedFile.fileExtension|default(''), size: 'landing' } %}
+                                    {% include 'components/_file_type_icon.html.twig' with { extension: sharedFile.fileExtension|default(''), filename: sharedFile.originalFileName, size: 'landing' } %}
                                 </div>
                                 {% endif %}
                             </div>

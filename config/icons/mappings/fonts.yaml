@@ -1,0 +1,31 @@
+extensions:
+  eot:
+    icon: file-type-font
+    category: font
+  otf:
+    icon: file-type-font
+    category: font
+  ttf:
+    icon: file-type-font
+    category: font
+  woff:
+    icon: file-type-font
+    category: font
+  woff2:
+    icon: file-type-font
+    category: font
+  ttc:
+    icon: file-type-font
+    category: font
+  fon:
+    icon: file-type-font
+    category: font
+  pfb:
+    icon: file-type-font
+    category: font
+  pfm:
+    icon: file-type-font
+    category: font
+  sfd:
+    icon: file-type-font
+    category: font

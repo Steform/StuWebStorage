@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Files;
 
 use App\File\FileExtensionIconResolver;
+use App\File\FileIconMappingProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -34,7 +35,12 @@ final class FileTypeIconImportContractTest extends TestCase
             file($manifestPath, FILE_IGNORE_NEW_LINES) ?: [],
         )));
 
-        $resolver = new FileExtensionIconResolver();
+        $resolver = new FileExtensionIconResolver(
+            new FileIconMappingProvider(
+                $root.'/config/icons/mappings',
+                $root.'/config/icons/categories.yaml',
+            ),
+        );
         $expected = $resolver->listUsedIconSuffixes();
 
         sort($manifest);

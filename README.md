@@ -187,11 +187,22 @@ cp .env.exemple .env.local
 # Edit .env.local: DATABASE_URL, APP_SECRET, APP_FILE_ENCRYPTION_KEY, MAILER_DSN, DEFAULT_URI, …
 
 php bin/console doctrine:migrations:migrate --no-interaction
-composer import-icons
 php bin/console cache:clear
 ```
 
-File type icons use **Symfony UX Icons** (`vscode-icons`). In production (`APP_DEBUG=0`), icons are served offline — run `composer import-icons` after deploy or whenever [`config/icons/vscode-icons-used.txt`](config/icons/vscode-icons-used.txt) changes. Regenerate that list with `php bin/console app:file-icons:export`.
+File type icons use **Symfony UX Icons** (`vscode-icons`). Offline SVG assets live under `assets/icons/vscode/` and are **versioned in git** — a fresh clone does not need `import-icons` unless mappings changed.
+
+When you add or change extension mappings in `config/icons/mappings/`:
+
+```bash
+php bin/console app:file-icons:export   # refresh config/icons/vscode-icons-used.txt
+composer import-icons                   # download new SVGs (requires symfony/http-client)
+composer validate-icons                 # Iconify + manifest + local SVG contract
+```
+
+Ambiguous extensions (`.ts`, `.mts`, `.m`, `.mod`, `.key`, `.off`, `.ai`) are documented in `config/icons/mappings/overrides.yaml`. Extensionless filenames (`Dockerfile`, `Makefile`, …) are listed in `config/icons/mappings/filenames.yaml`.
+
+Missing icons do not break `/files`: `ignore_not_found: true` in UX Icons config plus a Twig fallback to `default-file`.
 
 Open `/setup` to create the first administrator, then `/` to access the platform.
 
@@ -243,6 +254,9 @@ php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
 
 # Static analysis
 composer analyse
+
+# File icon mappings contract (YAML, Iconify, local SVG)
+composer validate-icons
 ```
 
 | Metric | Value |

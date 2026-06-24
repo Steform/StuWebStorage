@@ -1,0 +1,262 @@
+extensions:
+  3ga:
+    icon: file-type-audio
+    category: audio
+  669:
+    icon: file-type-audio
+    category: audio
+  8svx:
+    icon: file-type-audio
+    category: audio
+  aa:
+    icon: file-type-audio
+    category: audio
+  aac:
+    icon: file-type-audio
+    category: audio
+  aax:
+    icon: file-type-audio
+    category: audio
+  ac3:
+    icon: file-type-audio
+    category: audio
+  act:
+    icon: file-type-audio
+    category: audio
+  aif:
+    icon: file-type-audio
+    category: audio
+  aifc:
+    icon: file-type-audio
+    category: audio
+  aiff:
+    icon: file-type-audio
+    category: audio
+  alac:
+    icon: file-type-audio
+    category: audio
+  amr:
+    icon: file-type-audio
+    category: audio
+  ape:
+    icon: file-type-audio
+    category: audio
+  au:
+    icon: file-type-audio
+    category: audio
+  awb:
+    icon: file-type-audio
+    category: audio
+  caf:
+    icon: file-type-audio
+    category: audio
+  cda:
+    icon: file-type-audio
+    category: audio
+  dct:
+    icon: file-type-audio
+    category: audio
+  dff:
+    icon: file-type-audio
+    category: audio
+  dsd:
+    icon: file-type-audio
+    category: audio
+  dsf:
+    icon: file-type-audio
+    category: audio
+  dss:
+    icon: file-type-audio
+    category: audio
+  dts:
+    icon: file-type-audio
+    category: audio
+  dtshd:
+    icon: file-type-audio
+    category: audio
+  dvf:
+    icon: file-type-audio
+    category: audio
+  eac3:
+    icon: file-type-audio
+    category: audio
+  f4a:
+    icon: file-type-audio
+    category: audio
+  f4b:
+    icon: file-type-audio
+    category: audio
+  flac:
+    icon: file-type-audio
+    category: audio
+  gsm:
+    icon: file-type-audio
+    category: audio
+  iklax:
+    icon: file-type-audio
+    category: audio
+  it:
+    icon: file-type-audio
+    category: audio
+  ivs:
+    icon: file-type-audio
+    category: audio
+  kar:
+    icon: file-type-audio
+    category: audio
+  m4a:
+    icon: file-type-audio
+    category: audio
+  m4b:
+    icon: file-type-audio
+    category: audio
+  m4p:
+    icon: file-type-audio
+    category: audio
+  m4r:
+    icon: file-type-audio
+    category: audio
+  med:
+    icon: file-type-audio
+    category: audio
+  mid:
+    icon: file-type-audio
+    category: audio
+  midi:
+    icon: file-type-audio
+    category: audio
+  mka:
+    icon: file-type-audio
+    category: audio
+  mod:
+    icon: file-type-audio
+    category: audio
+  mogg:
+    icon: file-type-audio
+    category: audio
+  mp+:
+    icon: file-type-audio
+    category: audio
+  mp3:
+    icon: file-type-audio
+    category: audio
+  mpc:
+    icon: file-type-audio
+    category: audio
+  msv:
+    icon: file-type-audio
+    category: audio
+  mtm:
+    icon: file-type-audio
+    category: audio
+  nmf:
+    icon: file-type-audio
+    category: audio
+  nsf:
+    icon: file-type-audio
+    category: audio
+  off:
+    icon: file-type-audio
+    category: audio
+  ofr:
+    icon: file-type-audio
+    category: audio
+  ofs:
+    icon: file-type-audio
+    category: audio
+  oga:
+    icon: file-type-audio
+    category: audio
+  ogg:
+    icon: file-type-audio
+    category: audio
+  ogx:
+    icon: file-type-audio
+    category: audio
+  okt:
+    icon: file-type-audio
+    category: audio
+  oma:
+    icon: file-type-audio
+    category: audio
+  opus:
+    icon: file-type-audio
+    category: audio
+  ptm:
+    icon: file-type-audio
+    category: audio
+  qcp:
+    icon: file-type-audio
+    category: audio
+  ra:
+    icon: file-type-audio
+    category: audio
+  ram:
+    icon: file-type-audio
+    category: audio
+  rf64:
+    icon: file-type-audio
+    category: audio
+  rka:
+    icon: file-type-audio
+    category: audio
+  rm:
+    icon: file-type-audio
+    category: audio
+  s3m:
+    icon: file-type-audio
+    category: audio
+  shn:
+    icon: file-type-audio
+    category: audio
+  smf:
+    icon: file-type-audio
+    category: audio
+  snd:
+    icon: file-type-audio
+    category: audio
+  spx:
+    icon: file-type-audio
+    category: audio
+  stm:
+    icon: file-type-audio
+    category: audio
+  tak:
+    icon: file-type-audio
+    category: audio
+  tta:
+    icon: file-type-audio
+    category: audio
+  umx:
+    icon: file-type-audio
+    category: audio
+  voc:
+    icon: file-type-audio
+    category: audio
+  vox:
+    icon: file-type-audio
+    category: audio
+  w64:
+    icon: file-type-audio
+    category: audio
+  wav:
+    icon: file-type-audio
+    category: audio
+  wave:
+    icon: file-type-audio
+    category: audio
+  weba:
+    icon: file-type-audio
+    category: audio
+  wma:
+    icon: file-type-audio
+    category: audio
+  wv:
+    icon: file-type-audio
+    category: audio
+  wvc:
+    icon: file-type-audio
+    category: audio
+  xm:
+    icon: file-type-audio
+    category: audio

@@ -1,0 +1,52 @@
+extensions:
+  db:
+    icon: file-type-sqlite
+    category: database
+  duckdb:
+    icon: file-type-duckdb
+    category: database
+  mariadb:
+    icon: file-type-mariadb
+    category: database
+  mdb:
+    icon: file-type-access
+    category: database
+  mysql:
+    icon: file-type-mysql
+    category: database
+  odb:
+    icon: file-type-libreoffice-base
+    category: database
+  pgsql:
+    icon: file-type-postgres
+    category: database
+  plsql:
+    icon: file-type-sql
+    category: database
+  postgres:
+    icon: file-type-postgres
+    category: database
+  psql:
+    icon: file-type-postgres
+    category: database
+  sql:
+    icon: file-type-sql
+    category: database
+  sqlite:
+    icon: file-type-sqlite
+    category: database
+  sqlite3:
+    icon: file-type-sqlite
+    category: database
+  accdb:
+    icon: file-type-access
+    category: database
+  accde:
+    icon: file-type-access
+    category: database
+  accdr:
+    icon: file-type-access
+    category: database
+  accdt:
+    icon: file-type-access
+    category: database

@@ -77,10 +77,10 @@
                         {% else %}
                             {% if isPreviewStream %}
                                 <div class="files-grid-card-compact__preview-stream-trigger d-inline-flex align-items-center justify-content-center{% if isPdf %} files-grid-card-compact__preview-pdf-trigger{% endif %}" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="{{ isPdf ? 'pdf' : (isVideo ? 'video' : (isAudio ? 'audio' : 'text')) }}" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
-                                    {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'grid' } %}
+                                    {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'grid' } %}
                                 </div>
                             {% else %}
-                                {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'grid' } %}
+                                {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'grid' } %}
                             {% endif %}
                         {% endif %}
                     </div>

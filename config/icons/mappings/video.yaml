@@ -1,0 +1,196 @@
+extensions:
+  3g2:
+    icon: file-type-video
+    category: video
+  3gp:
+    icon: file-type-video
+    category: video
+  3gpp:
+    icon: file-type-video
+    category: video
+  3gpp2:
+    icon: file-type-video
+    category: video
+  amv:
+    icon: file-type-video
+    category: video
+  asf:
+    icon: file-type-video
+    category: video
+  asx:
+    icon: file-type-video
+    category: video
+  av1:
+    icon: file-type-video
+    category: video
+  avc:
+    icon: file-type-video
+    category: video
+  avi:
+    icon: file-type-video
+    category: video
+  bik:
+    icon: file-type-video
+    category: video
+  bup:
+    icon: file-type-video
+    category: video
+  cam:
+    icon: file-type-video
+    category: video
+  divx:
+    icon: file-type-video
+    category: video
+  dv:
+    icon: file-type-video
+    category: video
+  dvr-ms:
+    icon: file-type-video
+    category: video
+  f4p:
+    icon: file-type-video
+    category: video
+  f4v:
+    icon: file-type-video
+    category: video
+  flv:
+    icon: file-type-video
+    category: video
+  h264:
+    icon: file-type-video
+    category: video
+  h265:
+    icon: file-type-video
+    category: video
+  hevc:
+    icon: file-type-video
+    category: video
+  ifo:
+    icon: file-type-video
+    category: video
+  m1v:
+    icon: file-type-video
+    category: video
+  m2t:
+    icon: file-type-video
+    category: video
+  m2ts:
+    icon: file-type-video
+    category: video
+  m2v:
+    icon: file-type-video
+    category: video
+  m4v:
+    icon: file-type-video
+    category: video
+  mk3d:
+    icon: file-type-video
+    category: video
+  mkv:
+    icon: file-type-video
+    category: video
+  mng:
+    icon: file-type-video
+    category: video
+  mov:
+    icon: file-type-video
+    category: video
+  mp2v:
+    icon: file-type-video
+    category: video
+  mp4:
+    icon: file-type-video
+    category: video
+  mp4v:
+    icon: file-type-video
+    category: video
+  mpe:
+    icon: file-type-video
+    category: video
+  mpeg:
+    icon: file-type-video
+    category: video
+  mpg:
+    icon: file-type-video
+    category: video
+  mpg2:
+    icon: file-type-video
+    category: video
+  mpv:
+    icon: file-type-video
+    category: video
+  mxf:
+    icon: file-type-video
+    category: video
+  nsv:
+    icon: file-type-video
+    category: video
+  nut:
+    icon: file-type-video
+    category: video
+  ogm:
+    icon: file-type-video
+    category: video
+  ogv:
+    icon: file-type-video
+    category: video
+  qt:
+    icon: file-type-video
+    category: video
+  rec:
+    icon: file-type-video
+    category: video
+  rmvb:
+    icon: file-type-video
+    category: video
+  rv:
+    icon: file-type-video
+    category: video
+  rvx:
+    icon: file-type-video
+    category: video
+  smk:
+    icon: file-type-video
+    category: video
+  swf:
+    icon: file-type-video
+    category: video
+  tod:
+    icon: file-type-video
+    category: video
+  tp:
+    icon: file-type-video
+    category: video
+  trp:
+    icon: file-type-video
+    category: video
+  vob:
+    icon: file-type-video
+    category: video
+  vp8:
+    icon: file-type-video
+    category: video
+  vp9:
+    icon: file-type-video
+    category: video
+  vro:
+    icon: file-type-video
+    category: video
+  webm:
+    icon: file-type-video
+    category: video
+  wmv:
+    icon: file-type-video
+    category: video
+  wmx:
+    icon: file-type-video
+    category: video
+  wtv:
+    icon: file-type-video
+    category: video
+  xvid:
+    icon: file-type-video
+    category: video
+  yuv:
+    icon: file-type-video
+    category: video

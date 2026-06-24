@@ -18,6 +18,7 @@
     "symfony/flex": "^2.5",
     "symfony/framework-bundle": "8.1.*",
     "symfony/html-sanitizer": "^8.1",
+    "symfony/http-client": "8.1.*",
     "symfony/mailer": "8.1.*",
     "symfony/mime": "8.1.*",
     "symfony/monolog-bundle": "^4.0",
@@ -52,6 +53,7 @@
   "scripts": {
     "analyse": "phpstan analyse",
     "import-icons": "php bin/console app:file-icons:import",
+    "validate-icons": "php bin/console app:file-icons:validate",
     "auto-scripts": {
       "cache:clear": "symfony-cmd",
       "assets:install %PUBLIC_DIR%": "symfony-cmd"

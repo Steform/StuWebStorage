@@ -1,0 +1,346 @@
+extensions:
+  adoc:
+    icon: file-type-asciidoc
+    category: code
+  asciidoc:
+    icon: file-type-asciidoc
+    category: code
+  asm:
+    icon: file-type-assembly
+    category: code
+  astro:
+    icon: file-type-astro
+    category: code
+  bash:
+    icon: file-type-shell
+    category: code
+  blade:
+    icon: file-type-blade
+    category: code
+  bun:
+    icon: file-type-bun
+    category: code
+  c:
+    icon: file-type-c
+    category: code
+  cjs:
+    icon: file-type-js
+    category: code
+  clj:
+    icon: file-type-clojure
+    category: code
+  cmake:
+    icon: file-type-cmake
+    category: code
+  cpp:
+    icon: file-type-cpp
+    category: code
+  cr:
+    icon: file-type-crystal
+    category: code
+  cs:
+    icon: file-type-csharp
+    category: code
+  css:
+    icon: file-type-css
+    category: code
+  dart:
+    icon: file-type-dartlang
+    category: code
+  deno:
+    icon: file-type-deno
+    category: code
+  dockerfile:
+    icon: file-type-docker
+    category: code
+  dta:
+    icon: file-type-json
+    category: code
+  dtd:
+    icon: file-type-dtd
+    category: code
+  editorconfig:
+    icon: file-type-editorconfig
+    category: code
+  ejs:
+    icon: file-type-ejs
+    category: code
+  erl:
+    icon: file-type-erlang
+    category: code
+  ex:
+    icon: file-type-elixir
+    category: code
+  fs:
+    icon: file-type-fsharp
+    category: code
+  go:
+    icon: file-type-go
+    category: code
+  gradle:
+    icon: file-type-gradle
+    category: code
+  graphql:
+    icon: file-type-graphql
+    category: code
+  groovy:
+    icon: file-type-groovy
+    category: code
+  h:
+    icon: file-type-c
+    category: code
+  h5:
+    icon: file-type-json
+    category: code
+  handlebars:
+    icon: file-type-handlebars
+    category: code
+  hbs:
+    icon: file-type-handlebars
+    category: code
+  hdf5:
+    icon: file-type-json
+    category: code
+  helm:
+    icon: file-type-helm
+    category: code
+  hjson:
+    icon: file-type-hjson
+    category: code
+  hpp:
+    icon: file-type-cpp
+    category: code
+  hs:
+    icon: file-type-haskell
+    category: code
+  htm:
+    icon: file-type-html
+    category: code
+  html:
+    icon: file-type-html
+    category: code
+  inc:
+    icon: file-type-php
+    category: code
+  ipynb:
+    icon: file-type-jupyter
+    category: code
+  jade:
+    icon: file-type-pug
+    category: code
+  java:
+    icon: file-type-java
+    category: code
+  jl:
+    icon: file-type-julia
+    category: code
+  js:
+    icon: file-type-js
+    category: code
+  json:
+    icon: file-type-json
+    category: code
+  json5:
+    icon: file-type-json5
+    category: code
+  jsonc:
+    icon: file-type-json5
+    category: code
+  jsonl:
+    icon: file-type-jsonld
+    category: code
+  jsp:
+    icon: file-type-jsp
+    category: code
+  jspx:
+    icon: file-type-jsp
+    category: code
+  jsx:
+    icon: file-type-reactjs
+    category: code
+  kt:
+    icon: file-type-kotlin
+    category: code
+  less:
+    icon: file-type-less
+    category: code
+  lisp:
+    icon: file-type-lisp
+    category: code
+  lua:
+    icon: file-type-lua
+    category: code
+  m:
+    icon: file-type-objectivec
+    category: code
+  make:
+    icon: file-type-cmake
+    category: code
+  mat:
+    icon: file-type-matlab
+    category: code
+  mdx:
+    icon: file-type-mdx
+    category: code
+  mjs:
+    icon: file-type-js
+    category: code
+  ml:
+    icon: file-type-ocaml
+    category: code
+  mm:
+    icon: file-type-objectivecpp
+    category: code
+  mustache:
+    icon: file-type-mustache
+    category: code
+  ndjson:
+    icon: file-type-jsonld
+    category: code
+  nim:
+    icon: file-type-nim
+    category: code
+  nix:
+    icon: file-type-nix
+    category: code
+  org:
+    icon: file-type-org
+    category: code
+  pcss:
+    icon: file-type-postcss
+    category: code
+  phar:
+    icon: file-type-php
+    category: code
+  php:
+    icon: file-type-php
+    category: code
+  php3:
+    icon: file-type-php
+    category: code
+  php4:
+    icon: file-type-php
+    category: code
+  php5:
+    icon: file-type-php
+    category: code
+  phps:
+    icon: file-type-php
+    category: code
+  phtml:
+    icon: file-type-php
+    category: code
+  pl:
+    icon: file-type-perl
+    category: code
+  postcss:
+    icon: file-type-postcss
+    category: code
+  prisma:
+    icon: file-type-prisma
+    category: code
+  proto:
+    icon: file-type-protobuf
+    category: code
+  ps1:
+    icon: file-type-powershell
+    category: code
+  pug:
+    icon: file-type-pug
+    category: code
+  py:
+    icon: file-type-python
+    category: code
+  r:
+    icon: file-type-r
+    category: code
+  rb:
+    icon: file-type-ruby
+    category: code
+  re:
+    icon: file-type-reason
+    category: code
+  rs:
+    icon: file-type-rust
+    category: code
+  sass:
+    icon: file-type-scss
+    category: code
+  sav:
+    icon: file-type-json
+    category: code
+  scala:
+    icon: file-type-scala
+    category: code
+  scss:
+    icon: file-type-scss
+    category: code
+  sh:
+    icon: file-type-shell
+    category: code
+  sol:
+    icon: file-type-solidity
+    category: code
+  styl:
+    icon: file-type-stylus
+    category: code
+  stylus:
+    icon: file-type-stylus
+    category: code
+  svelte:
+    icon: file-type-svelte
+    category: code
+  swift:
+    icon: file-type-swift
+    category: code
+  tf:
+    icon: file-type-terraform
+    category: code
+  toml:
+    icon: file-type-toml
+    category: code
+  ts:
+    icon: file-type-typescript
+    category: code
+  tsx:
+    icon: file-type-reactts
+    category: code
+  twig:
+    icon: file-type-twig
+    category: code
+  vb:
+    icon: file-type-vb
+    category: code
+  vim:
+    icon: file-type-vim
+    category: code
+  vue:
+    icon: file-type-vue
+    category: code
+  wasm:
+    icon: file-type-wasm
+    category: code
+  xhtml:
+    icon: file-type-html
+    category: code
+  xml:
+    icon: file-type-xml
+    category: code
+  xsd:
+    icon: file-type-xml
+    category: code
+  xsl:
+    icon: file-type-xsl
+    category: code
+  xslt:
+    icon: file-type-xsl
+    category: code
+  yaml:
+    icon: file-type-yaml
+    category: code
+  yml:
+    icon: file-type-yaml
+    category: code
+  zig:
+    icon: file-type-zig
+    category: code

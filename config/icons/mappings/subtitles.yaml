@@ -1,0 +1,22 @@
+extensions:
+  ass:
+    icon: file-type-text
+    category: subtitle
+  idx:
+    icon: file-type-text
+    category: subtitle
+  smi:
+    icon: file-type-text
+    category: subtitle
+  srt:
+    icon: file-type-text
+    category: subtitle
+  ssa:
+    icon: file-type-text
+    category: subtitle
+  sub:
+    icon: file-type-text
+    category: subtitle
+  vtt:
+    icon: file-type-text
+    category: subtitle

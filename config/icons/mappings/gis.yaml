@@ -1,0 +1,25 @@
+extensions:
+  dbf:
+    icon: file-type-xml
+    category: gis
+  geojson:
+    icon: file-type-json
+    category: gis
+  gpx:
+    icon: file-type-xml
+    category: gis
+  kml:
+    icon: file-type-xml
+    category: gis
+  kmz:
+    icon: file-type-xml
+    category: gis
+  prj:
+    icon: file-type-xml
+    category: gis
+  shp:
+    icon: file-type-json
+    category: gis
+  shx:
+    icon: file-type-json
+    category: gis

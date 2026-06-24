@@ -1,0 +1,55 @@
+extensions:
+  blend:
+    icon: file-type-blender
+    category: cad
+  dwg:
+    icon: file-type-openscad
+    category: cad
+  dxf:
+    icon: file-type-openscad
+    category: cad
+  fbx:
+    icon: file-type-fbx
+    category: cad
+  iges:
+    icon: file-type-blender
+    category: cad
+  obj:
+    icon: file-type-blender
+    category: cad
+  step:
+    icon: file-type-blender
+    category: cad
+  stl:
+    icon: file-type-blender
+    category: cad
+  stp:
+    icon: file-type-blender
+    category: cad
+  gltf:
+    icon: file-type-gltf
+    category: cad
+  glb:
+    icon: file-type-gltf
+    category: cad
+  usdz:
+    icon: file-type-blender
+    category: cad
+  3ds:
+    icon: file-type-blender
+    category: cad
+  ply:
+    icon: file-type-blender
+    category: cad
+  wrl:
+    icon: file-type-blender
+    category: cad
+  x3d:
+    icon: file-type-blender
+    category: cad
+  dae:
+    icon: file-type-blender
+    category: cad
+  igs:
+    icon: file-type-blender
+    category: cad

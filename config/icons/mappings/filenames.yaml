@@ -1,0 +1,37 @@
+filenames:
+  Dockerfile:
+    icon: file-type-docker
+    category: code
+  Containerfile:
+    icon: file-type-docker
+    category: code
+  Makefile:
+    icon: file-type-cmake
+    category: code
+  GNUmakefile:
+    icon: file-type-cmake
+    category: code
+  Vagrantfile:
+    icon: file-type-vagrant
+    category: code
+  Gemfile:
+    icon: file-type-ruby
+    category: code
+  Rakefile:
+    icon: file-type-rake
+    category: code
+  Procfile:
+    icon: file-type-config
+    category: code
+  Brewfile:
+    icon: file-type-ruby
+    category: code
+  Justfile:
+    icon: file-type-just
+    category: code
+  Earthfile:
+    icon: file-type-earthly
+    category: code
+  Tiltfile:
+    icon: file-type-tiltfile
+    category: code

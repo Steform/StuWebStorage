@@ -6,6 +6,7 @@ namespace App\Twig;
 
 use App\File\FileExtensionIconResolver;
 use App\File\FileIconDescriptor;
+use Symfony\UX\Icons\Exception\IconNotFoundException;
 use Symfony\UX\Icons\IconRendererInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -18,6 +19,8 @@ use Twig\TwigFunction;
  */
 final class FileIconExtension extends AbstractExtension
 {
+    private const FALLBACK_ICON = 'vscode:default-file';
+
     /**
      * @param FileExtensionIconResolver $iconResolver Extension to icon resolver.
      * @param IconRendererInterface $iconRenderer Symfony UX icon renderer.
@@ -45,31 +48,41 @@ final class FileIconExtension extends AbstractExtension
     }
 
     /**
-     * @brief Resolve icon metadata for a file extension.
+     * @brief Resolve icon metadata for a file extension or filename.
      *
      * @param string $extension Raw file extension.
+     * @param string|null $filename Optional filename for extensionless files.
      * @return FileIconDescriptor
      * @date 2026-06-24
      * @author Stephane H.
      */
-    public function resolveDescriptor(string $extension): FileIconDescriptor
+    public function resolveDescriptor(string $extension, ?string $filename = null): FileIconDescriptor
     {
+        if ($filename !== null && $filename !== '') {
+            return $this->iconResolver->resolveByFilename($filename, $extension);
+        }
+
         return $this->iconResolver->resolve($extension);
     }
 
     /**
-     * @brief Render UX icon markup for a file extension.
+     * @brief Render UX icon markup for a file extension or filename.
      *
      * @param string $extension Raw file extension.
      * @param array<string, mixed> $attributes Optional SVG attributes.
+     * @param string|null $filename Optional filename for extensionless files.
      * @return string
      * @date 2026-06-24
      * @author Stephane H.
      */
-    public function renderIcon(string $extension, array $attributes = []): string
+    public function renderIcon(string $extension, array $attributes = [], ?string $filename = null): string
     {
-        $descriptor = $this->iconResolver->resolve($extension);
+        $descriptor = $this->resolveDescriptor($extension, $filename);
 
-        return $this->iconRenderer->renderIcon($descriptor->iconName, $attributes);
+        try {
+            return $this->iconRenderer->renderIcon($descriptor->iconName, $attributes);
+        } catch (IconNotFoundException) {
+            return $this->iconRenderer->renderIcon(self::FALLBACK_ICON, $attributes);
+        }
     }
 }

@@ -1,0 +1,30 @@
+# Ambiguous extensions — last file loaded; explicit decisions documented.
+extensions:
+  # MPEG transport stream (.mts) over TypeScript module (.mts)
+  mts:
+    icon: file-type-video
+    category: video
+  # TypeScript (.ts) over MPEG transport stream (.ts)
+  ts:
+    icon: file-type-typescript
+    category: code
+  # Objective-C (.m) over Matlab (.m)
+  m:
+    icon: file-type-objectivec
+    category: code
+  # Tracker module (.mod) — not Go modules (go.mod resolves to mod via compound)
+  mod:
+    icon: file-type-audio
+    category: audio
+  # Apple Keynote (.key) over SSL private key (.key)
+  key:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  # OptimFROG audio (.off)
+  off:
+    icon: file-type-audio
+    category: audio
+  # Adobe Illustrator (.ai)
+  ai:
+    icon: file-type-ai
+    category: image

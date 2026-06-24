@@ -1,0 +1,223 @@
+extensions:
+  7z:
+    icon: file-type-zip2
+    category: archive
+  ace:
+    icon: file-type-zip2
+    category: archive
+  alz:
+    icon: file-type-zip2
+    category: archive
+  arc:
+    icon: file-type-zip2
+    category: archive
+  arj:
+    icon: file-type-zip2
+    category: archive
+  bz2:
+    icon: file-type-zip2
+    category: archive
+  bzip2:
+    icon: file-type-zip2
+    category: archive
+  cab:
+    icon: file-type-zip2
+    category: archive
+  cb7:
+    icon: file-type-zip2
+    category: archive
+  cba:
+    icon: file-type-zip2
+    category: archive
+  cbr:
+    icon: file-type-zip2
+    category: archive
+  cbt:
+    icon: file-type-zip2
+    category: archive
+  cbz:
+    icon: file-type-zip2
+    category: archive
+  cpio:
+    icon: file-type-zip
+    category: archive
+  crate:
+    icon: file-type-cargo
+    category: archive
+  crx:
+    icon: file-type-zip
+    category: archive
+  cue:
+    icon: file-type-zip
+    category: archive
+  deb:
+    icon: file-type-debian
+    category: archive
+  dmg:
+    icon: file-type-zip
+    category: archive
+  ear:
+    icon: file-type-jar
+    category: archive
+  egg:
+    icon: file-type-zip2
+    category: archive
+  esd:
+    icon: file-type-zip
+    category: archive
+  flatpak:
+    icon: file-type-zip2
+    category: archive
+  gtar:
+    icon: file-type-zip
+    category: archive
+  gz:
+    icon: file-type-zip
+    category: archive
+  gzip:
+    icon: file-type-zip
+    category: archive
+  ha:
+    icon: file-type-zip2
+    category: archive
+  img:
+    icon: file-type-zip
+    category: archive
+  ipa:
+    icon: file-type-zip
+    category: archive
+  iso:
+    icon: file-type-zip
+    category: archive
+  jar:
+    icon: file-type-jar
+    category: archive
+  lha:
+    icon: file-type-zip2
+    category: archive
+  lz:
+    icon: file-type-zip2
+    category: archive
+  lz4:
+    icon: file-type-zip2
+    category: archive
+  lzh:
+    icon: file-type-zip2
+    category: archive
+  lzma:
+    icon: file-type-zip2
+    category: archive
+  lzo:
+    icon: file-type-zip2
+    category: archive
+  mdf:
+    icon: file-type-zip
+    category: archive
+  mds:
+    icon: file-type-zip
+    category: archive
+  msix:
+    icon: file-type-zip
+    category: archive
+  msp:
+    icon: file-type-zip
+    category: archive
+  nrg:
+    icon: file-type-zip
+    category: archive
+  nupkg:
+    icon: file-type-nuget
+    category: archive
+  pak:
+    icon: file-type-zip2
+    category: archive
+  pax:
+    icon: file-type-zip
+    category: archive
+  pet:
+    icon: file-type-zip
+    category: archive
+  pkg:
+    icon: file-type-zip
+    category: archive
+  r00:
+    icon: file-type-zip2
+    category: archive
+  r01:
+    icon: file-type-zip2
+    category: archive
+  rar:
+    icon: file-type-zip2
+    category: archive
+  rpm:
+    icon: file-type-zip2
+    category: archive
+  sea:
+    icon: file-type-zip2
+    category: archive
+  sfs:
+    icon: file-type-zip
+    category: archive
+  shar:
+    icon: file-type-zip
+    category: archive
+  sit:
+    icon: file-type-zip2
+    category: archive
+  sitx:
+    icon: file-type-zip2
+    category: archive
+  snap:
+    icon: file-type-snapcraft
+    category: archive
+  swm:
+    icon: file-type-zip
+    category: archive
+  tar:
+    icon: file-type-zip
+    category: archive
+  tbz:
+    icon: file-type-zip2
+    category: archive
+  tbz2:
+    icon: file-type-zip2
+    category: archive
+  tgz:
+    icon: file-type-zip
+    category: archive
+  toast:
+    icon: file-type-zip
+    category: archive
+  txz:
+    icon: file-type-zip2
+    category: archive
+  vcd:
+    icon: file-type-zip
+    category: archive
+  war:
+    icon: file-type-jar
+    category: archive
+  whl:
+    icon: file-type-zip2
+    category: archive
+  wim:
+    icon: file-type-zip
+    category: archive
+  xpi:
+    icon: file-type-zip
+    category: archive
+  xz:
+    icon: file-type-zip2
+    category: archive
+  zip:
+    icon: file-type-zip
+    category: archive
+  zipx:
+    icon: file-type-zip
+    category: archive
+  zst:
+    icon: file-type-zip2
+    category: archive
+  zstd:
+    icon: file-type-zip2
+    category: archive

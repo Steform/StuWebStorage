@@ -1,0 +1,169 @@
+extensions:
+  ada:
+    icon: file-type-ada
+    category: code
+  adb:
+    icon: file-type-ada
+    category: code
+  ads:
+    icon: file-type-ada
+    category: code
+  avdl:
+    icon: file-type-avro
+    category: code
+  avsc:
+    icon: file-type-avro
+    category: code
+  bib:
+    icon: file-type-tex
+    category: code
+  c++:
+    icon: file-type-cpp
+    category: code
+  cairo:
+    icon: file-type-crystal
+    category: code
+  cbl:
+    icon: file-type-cobol
+    category: code
+  cc:
+    icon: file-type-cpp
+    category: code
+  class:
+    icon: file-type-java
+    category: code
+  cls:
+    icon: file-type-tex
+    category: code
+  cob:
+    icon: file-type-cobol
+    category: code
+  cobol:
+    icon: file-type-cobol
+    category: code
+  cppm:
+    icon: file-type-cpp
+    category: code
+  csx:
+    icon: file-type-csharp
+    category: code
+  cts:
+    icon: file-type-typescript
+    category: code
+  cxx:
+    icon: file-type-cpp
+    category: code
+  d:
+    icon: file-type-dlang
+    category: code
+  dpr:
+    icon: file-type-delphi
+    category: code
+  env:
+    icon: file-type-config
+    category: code
+  f:
+    icon: file-type-fortran
+    category: code
+  f90:
+    icon: file-type-fortran
+    category: code
+  f95:
+    icon: file-type-fortran
+    category: code
+  for:
+    icon: file-type-fortran
+    category: code
+  fsi:
+    icon: file-type-fsharp
+    category: code
+  fsx:
+    icon: file-type-fsharp
+    category: code
+  gleam:
+    icon: file-type-gleam
+    category: code
+  gql:
+    icon: file-type-graphql
+    category: code
+  gvy:
+    icon: file-type-groovy
+    category: code
+  h++:
+    icon: file-type-cpp
+    category: code
+  hh:
+    icon: file-type-cpp
+    category: code
+  hxx:
+    icon: file-type-cpp
+    category: code
+  i:
+    icon: file-type-c
+    category: code
+  ixx:
+    icon: file-type-cpp
+    category: code
+  kts:
+    icon: file-type-kotlin
+    category: code
+  latex:
+    icon: file-type-tex
+    category: code
+  ltx:
+    icon: file-type-tex
+    category: code
+  nimble:
+    icon: file-type-nimble
+    category: code
+  nims:
+    icon: file-type-nim
+    category: code
+  odin:
+    icon: file-type-iodine
+    category: code
+  parquet:
+    icon: file-type-parquet
+    category: code
+  pas:
+    icon: file-type-delphi
+    category: code
+  pb:
+    icon: file-type-protobuf
+    category: code
+  properties:
+    icon: file-type-config
+    category: code
+  rdata:
+    icon: file-type-r
+    category: code
+  rds:
+    icon: file-type-r
+    category: code
+  rmd:
+    icon: file-type-r
+    category: code
+  s:
+    icon: file-type-assembly
+    category: code
+  sc:
+    icon: file-type-scala
+    category: code
+  sty:
+    icon: file-type-tex
+    category: code
+  thrift:
+    icon: file-type-avro
+    category: code
+  v:
+    icon: file-type-vlang
+    category: code
+  vbs:
+    icon: file-type-vb
+    category: code
+  vy:
+    icon: file-type-vyper
+    category: code
+  wat:
+    icon: file-type-wasm
+    category: code

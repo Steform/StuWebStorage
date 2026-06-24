@@ -1,0 +1,142 @@
+extensions:
+  ai:
+    icon: file-type-ai
+    category: image
+  arw:
+    icon: file-type-image
+    category: image
+  bmp:
+    icon: file-type-image
+    category: image
+  cr2:
+    icon: file-type-image
+    category: image
+  cur:
+    icon: file-type-favicon
+    category: image
+  dng:
+    icon: file-type-image
+    category: image
+  eps:
+    icon: file-type-eps
+    category: image
+  fig:
+    icon: file-type-sketch
+    category: image
+  gif:
+    icon: file-type-image
+    category: image
+  heic:
+    icon: file-type-image
+    category: image
+  heif:
+    icon: file-type-image
+    category: image
+  ico:
+    icon: file-type-favicon
+    category: image
+  jfif:
+    icon: file-type-image
+    category: image
+  jpe:
+    icon: file-type-image
+    category: image
+  jpeg:
+    icon: file-type-image
+    category: image
+  jpg:
+    icon: file-type-image
+    category: image
+  nef:
+    icon: file-type-image
+    category: image
+  png:
+    icon: file-type-image
+    category: image
+  psd:
+    icon: file-type-photoshop
+    category: image
+  raw:
+    icon: file-type-image
+    category: image
+  sketch:
+    icon: file-type-sketch
+    category: image
+  svg:
+    icon: file-type-svg
+    category: image
+  tailwind:
+    icon: file-type-tailwind
+    category: image
+  tif:
+    icon: file-type-image
+    category: image
+  tiff:
+    icon: file-type-image
+    category: image
+  webp:
+    icon: file-type-image
+    category: image
+  xcf:
+    icon: file-type-gimp
+    category: image
+  avif:
+    icon: file-type-avif
+    category: image
+  apng:
+    icon: file-type-image
+    category: image
+  jxl:
+    icon: file-type-image
+    category: image
+  jp2:
+    icon: file-type-image
+    category: image
+  j2k:
+    icon: file-type-image
+    category: image
+  tga:
+    icon: file-type-image
+    category: image
+  dds:
+    icon: file-type-image
+    category: image
+  exr:
+    icon: file-type-image
+    category: image
+  hdr:
+    icon: file-type-image
+    category: image
+  pcx:
+    icon: file-type-image
+    category: image
+  orf:
+    icon: file-type-image
+    category: image
+  raf:
+    icon: file-type-image
+    category: image
+  rw2:
+    icon: file-type-image
+    category: image
+  pef:
+    icon: file-type-image
+    category: image
+  nrw:
+    icon: file-type-image
+    category: image
+  3fr:
+    icon: file-type-image
+    category: image
+  cr3:
+    icon: file-type-image
+    category: image
+  sr2:
+    icon: file-type-image
+    category: image
+  icns:
+    icon: file-type-favicon
+    category: image
+  svgz:
+    icon: file-type-svg
+    category: image

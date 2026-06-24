@@ -5,7 +5,7 @@ ux_icons:
         height: '1.5rem'
         aria-hidden: 'true'
 
-    ignore_not_found: false
+    ignore_not_found: true
 
     iconify:
         enabled: true

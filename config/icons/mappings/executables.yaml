@@ -1,0 +1,55 @@
+extensions:
+  apk:
+    icon: file-type-binary
+    category: executable
+  appimage:
+    icon: file-type-binary
+    category: binary
+  bak:
+    icon: file-type-binary
+    category: binary
+  bat:
+    icon: file-type-bat
+    category: executable
+  bin:
+    icon: file-type-binary
+    category: binary
+  cmd:
+    icon: file-type-bat
+    category: executable
+  com:
+    icon: file-type-binary
+    category: executable
+  dll:
+    icon: file-type-binary
+    category: executable
+  exe:
+    icon: file-type-binary
+    category: executable
+  lnk:
+    icon: file-type-lnk
+    category: executable
+  msi:
+    icon: file-type-zip
+    category: executable
+  old:
+    icon: file-type-binary
+    category: binary
+  sys:
+    icon: file-type-binary
+    category: binary
+  tmp:
+    icon: file-type-binary
+    category: binary
+  vdi:
+    icon: file-type-binary
+    category: binary
+  vhd:
+    icon: file-type-binary
+    category: binary
+  vhdx:
+    icon: file-type-binary
+    category: binary
+  vmdk:
+    icon: file-type-binary
+    category: binary

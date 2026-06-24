@@ -1,0 +1,232 @@
+extensions:
+  abw:
+    icon: file-type-word
+    category: office_word
+  csv:
+    icon: file-type-excel
+    category: office_excel
+  dif:
+    icon: file-type-excel
+    category: office_excel
+  doc:
+    icon: file-type-word
+    category: office_word
+  docb:
+    icon: file-type-word
+    category: office_word
+  docm:
+    icon: file-type-word
+    category: office_word
+  docx:
+    icon: file-type-word
+    category: office_word
+  dot:
+    icon: file-type-word
+    category: office_word
+  dotm:
+    icon: file-type-word
+    category: office_word
+  dotx:
+    icon: file-type-word
+    category: office_word
+  fodg:
+    icon: file-type-libreoffice-draw
+    category: office_powerpoint
+  fodp:
+    icon: file-type-libreoffice-impress
+    category: office_powerpoint
+  fods:
+    icon: file-type-libreoffice-calc
+    category: office_excel
+  fodt:
+    icon: file-type-libreoffice-writer
+    category: office_word
+  mpp:
+    icon: file-type-excel
+    category: office_excel
+  mpt:
+    icon: file-type-excel
+    category: office_excel
+  numbers:
+    icon: file-type-excel2
+    category: office_excel
+  odf:
+    icon: file-type-libreoffice-math
+    category: office_word
+  odg:
+    icon: file-type-libreoffice-draw
+    category: office_powerpoint
+  odm:
+    icon: file-type-libreoffice-writer
+    category: office_word
+  odp:
+    icon: file-type-libreoffice-impress
+    category: office_powerpoint
+  ods:
+    icon: file-type-libreoffice-calc
+    category: office_excel
+  odt:
+    icon: file-type-libreoffice-writer
+    category: office_word
+  one:
+    icon: file-type-onenote
+    category: office_powerpoint
+  onepkg:
+    icon: file-type-onenote
+    category: office_powerpoint
+  onetoc2:
+    icon: file-type-onenote
+    category: office_powerpoint
+  otg:
+    icon: file-type-libreoffice-draw
+    category: office_powerpoint
+  otp:
+    icon: file-type-libreoffice-impress
+    category: office_powerpoint
+  ots:
+    icon: file-type-libreoffice-calc
+    category: office_excel
+  ott:
+    icon: file-type-libreoffice-writer
+    category: office_word
+  pages:
+    icon: file-type-word2
+    category: office_word
+  pot:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  potm:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  potx:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  ppa:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  ppam:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  pps:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  ppsm:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  ppsx:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  ppt:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  pptm:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  pptx:
+    icon: file-type-powerpoint
+    category: office_powerpoint
+  prn:
+    icon: file-type-excel
+    category: office_excel
+  pub:
+    icon: file-type-publisher
+    category: office_word
+  slk:
+    icon: file-type-excel
+    category: office_excel
+  stw:
+    icon: file-type-libreoffice-writer
+    category: office_word
+  sxc:
+    icon: file-type-libreoffice-calc
+    category: office_excel
+  sxi:
+    icon: file-type-libreoffice-impress
+    category: office_powerpoint
+  sxw:
+    icon: file-type-libreoffice-writer
+    category: office_word
+  tsv:
+    icon: file-type-excel
+    category: office_excel
+  vdw:
+    icon: file-type-drawio
+    category: office_powerpoint
+  vsd:
+    icon: file-type-drawio
+    category: office_powerpoint
+  vsdm:
+    icon: file-type-drawio
+    category: office_powerpoint
+  vsdx:
+    icon: file-type-drawio
+    category: office_powerpoint
+  vss:
+    icon: file-type-drawio
+    category: office_powerpoint
+  vssm:
+    icon: file-type-drawio
+    category: office_powerpoint
+  vssx:
+    icon: file-type-drawio
+    category: office_powerpoint
+  vst:
+    icon: file-type-drawio
+    category: office_powerpoint
+  vstm:
+    icon: file-type-drawio
+    category: office_powerpoint
+  vstx:
+    icon: file-type-drawio
+    category: office_powerpoint
+  wks:
+    icon: file-type-excel
+    category: office_excel
+  wpd:
+    icon: file-type-word
+    category: office_word
+  wps:
+    icon: file-type-word
+    category: office_word
+  wri:
+    icon: file-type-word
+    category: office_word
+  xla:
+    icon: file-type-excel
+    category: office_excel
+  xlam:
+    icon: file-type-excel
+    category: office_excel
+  xlb:
+    icon: file-type-excel
+    category: office_excel
+  xlm:
+    icon: file-type-excel
+    category: office_excel
+  xlr:
+    icon: file-type-excel
+    category: office_excel
+  xls:
+    icon: file-type-excel
+    category: office_excel
+  xlsb:
+    icon: file-type-excel
+    category: office_excel
+  xlsm:
+    icon: file-type-excel
+    category: office_excel
+  xlsx:
+    icon: file-type-excel
+    category: office_excel
+  xlt:
+    icon: file-type-excel
+    category: office_excel
+  xltm:
+    icon: file-type-excel
+    category: office_excel
+  xltx:
+    icon: file-type-excel
+    category: office_excel
+  xsn:
+    icon: file-type-infopath
+    category: office_word

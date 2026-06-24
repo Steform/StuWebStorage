@@ -1,0 +1,118 @@
+extensions:
+  ansible:
+    icon: file-type-ansible
+    category: code
+  bazel:
+    icon: file-type-bazel
+    category: code
+  buck:
+    icon: file-type-buckbuild
+    category: code
+  bzl:
+    icon: file-type-bazel
+    category: code
+  cabal:
+    icon: file-type-cabal
+    category: code
+  chef:
+    icon: file-type-chef
+    category: code
+  composer:
+    icon: file-type-composer
+    category: code
+  containerfile:
+    icon: file-type-docker
+    category: code
+  csproj:
+    icon: file-type-csproj
+    category: code
+  cypress:
+    icon: file-type-cypress
+    category: code
+  fsproj:
+    icon: file-type-fsproj
+    category: code
+  hcl:
+    icon: file-type-terraform
+    category: code
+  jest:
+    icon: file-type-jest
+    category: code
+  lock:
+    icon: file-type-npm
+    category: code
+  maven:
+    icon: file-type-maven
+    category: code
+  meson:
+    icon: file-type-meson
+    category: code
+  mk:
+    icon: file-type-cmake
+    category: code
+  mocha:
+    icon: file-type-mocha
+    category: code
+  ninja:
+    icon: file-type-ninja
+    category: code
+  opam:
+    icon: file-type-opam
+    category: code
+  pbxproj:
+    icon: file-type-xcode
+    category: code
+  playwright:
+    icon: file-type-playwright
+    category: code
+  pom:
+    icon: file-type-maven
+    category: code
+  pulumi:
+    icon: file-type-pulumi
+    category: code
+  puppet:
+    icon: file-type-puppet
+    category: code
+  rollup:
+    icon: file-type-rollup
+    category: code
+  salt:
+    icon: file-type-saltstack
+    category: code
+  sbt:
+    icon: file-type-sbt
+    category: code
+  sln:
+    icon: file-type-sln
+    category: code
+  storybook:
+    icon: file-type-storybook
+    category: code
+  tfvars:
+    icon: file-type-terraform
+    category: code
+  vagrantfile:
+    icon: file-type-vagrant
+    category: code
+  vbproj:
+    icon: file-type-vbproj
+    category: code
+  vcxproj:
+    icon: file-type-vcxproj
+    category: code
+  vite:
+    icon: file-type-vite
+    category: code
+  vitest:
+    icon: file-type-vitest
+    category: code
+  webpack:
+    icon: file-type-webpack
+    category: code
+  xcodeproj:
+    icon: file-type-xcode
+    category: code
+  xmake:
+    icon: file-type-xmake
+    category: code

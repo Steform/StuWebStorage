@@ -1,4 +1,10 @@
-{% set descriptor = file_icon_descriptor(extension|default('')) %}
+{% set resolvedExtension = extension|default('') %}
+{% set resolvedFilename = filename|default(null) %}
+{% if resolvedFilename %}
+    {% set descriptor = file_icon_descriptor(resolvedExtension, resolvedFilename) %}
+{% else %}
+    {% set descriptor = file_icon_descriptor(resolvedExtension) %}
+{% endif %}
 {% set sizeClass = size|default('list') %}
 {% set iconAttributes = {
     'class': ('files-type-icon files-type-icon--' ~ sizeClass ~ ' ' ~ (class|default('')))|trim,
@@ -14,4 +20,4 @@
     {% set iconAttributes = iconAttributes|merge({ 'aria-label': descriptor.ariaLabel }) %}
     {% set iconAttributes = iconAttributes|merge({ 'aria-hidden': 'false' }) %}
 {% endif %}
-{{ file_ux_icon(extension|default(''), iconAttributes) }}
+{{ file_ux_icon(resolvedExtension, iconAttributes, resolvedFilename) }}

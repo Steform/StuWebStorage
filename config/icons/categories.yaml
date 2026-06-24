@@ -1,0 +1,22 @@
+category_icons:
+  office_word: file-type-word
+  office_excel: file-type-excel
+  office_powerpoint: file-type-powerpoint
+  pdf: file-type-pdf2
+  image: file-type-image
+  video: file-type-video
+  audio: file-type-audio
+  archive: file-type-zip
+  code: default-file
+  text: file-type-text
+  database: file-type-sqlite
+  email: file-type-mailing
+  font: file-type-font
+  executable: file-type-binary
+  certificate: file-type-cert
+  cad: file-type-blender
+  binary: file-type-binary
+  ebook: file-type-epub
+  subtitle: file-type-text
+  gis: file-type-xml
+  default: default-file

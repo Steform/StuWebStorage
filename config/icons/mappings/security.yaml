@@ -1,0 +1,28 @@
+extensions:
+  asc:
+    icon: file-type-key
+    category: certificate
+  cer:
+    icon: file-type-cert
+    category: certificate
+  crt:
+    icon: file-type-cert
+    category: certificate
+  der:
+    icon: file-type-cert
+    category: certificate
+  gpg:
+    icon: file-type-gpg
+    category: certificate
+  p12:
+    icon: file-type-key
+    category: certificate
+  pem:
+    icon: file-type-cert
+    category: certificate
+  pfx:
+    icon: file-type-key
+    category: certificate
+  sig:
+    icon: file-type-cert
+    category: certificate

@@ -76,6 +76,7 @@ final class FileTypeIconMarkupContractTest extends TestCase
 
         self::assertStringContainsString('file_icon_descriptor', $source);
         self::assertStringContainsString('file_ux_icon', $source);
+        self::assertStringContainsString('filename', $source);
         self::assertStringContainsString('files-type-icon--', $source);
     }
 }

@@ -29,5 +29,8 @@ enum FileIconCategory: string
     case Certificate = 'certificate';
     case Cad = 'cad';
     case Binary = 'binary';
+    case Ebook = 'ebook';
+    case Subtitle = 'subtitle';
+    case Gis = 'gis';
     case Default = 'default';
 }

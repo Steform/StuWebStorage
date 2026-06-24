@@ -193,10 +193,10 @@
                                         role="button"
                                         aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}"
                                     >
-                                        {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'grid' } %}
+                                        {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'grid' } %}
                                     </div>
                                 {% else %}
-                                    {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'grid' } %}
+                                    {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'grid' } %}
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -463,7 +463,7 @@
                         {% endif %}
                         {% endif %}
                     >
-                        {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'list' } %}
+                        {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'list' } %}
                     </td>
                     <td
                         class="text-break files-col-name files-row-clickable text-start w-100{% if isListPreviewable %} files-col-name--previewable{% endif %}"
@@ -652,10 +652,10 @@
                                         role="button"
                                         aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}"
                                     >
-                                        {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'grid' } %}
+                                        {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'grid' } %}
                                     </div>
                                 {% else %}
-                                    {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'grid' } %}
+                                    {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'grid' } %}
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -808,7 +808,7 @@
                             {% endif %}
                             {% endif %}
                         >
-                            {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'list' } %}
+                            {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'list' } %}
                         </td>
                         <td
                             class="text-break files-col-name files-row-clickable text-start w-100{% if isListPreviewableShared %} files-col-name--previewable{% endif %}"

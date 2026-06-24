@@ -1,0 +1,22 @@
+extensions:
+  eml:
+    icon: file-type-mailing
+    category: email
+  ics:
+    icon: file-type-mailing
+    category: email
+  msg:
+    icon: file-type-mailing
+    category: email
+  oft:
+    icon: file-type-outlook
+    category: email
+  ost:
+    icon: file-type-outlook
+    category: email
+  pst:
+    icon: file-type-outlook
+    category: email
+  vcf:
+    icon: file-type-mailing
+    category: email

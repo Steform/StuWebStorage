@@ -1,0 +1,142 @@
+extensions:
+  apl:
+    icon: file-type-apl
+    category: code
+  asp:
+    icon: file-type-asp
+    category: code
+  aspx:
+    icon: file-type-aspx
+    category: code
+  autoit:
+    icon: file-type-autoit
+    category: code
+  awk:
+    icon: file-type-awk
+    category: code
+  cf:
+    icon: file-type-cf
+    category: code
+  cfc:
+    icon: file-type-cf
+    category: code
+  cfm:
+    icon: file-type-cfm
+    category: code
+  cl:
+    icon: file-type-lisp
+    category: code
+  cljc:
+    icon: file-type-clojure
+    category: code
+  cljs:
+    icon: file-type-clojurescript
+    category: code
+  coffee:
+    icon: file-type-coffeescript
+    category: code
+  csh:
+    icon: file-type-shell
+    category: code
+  edn:
+    icon: file-type-clojure
+    category: code
+  eex:
+    icon: file-type-eex
+    category: code
+  el:
+    icon: file-type-emacs
+    category: code
+  erb:
+    icon: file-type-ruby
+    category: code
+  exs:
+    icon: file-type-elixir
+    category: code
+  fish:
+    icon: file-type-shell
+    category: code
+  gem:
+    icon: file-type-ruby
+    category: code
+  gemspec:
+    icon: file-type-ruby
+    category: code
+  heex:
+    icon: file-type-eex
+    category: code
+  hrl:
+    icon: file-type-erlang
+    category: code
+  ksh:
+    icon: file-type-shell
+    category: code
+  leex:
+    icon: file-type-eex
+    category: code
+  lhs:
+    icon: file-type-haskell
+    category: code
+  litcoffee:
+    icon: file-type-coffeescript
+    category: code
+  luau:
+    icon: file-type-luau
+    category: code
+  mli:
+    icon: file-type-ocaml
+    category: code
+  pm:
+    icon: file-type-perl
+    category: code
+  pro:
+    icon: file-type-prolog
+    category: code
+  ps1xml:
+    icon: file-type-powershell
+    category: code
+  psd1:
+    icon: file-type-powershell
+    category: code
+  psm1:
+    icon: file-type-powershell
+    category: code
+  pyc:
+    icon: file-type-python
+    category: code
+  pyd:
+    icon: file-type-python
+    category: code
+  pyi:
+    icon: file-type-python
+    category: code
+  pyo:
+    icon: file-type-python
+    category: code
+  pyw:
+    icon: file-type-python
+    category: code
+  pyx:
+    icon: file-type-python
+    category: code
+  rake:
+    icon: file-type-rake
+    category: code
+  rei:
+    icon: file-type-reason
+    category: code
+  rkt:
+    icon: file-type-racket
+    category: code
+  scm:
+    icon: file-type-lisp
+    category: code
+  t:
+    icon: file-type-perl
+    category: code
+  tcl:
+    icon: file-type-tcl
+    category: code
+  zsh:
+    icon: file-type-shell
+    category: code
