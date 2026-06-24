@@ -342,6 +342,14 @@ files:
       progress: 'Vyksta išskleidimas'
       error_generic: 'Išskleidimas nepavyko. Bandykite dar kartą.'
       cancel_confirm: 'Atšaukti vykdomą išskleidimą?'
+      loading_preflight: 'Įkeliamos išskleidimo ribos…'
+      limits_hint: 'Išskleistas turinys negali viršyti platformos limito. ZIP failo dydis gali būti mažesnis nei išskleistas turinys.'
+      zip_size_label: 'ZIP dydis:'
+      max_uncompressed_label: 'Išskleisto turinio limitas:'
+      max_files_label: 'Failų skaičiaus limitas:'
+      limits_admin_tier: 'Padidintos ribos (administratoriaus paskyra).'
+      phase_pending: 'Iššifruojamas archyvas…'
+      phase_scanning: 'Analizuojamas archyvas…'
   table:
     name: Pavadinimas
     extension: Tipas

@@ -342,6 +342,14 @@ files:
       progress: 'Entpacken laeuft'
       error_generic: 'Entpacken fehlgeschlagen. Bitte erneut versuchen.'
       cancel_confirm: 'Laufendes Entpacken abbrechen?'
+      loading_preflight: 'Entpack-Limits werden geladen…'
+      limits_hint: 'Der dekomprimierte Inhalt darf das Plattformlimit nicht ueberschreiten. Die ZIP-Dateigroesse kann kleiner sein als der extrahierte Inhalt.'
+      zip_size_label: 'ZIP-Groesse:'
+      max_uncompressed_label: 'Limit dekomprimierter Inhalt:'
+      max_files_label: 'Limit Dateianzahl:'
+      limits_admin_tier: 'Erweiterte Limits (Administratorkonto).'
+      phase_pending: 'Archiv wird entschluesselt…'
+      phase_scanning: 'Archiv wird analysiert…'
   table:
     name: Name
     extension: Typ

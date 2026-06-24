@@ -342,6 +342,14 @@ files:
       progress: 'Extraction en cours'
       error_generic: 'L''extraction a echoue. Reessayez.'
       cancel_confirm: 'Annuler l''extraction en cours ?'
+      loading_preflight: 'Chargement des limites d''extraction…'
+      limits_hint: 'Le contenu decompresse ne doit pas depasser la limite plateforme. La taille du fichier ZIP peut etre inferieure au contenu extrait.'
+      zip_size_label: 'Taille du ZIP :'
+      max_uncompressed_label: 'Limite contenu decompresse :'
+      max_files_label: 'Limite nombre de fichiers :'
+      limits_admin_tier: 'Limites elevees (compte administrateur).'
+      phase_pending: 'Dechiffrement de l''archive…'
+      phase_scanning: 'Analyse de l''archive…'
   table:
     name: Nom
     extension: Type

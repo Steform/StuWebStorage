@@ -229,6 +229,14 @@ Symfony merges `.env` (defaults shipped with the repo) with `.env.local` (your m
 | `APP_FILE_ENCRYPTION_KEY` | yes | AES-256 key for files encrypted at rest |
 | `APP_FILES_STORAGE_ENABLED` | yes | Enable storage module (`1` / `0`) |
 | `APP_USER_STORAGE_QUOTA_BYTES` | yes | Default user quota in bytes (`0` = unlimited) |
+| `APP_ZIP_EXTRACT_MAX_TOTAL_BYTES` | no | Max decompressed ZIP content per extraction for standard users (default 100 GiB) |
+| `APP_ZIP_EXTRACT_ADMIN_MAX_TOTAL_BYTES` | no | Elevated limit for `ROLE_ADMIN` actors (default 100 GiB) |
+| `APP_ZIP_EXTRACT_MAX_FILE_COUNT` | no | Max files inside one archive (standard users) |
+| `APP_ZIP_EXTRACT_ADMIN_MAX_FILE_COUNT` | no | Max files for admin extraction |
+| `APP_ZIP_EXTRACT_MAX_SECONDS` | no | Wall-clock budget per extraction job (standard users) |
+| `APP_ZIP_EXTRACT_ADMIN_MAX_SECONDS` | no | Wall-clock budget for admin extraction |
+| `APP_ZIP_EXTRACT_BATCH_SIZE` | no | File entries processed per extraction tick |
+| `APP_ZIP_EXTRACT_MAX_COMPRESSION_RATIO` | no | Zip-bomb guard (uncompressed / compressed) |
 
 **Generate secrets locally:**
 

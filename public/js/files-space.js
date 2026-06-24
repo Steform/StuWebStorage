@@ -6293,7 +6293,93 @@
         if (deleteZip) {
             deleteZip.checked = false;
         }
+        loadExtractZipPreflight(modalEl, fileId);
         window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+
+    /**
+     * @brief Fetch and render extraction limits for one ZIP file.
+     * @param {HTMLElement} modalEl Modal root.
+     * @param {number} fileId Shared file id.
+     * @return {void}
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    function loadExtractZipPreflight(modalEl, fileId) {
+        var preflightRoot = modalEl.querySelector('[data-files-extract-preflight]');
+        var loadingEl = modalEl.querySelector('[data-files-extract-preflight-loading]');
+        var bodyEl = modalEl.querySelector('[data-files-extract-preflight-body]');
+        var zipSizeEl = modalEl.querySelector('[data-files-extract-zip-size]');
+        var maxUncompressedEl = modalEl.querySelector('[data-files-extract-max-uncompressed]');
+        var maxFilesEl = modalEl.querySelector('[data-files-extract-max-files]');
+        var adminTierEl = modalEl.querySelector('[data-files-extract-admin-tier]');
+        var submitBtn = modalEl.querySelector('[data-files-extract-submit]');
+        var template = modalEl.getAttribute('data-files-extract-preflight-url-template') || '';
+        if (template === '' || fileId < 1) {
+            return;
+        }
+        if (loadingEl) {
+            loadingEl.classList.remove('d-none');
+        }
+        if (bodyEl) {
+            bodyEl.classList.add('d-none');
+        }
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+        fetch(template.replace('999999', String(fileId)), {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        }).then(function (response) {
+            return response.json().catch(function () {
+                return {};
+            }).then(function (json) {
+                return { ok: response.ok, json: json };
+            });
+        }).then(function (pack) {
+            if (loadingEl) {
+                loadingEl.classList.add('d-none');
+            }
+            if (!pack.ok || !pack.json || pack.json.status !== 'ok') {
+                if (preflightRoot) {
+                    preflightRoot.textContent = modalEl.getAttribute('data-msg-error') || '';
+                }
+                return;
+            }
+            if (bodyEl) {
+                bodyEl.classList.remove('d-none');
+            }
+            if (zipSizeEl) {
+                zipSizeEl.textContent = pack.json.zip_file_bytes_formatted || String(pack.json.zip_file_bytes || 0);
+            }
+            if (maxUncompressedEl) {
+                maxUncompressedEl.textContent = pack.json.max_uncompressed_bytes_formatted || String(pack.json.max_uncompressed_bytes || 0);
+            }
+            if (maxFilesEl) {
+                maxFilesEl.textContent = String(pack.json.max_file_count || 0);
+            }
+            if (adminTierEl) {
+                if (pack.json.limits_tier === 'admin') {
+                    adminTierEl.classList.remove('d-none');
+                } else {
+                    adminTierEl.classList.add('d-none');
+                }
+            }
+            if (submitBtn) {
+                submitBtn.disabled = false;
+            }
+        }).catch(function () {
+            if (loadingEl) {
+                loadingEl.classList.add('d-none');
+            }
+            if (preflightRoot) {
+                preflightRoot.textContent = modalEl.getAttribute('data-msg-error') || '';
+            }
+        });
     }
 
     /**
@@ -6316,19 +6402,29 @@
             progressWrap.classList.remove('d-none');
         }
         if (phaseEl) {
+            var phaseKey = String(payload.phase || '');
             var progressLabel = modalEl.getAttribute('data-msg-progress') || '';
+            if (phaseKey === 'pending') {
+                progressLabel = modalEl.getAttribute('data-msg-phase-pending') || progressLabel;
+            } else if (phaseKey === 'scanning') {
+                progressLabel = modalEl.getAttribute('data-msg-phase-scanning') || progressLabel;
+            }
             phaseEl.textContent = progressLabel;
         }
         if (barEl) {
             barEl.style.width = String(Math.max(0, Math.min(100, percent))) + '%';
         }
         if (progressEl) {
-            progressEl.setAttribute('aria-valuenow', String(Math.max(0, Math.min(100, percent))));
+            progressEl.setAttribute('aria-valuenow', String(Math.max(0, Math.min(100, percent)));
         }
         if (countEl) {
-            countEl.textContent = String(payload.extracted || 0) + ' / ' + String(payload.total || 0);
-            if (Number(payload.skipped || 0) > 0) {
-                countEl.textContent += ' (' + String(payload.skipped || 0) + ' skipped)';
+            if (Number(payload.total || 0) > 0) {
+                countEl.textContent = String(payload.extracted || 0) + ' / ' + String(payload.total || 0);
+                if (Number(payload.skipped || 0) > 0) {
+                    countEl.textContent += ' (' + String(payload.skipped || 0) + ' skipped)';
+                }
+            } else {
+                countEl.textContent = '';
             }
         }
         if (currentEl) {
@@ -6535,8 +6631,13 @@
                 if (optionsEl) {
                     optionsEl.classList.add('d-none');
                 }
+                var preflightEl = extractZipModal.querySelector('[data-files-extract-preflight]');
+                if (preflightEl) {
+                    preflightEl.classList.add('d-none');
+                }
                 extractZipActiveJobId = String(pack.json.job_id);
                 updateExtractZipProgressUi(extractZipModal, {
+                    phase: pack.json.phase || 'pending',
                     percent: 0,
                     extracted: 0,
                     skipped: 0,

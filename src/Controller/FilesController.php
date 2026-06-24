@@ -20,6 +20,7 @@ use App\Service\File\ChunkedUploadService;
 use App\Service\File\FilesQueryScopeResolver;
 use App\Service\File\UserFilesPaneBuilderService;
 use App\Service\File\UserStorageQuotaService;
+use App\Service\File\ZipExtractLimitsResolver;
 use App\Service\File\ZipExtractService;
 use App\Service\Format\BinaryByteFormatter;
 use App\Service\File\FileEncryptionService;
@@ -145,6 +146,7 @@ class FilesController extends AbstractController
         private readonly BinaryByteFormatter $binaryByteFormatter,
         private readonly ChunkedUploadService $chunkedUploadService,
         private readonly ZipExtractService $zipExtractService,
+        private readonly ZipExtractLimitsResolver $zipExtractLimitsResolver,
         private readonly UserStorageQuotaService $userStorageQuotaService,
         private readonly FilesQueryScopeResolver $filesQueryScopeResolver,
         private readonly UserFilesPaneBuilderService $userFilesPaneBuilderService,
@@ -1613,6 +1615,50 @@ class FilesController extends AbstractController
     }
 
     /**
+     * @brief Preflight ZIP extraction limits and archive metadata for the modal.
+     * @param int $id Shared file identifier.
+     * @return JsonResponse
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    #[Route('/files/{id}/extract/preflight', name: 'files_extract_zip_preflight', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function extractZipPreflight(int $id): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+        $sharedFile = $this->sharedFileRepository->find($id);
+        if (!$sharedFile instanceof SharedFile) {
+            return new JsonResponse(['status' => 'error', 'message_key' => 'files.flash.not_found'], 404);
+        }
+        if (!$this->canActorMutateOwnedSharedFile($user, $sharedFile)) {
+            return new JsonResponse(['status' => 'error', 'message_key' => 'files.flash.not_owner'], 403);
+        }
+
+        $limits = $this->zipExtractLimitsResolver->resolveForActor($this->isGranted('ROLE_ADMIN'));
+        try {
+            $preflight = $this->zipExtractService->buildPreflight((int) $sharedFile->getOwnerUserId(), $sharedFile, $limits);
+        } catch (\RuntimeException $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message_key' => ZipExtractService::mapExceptionToFlashKey($e),
+            ], 400);
+        }
+
+        return new JsonResponse([
+            'status' => 'ok',
+            'zip_file_name' => $preflight['zip_file_name'],
+            'zip_file_bytes' => $preflight['zip_file_bytes'],
+            'zip_file_bytes_formatted' => $this->binaryByteFormatter->format((int) $preflight['zip_file_bytes']),
+            'max_uncompressed_bytes' => $preflight['max_uncompressed_bytes'],
+            'max_uncompressed_bytes_formatted' => $this->binaryByteFormatter->format((int) $preflight['max_uncompressed_bytes']),
+            'max_file_count' => $preflight['max_file_count'],
+            'max_job_seconds' => $preflight['max_job_seconds'],
+            'limits_tier' => $preflight['limits_tier'],
+        ]);
+    }
+
+    /**
      * @brief Start a ZIP extraction job for one owned archive file.
      * @param Request $request HTTP request (mode, conflict_policy, delete_zip).
      * @param TranslatorInterface $translator Translator for JSON errors.
@@ -1648,9 +1694,10 @@ class FilesController extends AbstractController
         $mode = trim((string) $request->request->get('mode', ZipExtractService::MODE_HERE));
         $conflictPolicy = trim((string) $request->request->get('conflict_policy', ZipExtractService::CONFLICT_ABORT));
         $deleteZip = filter_var($request->request->get('delete_zip', false), FILTER_VALIDATE_BOOL);
+        $limits = $this->zipExtractLimitsResolver->resolveForActor($this->isGranted('ROLE_ADMIN'));
 
         try {
-            $result = $this->zipExtractService->createJob($ownerId, $sharedFile, $mode, $conflictPolicy, $deleteZip);
+            $result = $this->zipExtractService->createJob($ownerId, $sharedFile, $mode, $conflictPolicy, $deleteZip, $limits);
         } catch (\RuntimeException $e) {
             return $this->extractJsonOrRedirect($request, $translator, ZipExtractService::mapExceptionToFlashKey($e), 400);
         }
@@ -1660,6 +1707,7 @@ class FilesController extends AbstractController
             'job_id' => $result['job_id'],
             'total_entries' => $result['total_entries'],
             'total_bytes' => $result['total_bytes'],
+            'phase' => $result['phase'],
         ]);
     }
 

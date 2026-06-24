@@ -342,6 +342,14 @@ files:
       progress: 'Extraction in progress'
       error_generic: 'Extraction failed. Try again.'
       cancel_confirm: 'Cancel the extraction in progress?'
+      loading_preflight: 'Loading extraction limits…'
+      limits_hint: 'Decompressed content must not exceed the platform limit. The ZIP file size may be smaller than the extracted content.'
+      zip_size_label: 'ZIP size:'
+      max_uncompressed_label: 'Max decompressed content:'
+      max_files_label: 'Max file count:'
+      limits_admin_tier: 'Elevated limits (administrator account).'
+      phase_pending: 'Decrypting archive…'
+      phase_scanning: 'Scanning archive…'
   table:
     name: Name
     extension: Type

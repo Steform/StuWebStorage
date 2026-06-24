@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\File;
 
+use App\Dto\File\ZipExtractLimits;
 use App\Entity\Folder;
 use App\Entity\SharedFile;
 use App\Entity\ShareGrant;
@@ -52,22 +53,46 @@ final class ZipExtractService
         private readonly PublicShareService $publicShareService,
         private readonly FriendsShareService $friendsShareService,
         private readonly string $projectDir,
-        private readonly int $maxTotalBytes,
-        private readonly int $maxFileCount,
-        private readonly int $maxSeconds,
-        private readonly int $batchSize,
-        private readonly int $maxCompressionRatio,
     ) {
     }
 
     /**
-     * @brief Create an extraction job: decrypt archive, preflight entries, persist session meta.
+     * @brief Build preflight payload for the extraction modal (no decrypt required).
+     * @param int $ownerUserId Effective owner namespace.
+     * @param SharedFile $sourceFile Owned ZIP shared file row.
+     * @param ZipExtractLimits $limits Effective limits for the current actor.
+     * @return array<string, mixed>
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    public function buildPreflight(int $ownerUserId, SharedFile $sourceFile, ZipExtractLimits $limits): array
+    {
+        if ($sourceFile->getOwnerUserId() !== $ownerUserId) {
+            throw new \RuntimeException('zip_extract.forbidden');
+        }
+        if (strtolower($sourceFile->getFileExtension()) !== 'zip') {
+            throw new \RuntimeException('zip_extract.not_zip');
+        }
+
+        return [
+            'zip_file_name' => $sourceFile->getOriginalFileName(),
+            'zip_file_bytes' => (int) $sourceFile->getByteSize(),
+            'max_uncompressed_bytes' => $limits->maxTotalBytes,
+            'max_file_count' => $limits->maxFileCount,
+            'max_job_seconds' => $limits->maxSeconds,
+            'limits_tier' => $limits->tier,
+        ];
+    }
+
+    /**
+     * @brief Create an extraction job session (decrypt and scan deferred to the first ticks).
      * @param int $ownerUserId Effective owner namespace.
      * @param SharedFile $sourceFile Owned ZIP shared file row.
      * @param string $mode One of MODE_HERE or MODE_SUBFOLDER.
      * @param string $conflictPolicy One of CONFLICT_* constants.
      * @param bool $deleteZipAfter When true, remove source ZIP after successful extraction.
-     * @return array{job_id: string, total_entries: int, total_bytes: int}
+     * @param ZipExtractLimits $limits Effective limits frozen for this job.
+     * @return array{job_id: string, total_entries: int, total_bytes: int, phase: string}
      * @date 2026-06-24
      * @author Stephane H.
      */
@@ -77,6 +102,7 @@ final class ZipExtractService
         string $mode,
         string $conflictPolicy,
         bool $deleteZipAfter,
+        ZipExtractLimits $limits,
     ): array {
         $this->purgeExpiredForOwner($ownerUserId);
         $this->assertValidMode($mode);
@@ -95,102 +121,40 @@ final class ZipExtractService
             throw new \RuntimeException('zip_extract.storage_failed');
         }
 
-        $tempZipPath = $this->tempZipPath($ownerUserId, $jobId);
-        $out = fopen($tempZipPath, 'wb');
-        if ($out === false) {
-            throw new \RuntimeException('zip_extract.decrypt_failed');
-        }
-        try {
-            $this->fileEncryptionService->streamDecryptStorageToHandle($sourceFile->getStoragePath(), $out);
-        } catch (\RuntimeException) {
-            @unlink($tempZipPath);
-            throw new \RuntimeException('zip_extract.decrypt_failed');
-        } finally {
-            fclose($out);
-        }
-
-        $startedAt = microtime(true);
-        $scan = $this->scanZipArchive($tempZipPath, $startedAt);
-
-        $quotaBytes = $deleteZipAfter
-            ? max(0, $scan['total_bytes'] - (int) $sourceFile->getByteSize())
-            : $scan['total_bytes'];
-        if ($quotaBytes > 0) {
-            try {
-                $this->userStorageQuotaService->assertOwnerCanStoreBytes($ownerUserId, $quotaBytes);
-            } catch (\RuntimeException $e) {
-                @unlink($tempZipPath);
-                if ($e->getMessage() === UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED) {
-                    throw new \RuntimeException('zip_extract.quota_exceeded', 0, $e);
-                }
-
-                throw $e;
-            }
-        }
-
         $targetFolder = $sourceFile->getFolder();
-        $extractRootFolderId = 0;
-        $createdFolderIds = [];
-
-        if ($mode === self::MODE_SUBFOLDER) {
-            $subfolderName = $this->deriveSubfolderName($sourceFile->getOriginalFileName());
-            $resolved = $this->resolveFolderSegmentName(
-                $ownerUserId,
-                $targetFolder,
-                $subfolderName,
-                $conflictPolicy,
-                null
-            );
-            if ($resolved['action'] === 'abort') {
-                @unlink($tempZipPath);
-                throw new \RuntimeException('zip_extract.conflict_abort');
-            }
-            if ($resolved['action'] === 'skip') {
-                @unlink($tempZipPath);
-                throw new \RuntimeException('zip_extract.conflict_abort');
-            }
-            $folder = $resolved['folder'];
-            if ($folder === null) {
-                $folder = new Folder($ownerUserId, $resolved['name'], $targetFolder);
-                $this->entityManager->persist($folder);
-                $this->entityManager->flush();
-                $fid = (int) ($folder->getId() ?? 0);
-                if ($fid > 0) {
-                    $createdFolderIds[] = $fid;
-                }
-            }
-            $extractRootFolderId = (int) ($folder->getId() ?? 0);
-            $targetFolder = $folder;
-        }
+        $startedAt = microtime(true);
 
         $meta = [
             'owner_user_id' => $ownerUserId,
             'source_file_id' => (int) $sourceFile->getId(),
+            'source_storage_path' => $sourceFile->getStoragePath(),
             'mode' => $mode,
             'conflict_policy' => $conflictPolicy,
             'delete_zip_after' => $deleteZipAfter,
             'target_folder_id' => $targetFolder instanceof Folder ? (int) ($targetFolder->getId() ?? 0) : 0,
-            'extract_root_folder_id' => $extractRootFolderId,
+            'extract_root_folder_id' => 0,
             'created_at' => time(),
             'started_at' => $startedAt,
-            'phase' => 'extracting',
+            'phase' => 'pending',
             'next_index' => 0,
-            'entries' => $scan['entries'],
-            'total_entries' => $scan['file_count'],
-            'total_bytes' => $scan['total_bytes'],
+            'entries' => [],
+            'total_entries' => 0,
+            'total_bytes' => 0,
             'extracted' => 0,
             'skipped' => 0,
             'created_file_ids' => [],
-            'created_folder_ids' => $createdFolderIds,
+            'created_folder_ids' => [],
             'current_entry' => '',
             'error_message' => '',
+            'limits' => $limits->toMetaArray(),
         ];
         $this->saveMeta($ownerUserId, $jobId, $meta);
 
         return [
             'job_id' => $jobId,
-            'total_entries' => $scan['file_count'],
-            'total_bytes' => $scan['total_bytes'],
+            'total_entries' => 0,
+            'total_bytes' => 0,
+            'phase' => 'pending',
         ];
     }
 
@@ -217,8 +181,9 @@ final class ZipExtractService
             return $this->buildProgressPayload($meta, true);
         }
 
+        $limits = ZipExtractLimits::fromJobMeta($meta);
         $startedAt = (float) ($meta['started_at'] ?? microtime(true));
-        if (microtime(true) - $startedAt > $this->maxSeconds) {
+        if ($this->isJobTimedOut($startedAt, $limits)) {
             $this->failJob($ownerUserId, $jobId, $meta, 'zip_extract.limit_time');
 
             throw new \RuntimeException('zip_extract.limit_time');
@@ -226,6 +191,14 @@ final class ZipExtractService
 
         if ($phase === 'finalizing') {
             return $this->finalizeJob($ownerUserId, $jobId, $meta);
+        }
+
+        if ($phase === 'pending') {
+            return $this->tickDecryptPhase($ownerUserId, $jobId, $meta);
+        }
+
+        if ($phase === 'scanning') {
+            return $this->tickScanPhase($ownerUserId, $jobId, $meta, $limits, $startedAt);
         }
 
         $tempZipPath = $this->tempZipPath($ownerUserId, $jobId);
@@ -245,7 +218,7 @@ final class ZipExtractService
             /** @var array<int, array<string, mixed>> $entries */
             $entries = $meta['entries'] ?? [];
             $nextIndex = (int) ($meta['next_index'] ?? 0);
-            $batchEnd = min(count($entries), $nextIndex + max(1, $this->batchSize));
+            $batchEnd = min(count($entries), $nextIndex + max(1, $limits->batchSize));
             $extractRootFolderId = (int) ($meta['extract_root_folder_id'] ?? 0);
             $extractRoot = $extractRootFolderId > 0
                 ? $this->folderTreeService->resolveCurrentFolder($ownerUserId, $extractRootFolderId)
@@ -263,7 +236,7 @@ final class ZipExtractService
             $conflictPolicy = (string) ($meta['conflict_policy'] ?? self::CONFLICT_ABORT);
 
             for ($i = $nextIndex; $i < $batchEnd; ++$i) {
-                if (microtime(true) - $startedAt > $this->maxSeconds) {
+                if ($this->isJobTimedOut($startedAt, $limits)) {
                     $meta['next_index'] = $i;
                     $this->saveMeta($ownerUserId, $jobId, $meta);
                     throw new \RuntimeException('zip_extract.limit_time');
@@ -325,6 +298,161 @@ final class ZipExtractService
         } finally {
             $zip->close();
         }
+    }
+
+    /**
+     * @brief Decrypt the source archive into the job temp path (one tick step).
+     * @param int $ownerUserId Owner id.
+     * @param string $jobId Job id.
+     * @param array<string, mixed> $meta Job meta.
+     * @return array<string, mixed>
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function tickDecryptPhase(int $ownerUserId, string $jobId, array $meta): array
+    {
+        $sourcePath = (string) ($meta['source_storage_path'] ?? '');
+        if ($sourcePath === '' || !is_readable($sourcePath)) {
+            $this->failJob($ownerUserId, $jobId, $meta, 'zip_extract.invalid');
+            throw new \RuntimeException('zip_extract.invalid');
+        }
+
+        $tempZipPath = $this->tempZipPath($ownerUserId, $jobId);
+        $out = fopen($tempZipPath, 'wb');
+        if ($out === false) {
+            $this->failJob($ownerUserId, $jobId, $meta, 'zip_extract.decrypt_failed');
+            throw new \RuntimeException('zip_extract.decrypt_failed');
+        }
+        try {
+            $this->fileEncryptionService->streamDecryptStorageToHandle($sourcePath, $out);
+        } catch (\RuntimeException) {
+            @unlink($tempZipPath);
+            $this->failJob($ownerUserId, $jobId, $meta, 'zip_extract.decrypt_failed');
+            throw new \RuntimeException('zip_extract.decrypt_failed');
+        } finally {
+            fclose($out);
+        }
+
+        $meta['phase'] = 'scanning';
+        $meta['started_at'] = microtime(true);
+        $meta['current_entry'] = '';
+        $this->saveMeta($ownerUserId, $jobId, $meta);
+
+        return $this->buildProgressPayload($meta, false);
+    }
+
+    /**
+     * @brief Scan decrypted archive, enforce quota, and prepare extraction entries.
+     * @param int $ownerUserId Owner id.
+     * @param string $jobId Job id.
+     * @param array<string, mixed> $meta Job meta.
+     * @param ZipExtractLimits $limits Frozen job limits.
+     * @param float $startedAt Job timer origin.
+     * @return array<string, mixed>
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function tickScanPhase(
+        int $ownerUserId,
+        string $jobId,
+        array $meta,
+        ZipExtractLimits $limits,
+        float $startedAt,
+    ): array {
+        $tempZipPath = $this->tempZipPath($ownerUserId, $jobId);
+        if (!is_readable($tempZipPath)) {
+            $this->failJob($ownerUserId, $jobId, $meta, 'zip_extract.invalid');
+            throw new \RuntimeException('zip_extract.invalid');
+        }
+
+        try {
+            $scan = $this->scanZipArchive($tempZipPath, $startedAt, $limits);
+        } catch (\RuntimeException $e) {
+            @unlink($tempZipPath);
+            $this->failJob($ownerUserId, $jobId, $meta, $e->getMessage());
+            throw $e;
+        }
+
+        $sourceId = (int) ($meta['source_file_id'] ?? 0);
+        $sourceFile = $this->sharedFileRepository->find($sourceId);
+        $sourceZipBytes = $sourceFile instanceof SharedFile ? (int) $sourceFile->getByteSize() : 0;
+        $deleteZipAfter = (bool) ($meta['delete_zip_after'] ?? false);
+        $quotaBytes = $deleteZipAfter
+            ? max(0, $scan['total_bytes'] - $sourceZipBytes)
+            : $scan['total_bytes'];
+        if ($quotaBytes > 0) {
+            try {
+                $this->userStorageQuotaService->assertOwnerCanStoreBytes($ownerUserId, $quotaBytes);
+            } catch (\RuntimeException $e) {
+                @unlink($tempZipPath);
+                if ($e->getMessage() === UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED) {
+                    $this->failJob($ownerUserId, $jobId, $meta, 'zip_extract.quota_exceeded');
+                    throw new \RuntimeException('zip_extract.quota_exceeded', 0, $e);
+                }
+
+                throw $e;
+            }
+        }
+
+        $mode = (string) ($meta['mode'] ?? self::MODE_HERE);
+        $conflictPolicy = (string) ($meta['conflict_policy'] ?? self::CONFLICT_ABORT);
+        $targetFolderId = (int) ($meta['target_folder_id'] ?? 0);
+        $targetFolder = $this->folderTreeService->resolveCurrentFolder($ownerUserId, $targetFolderId > 0 ? $targetFolderId : null);
+        $extractRootFolderId = 0;
+
+        if ($mode === self::MODE_SUBFOLDER && $sourceFile instanceof SharedFile) {
+            $subfolderName = $this->deriveSubfolderName($sourceFile->getOriginalFileName());
+            $resolved = $this->resolveFolderSegmentName(
+                $ownerUserId,
+                $targetFolder,
+                $subfolderName,
+                $conflictPolicy,
+                $meta
+            );
+            if ($resolved['action'] === 'abort' || $resolved['action'] === 'skip') {
+                @unlink($tempZipPath);
+                $this->failJob($ownerUserId, $jobId, $meta, 'zip_extract.conflict_abort');
+                throw new \RuntimeException('zip_extract.conflict_abort');
+            }
+            $folder = $resolved['folder'];
+            if ($folder === null) {
+                $folder = new Folder($ownerUserId, $resolved['name'], $targetFolder);
+                $this->entityManager->persist($folder);
+                $this->entityManager->flush();
+                $fid = (int) ($folder->getId() ?? 0);
+                if ($fid > 0) {
+                    /** @var list<int> $createdFolderIds */
+                    $createdFolderIds = $meta['created_folder_ids'] ?? [];
+                    $createdFolderIds[] = $fid;
+                    $meta['created_folder_ids'] = $createdFolderIds;
+                }
+            }
+            $extractRootFolderId = (int) ($folder->getId() ?? 0);
+        }
+
+        $meta['entries'] = $scan['entries'];
+        $meta['total_entries'] = $scan['file_count'];
+        $meta['total_bytes'] = $scan['total_bytes'];
+        $meta['extract_root_folder_id'] = $extractRootFolderId;
+        $meta['phase'] = 'extracting';
+        $meta['next_index'] = 0;
+        $meta['current_entry'] = '';
+        $this->saveMeta($ownerUserId, $jobId, $meta);
+
+        return $this->buildProgressPayload($meta, false);
+    }
+
+    /**
+     * @brief Whether the job exceeded its allowed wall-clock duration.
+     * @param float $startedAt Unix timestamp with fraction.
+     * @param ZipExtractLimits $limits Job limits.
+     * @return bool
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function isJobTimedOut(float $startedAt, ZipExtractLimits $limits): bool
+    {
+        return microtime(true) - $startedAt > $limits->maxSeconds;
     }
 
     /**
@@ -411,11 +539,12 @@ final class ZipExtractService
     /**
      * @param string $zipPath Readable decrypted ZIP path.
      * @param float $startedAt Job start timestamp for timeout checks.
+     * @param ZipExtractLimits $limits Effective limits for this job.
      * @return array{entries: list<array<string, mixed>>, file_count: int, total_bytes: int}
      * @date 2026-06-24
      * @author Stephane H.
      */
-    private function scanZipArchive(string $zipPath, float $startedAt): array
+    private function scanZipArchive(string $zipPath, float $startedAt, ZipExtractLimits $limits): array
     {
         $zip = new \ZipArchive();
         $openResult = $zip->open($zipPath);
@@ -429,7 +558,7 @@ final class ZipExtractService
         $numEntries = $zip->numFiles;
 
         for ($i = 0; $i < $numEntries; ++$i) {
-            if (microtime(true) - $startedAt > $this->maxSeconds) {
+            if ($this->isJobTimedOut($startedAt, $limits)) {
                 $zip->close();
                 throw new \RuntimeException('zip_extract.limit_time');
             }
@@ -456,15 +585,15 @@ final class ZipExtractService
             $compressed = (int) ($stat['comp_size'] ?? 0);
 
             if (!$isDir) {
-                if ($fileCount >= $this->maxFileCount) {
+                if ($fileCount >= $limits->maxFileCount) {
                     $zip->close();
                     throw new \RuntimeException('zip_extract.limit_files');
                 }
-                if ($totalBytes + $uncompressed > $this->maxTotalBytes) {
+                if ($totalBytes + $uncompressed > $limits->maxTotalBytes) {
                     $zip->close();
                     throw new \RuntimeException('zip_extract.limit_bytes');
                 }
-                if ($compressed > 0 && $uncompressed / $compressed > $this->maxCompressionRatio) {
+                if ($compressed > 0 && $uncompressed / $compressed > $limits->maxCompressionRatio) {
                     $zip->close();
                     throw new \RuntimeException('zip_extract.limit_ratio');
                 }
@@ -981,7 +1110,7 @@ final class ZipExtractService
      */
     private function buildProgressPayload(array $meta, bool $terminal): array
     {
-        $total = max(1, (int) ($meta['total_entries'] ?? 0));
+        $total = (int) ($meta['total_entries'] ?? 0);
         $doneCount = (int) ($meta['extracted'] ?? 0) + (int) ($meta['skipped'] ?? 0);
         $phase = (string) ($meta['phase'] ?? 'pending');
         $isDone = $terminal && ($phase === 'done' || $phase === 'failed' || $phase === 'cancelled');
@@ -990,12 +1119,36 @@ final class ZipExtractService
             'phase' => $phase,
             'extracted' => (int) ($meta['extracted'] ?? 0),
             'skipped' => (int) ($meta['skipped'] ?? 0),
-            'total' => (int) ($meta['total_entries'] ?? 0),
-            'percent' => min(100, (int) round(($doneCount / $total) * 100)),
+            'total' => $total,
+            'total_bytes' => (int) ($meta['total_bytes'] ?? 0),
+            'percent' => $this->computeProgressPercent($phase, $doneCount, $total),
             'current_entry' => (string) ($meta['current_entry'] ?? ''),
             'done' => $isDone,
             'error_message' => (string) ($meta['error_message'] ?? ''),
         ];
+    }
+
+    /**
+     * @brief Map job phase and counters to a 0–100 progress percentage.
+     * @param string $phase Current job phase.
+     * @param int $doneCount Extracted plus skipped file entries.
+     * @param int $total Total file entries when known.
+     * @return int
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function computeProgressPercent(string $phase, int $doneCount, int $total): int
+    {
+        return match ($phase) {
+            'pending' => 0,
+            'scanning' => 8,
+            'finalizing' => 99,
+            'done' => 100,
+            'extracting' => $total > 0
+                ? min(98, 10 + (int) round(88 * $doneCount / $total))
+                : 10,
+            default => 0,
+        };
     }
 
     /**

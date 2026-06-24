@@ -5,11 +5,15 @@
     aria-labelledby="filesExtractZipModalTitle"
     aria-hidden="true"
     data-files-extract-start-url-template="{{ path('files_extract_zip', { id: 999999 }) }}"
+    data-files-extract-preflight-url-template="{{ path('files_extract_zip_preflight', { id: 999999 }) }}"
     data-files-extract-tick-url-template="{{ path('files_extract_zip_tick', { jobId: '00000000000000000000000000000000' }) }}"
     data-files-extract-cancel-url-template="{{ path('files_extract_zip_cancel', { jobId: '00000000000000000000000000000000' }) }}"
     data-msg-error="{{ 'files.extract.modal.error_generic'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
     data-msg-progress="{{ 'files.extract.modal.progress'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-phase-pending="{{ 'files.extract.modal.phase_pending'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-phase-scanning="{{ 'files.extract.modal.phase_scanning'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
     data-msg-cancel-confirm="{{ 'files.extract.modal.cancel_confirm'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-loading-preflight="{{ 'files.extract.modal.loading_preflight'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
 >
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -22,6 +26,18 @@
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfExtract) }}" data-files-extract-csrf-input>
                     {% include 'files/_listing_retain.html.twig' %}
                     <p class="mb-3"><strong data-files-extract-target-name>—</strong></p>
+                    <div id="files-extract-preflight" class="small text-muted mb-3" data-files-extract-preflight aria-live="polite">
+                        <span data-files-extract-preflight-loading>{{ 'files.extract.modal.loading_preflight'|trans({}, 'messages', currentLocale) }}</span>
+                        <div class="d-none" data-files-extract-preflight-body>
+                            <p class="mb-1">{{ 'files.extract.modal.limits_hint'|trans({}, 'messages', currentLocale) }}</p>
+                            <ul class="mb-1 ps-3">
+                                <li><span>{{ 'files.extract.modal.zip_size_label'|trans({}, 'messages', currentLocale) }}</span> <strong data-files-extract-zip-size>—</strong></li>
+                                <li><span>{{ 'files.extract.modal.max_uncompressed_label'|trans({}, 'messages', currentLocale) }}</span> <strong data-files-extract-max-uncompressed>—</strong></li>
+                                <li><span>{{ 'files.extract.modal.max_files_label'|trans({}, 'messages', currentLocale) }}</span> <strong data-files-extract-max-files>—</strong></li>
+                            </ul>
+                            <p class="mb-0 d-none" data-files-extract-admin-tier>{{ 'files.extract.modal.limits_admin_tier'|trans({}, 'messages', currentLocale) }}</p>
+                        </div>
+                    </div>
                     <div data-files-extract-options>
                         <fieldset class="mb-3">
                             <legend class="form-label fs-6 mb-2">{{ 'files.extract.modal.destination_label'|trans({}, 'messages', currentLocale) }}</legend>

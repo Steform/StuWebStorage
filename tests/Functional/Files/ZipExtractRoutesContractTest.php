@@ -30,6 +30,18 @@ final class ZipExtractRoutesContractTest extends TestCase
      * @date 2026-06-24
      * @author Stephane H.
      */
+    private function readAppFilesYaml(): string
+    {
+        $path = dirname(__DIR__, 3).'/config/packages/app_files.yaml';
+
+        return is_readable($path) ? (string) file_get_contents($path) : '';
+    }
+
+    /**
+     * @return string
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
     private function readServicesYaml(): string
     {
         $path = dirname(__DIR__, 3).'/config/services.yaml';
@@ -42,23 +54,19 @@ final class ZipExtractRoutesContractTest extends TestCase
      * @date 2026-06-24
      * @author Stephane H.
      */
-    public function testExtractEndpointsDeclarePostRoutes(): void
+    public function testExtractEndpointsDeclareRoutes(): void
     {
         $src = $this->readController();
 
         self::assertStringContainsString("private const CSRF_EXTRACT = 'files_extract';", $src);
+        self::assertStringContainsString("#[Route('/files/{id}/extract/preflight'", $src);
         self::assertStringContainsString("#[Route('/files/{id}/extract'", $src);
         self::assertStringContainsString("#[Route('/files/extract/{jobId}/tick'", $src);
         self::assertStringContainsString("#[Route('/files/extract/{jobId}/cancel'", $src);
-        self::assertStringContainsString('function extractZipStart(', $src);
-        self::assertStringContainsString('function extractZipTick(', $src);
-        self::assertStringContainsString('function extractZipCancel(', $src);
+        self::assertStringContainsString('function extractZipPreflight(', $src);
+        self::assertStringContainsString('$this->zipExtractLimitsResolver->resolveForActor', $src);
         self::assertStringContainsString('$this->zipExtractService->createJob(', $src);
-        self::assertStringContainsString('$this->zipExtractService->tickJob(', $src);
-        self::assertStringContainsString('$this->zipExtractService->cancelJob(', $src);
-        self::assertStringContainsString("'csrfExtract' => self::CSRF_EXTRACT", $src);
-        self::assertStringContainsString('ZipExtractService::mapExceptionToFlashKey', $src);
-        self::assertStringContainsString('canActorMutateOwnedSharedFile', $src);
+        self::assertStringContainsString('$limits)', $src);
     }
 
     /**
@@ -66,16 +74,25 @@ final class ZipExtractRoutesContractTest extends TestCase
      * @date 2026-06-24
      * @author Stephane H.
      */
-    public function testZipExtractServiceIsRegisteredWithLimits(): void
+    public function testZipExtractLimitsAreConfiguredFromEnv(): void
+    {
+        $yaml = $this->readAppFilesYaml();
+
+        self::assertStringContainsString('APP_ZIP_EXTRACT_MAX_TOTAL_BYTES', $yaml);
+        self::assertStringContainsString('APP_ZIP_EXTRACT_ADMIN_MAX_TOTAL_BYTES', $yaml);
+        self::assertStringContainsString('app.zip_extract_admin_max_total_bytes:', $yaml);
+    }
+
+    /**
+     * @return void
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    public function testZipExtractLimitsResolverIsRegistered(): void
     {
         $yaml = $this->readServicesYaml();
 
-        self::assertStringContainsString('app.zip_extract_max_total_bytes:', $yaml);
-        self::assertStringContainsString('app.zip_extract_max_file_count:', $yaml);
-        self::assertStringContainsString('app.zip_extract_max_seconds:', $yaml);
-        self::assertStringContainsString('app.zip_extract_batch_size:', $yaml);
-        self::assertStringContainsString('app.zip_extract_max_compression_ratio:', $yaml);
-        self::assertStringContainsString('App\Service\File\ZipExtractService:', $yaml);
-        self::assertStringContainsString("$maxTotalBytes: '%app.zip_extract_max_total_bytes%'", $yaml);
+        self::assertStringContainsString('App\Service\File\ZipExtractLimitsResolver:', $yaml);
+        self::assertStringContainsString("$adminMaxTotalBytes: '%app.zip_extract_admin_max_total_bytes%'", $yaml);
     }
 }

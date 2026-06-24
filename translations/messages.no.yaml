@@ -342,6 +342,14 @@ files:
       progress: 'Utpakking paagaar'
       error_generic: 'Utpakking mislyktes. Prov igjen.'
       cancel_confirm: 'Avbryte utpakking som paagaar?'
+      loading_preflight: 'Laster utpakingsgrenser…'
+      limits_hint: 'Dekomprimert innhold maa ikke overskride plattformgrensen. ZIP-filens storrelse kan vaere mindre enn det utpakkede innholdet.'
+      zip_size_label: 'ZIP-storrelse:'
+      max_uncompressed_label: 'Grense for dekomprimert innhold:'
+      max_files_label: 'Grense for antall filer:'
+      limits_admin_tier: 'Forhoeyede grenser (administratorkonto).'
+      phase_pending: 'Dekrypterer arkiv…'
+      phase_scanning: 'Analyserer arkiv…'
   table:
     name: Navn
     extension: Type

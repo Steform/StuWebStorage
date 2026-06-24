@@ -4,23 +4,42 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\File;
 
+use App\Dto\File\ZipExtractLimits;
+use App\Service\File\ZipExtractLimitsResolver;
 use App\Service\File\ZipExtractService;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 /**
- * @brief Unit tests for ZIP extraction preflight scanning.
+ * @brief Unit tests for ZIP extraction preflight scanning and limits resolution.
  * @author Stephane H.
  * @date 2026-06-24
  */
 final class ZipExtractServiceTest extends TestCase
 {
     /**
+     * @return ZipExtractLimits
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function standardLimits(int $maxCompressionRatio = 100): ZipExtractLimits
+    {
+        return new ZipExtractLimits(
+            maxTotalBytes: 1048576,
+            maxFileCount: 100,
+            maxSeconds: 30,
+            batchSize: 5,
+            maxCompressionRatio: $maxCompressionRatio,
+            tier: ZipExtractLimitsResolver::TIER_STANDARD,
+        );
+    }
+
+    /**
      * @return ZipExtractService
      * @date 2026-06-24
      * @author Stephane H.
      */
-    private function buildService(int $maxCompressionRatio = 100): ZipExtractService
+    private function buildService(): ZipExtractService
     {
         $sharedFileRepository = $this->createMock(\App\Repository\SharedFileRepository::class);
         $userRepository = $this->createMock(\App\Repository\UserRepository::class);
@@ -38,11 +57,6 @@ final class ZipExtractServiceTest extends TestCase
             publicShareService: $this->createMock(\App\Service\Share\PublicShareService::class),
             friendsShareService: $this->createMock(\App\Service\Share\FriendsShareService::class),
             projectDir: sys_get_temp_dir(),
-            maxTotalBytes: 1048576,
-            maxFileCount: 100,
-            maxSeconds: 30,
-            batchSize: 5,
-            maxCompressionRatio: $maxCompressionRatio,
         );
     }
 
@@ -71,17 +85,18 @@ final class ZipExtractServiceTest extends TestCase
     /**
      * @param ZipExtractService $service Service instance.
      * @param string $zipPath ZIP path.
+     * @param ZipExtractLimits $limits Limits under test.
      * @return array{entries: list<array<string, mixed>>, file_count: int, total_bytes: int}
      * @date 2026-06-24
      * @author Stephane H.
      */
-    private function invokeScanZipArchive(ZipExtractService $service, string $zipPath): array
+    private function invokeScanZipArchive(ZipExtractService $service, string $zipPath, ZipExtractLimits $limits): array
     {
         $ref = new ReflectionClass($service);
         $method = $ref->getMethod('scanZipArchive');
         $method->setAccessible(true);
         /** @var array{entries: list<array<string, mixed>>, file_count: int, total_bytes: int} $result */
-        $result = $method->invoke($service, $zipPath, microtime(true));
+        $result = $method->invoke($service, $zipPath, microtime(true), $limits);
 
         return $result;
     }
@@ -98,7 +113,7 @@ final class ZipExtractServiceTest extends TestCase
             ['name' => '../evil.txt', 'content' => 'bad'],
         ]);
         $service = $this->buildService();
-        $scan = $this->invokeScanZipArchive($service, $zipPath);
+        $scan = $this->invokeScanZipArchive($service, $zipPath, $this->standardLimits());
 
         self::assertSame(2, $scan['file_count']);
         self::assertSame(8, $scan['total_bytes']);
@@ -116,14 +131,37 @@ final class ZipExtractServiceTest extends TestCase
         $zipPath = $this->createTempZip([
             ['name' => 'bomb.bin', 'content' => str_repeat('A', 50000)],
         ]);
-        $service = $this->buildService(maxCompressionRatio: 10);
+        $service = $this->buildService();
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('zip_extract.limit_ratio');
         try {
-            $this->invokeScanZipArchive($service, $zipPath);
+            $this->invokeScanZipArchive($service, $zipPath, $this->standardLimits(maxCompressionRatio: 10));
         } finally {
             @unlink($zipPath);
         }
+    }
+
+    /**
+     * @return void
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    public function testLimitsResolverReturnsAdminTier(): void
+    {
+        $resolver = new ZipExtractLimitsResolver(
+            maxTotalBytes: 100,
+            adminMaxTotalBytes: 999,
+            maxFileCount: 10,
+            adminMaxFileCount: 20,
+            maxSeconds: 30,
+            adminMaxSeconds: 60,
+            batchSize: 5,
+            maxCompressionRatio: 100,
+        );
+
+        $admin = $resolver->resolveForActor(true);
+        self::assertSame(999, $admin->maxTotalBytes);
+        self::assertSame(ZipExtractLimitsResolver::TIER_ADMIN, $admin->tier);
     }
 
     /**
