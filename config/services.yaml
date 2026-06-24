@@ -172,6 +172,15 @@ services:
       $secret: '%kernel.secret%'
       $ttlSeconds: '%app.storage_bot_attestation_ttl_seconds%'
 
+  App\File\FileIconMappingProvider:
+    arguments:
+      $mappingsDir: '%kernel.project_dir%/config/icons/mappings'
+      $categoriesFile: '%kernel.project_dir%/config/icons/categories.yaml'
+
+  App\File\FileExtensionIconResolver:
+    arguments:
+      $mappingProvider: '@App\File\FileIconMappingProvider'
+
   App\Twig\StorageSiteExtension:
     arguments:
       $siteTitle: '%app.site_title%'
