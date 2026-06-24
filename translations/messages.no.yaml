@@ -325,6 +325,23 @@ files:
     progress_bar_aria: 'Fremdrift for filopplasting'
     xhr_network_error: 'Kunne ikke na serveren. Sjekk tilkoblingen og proev igjen.'
     selected_byte_size_label: 'Storrelse:'
+  extract:
+    modal:
+      title: 'Pakk ut et ZIP-arkiv'
+      close_aria: 'Lukk utpakking-dialog'
+      cancel: Avbryt
+      submit: 'Pakk ut'
+      destination_label: Mal
+      mode_here: 'Pakk ut her (gjeldende mappe)'
+      mode_subfolder: 'Pakk ut i en undermappe'
+      conflict_label: 'Ved navnekonflikt'
+      conflict_abort: 'Avbryt utpakking'
+      conflict_skip: 'Hopp over fil i konflikt'
+      conflict_rename: 'Gi nytt navn automatisk'
+      delete_zip: 'Slett ZIP etter utpakking'
+      progress: 'Utpakking paagaar'
+      error_generic: 'Utpakking mislyktes. Prov igjen.'
+      cancel_confirm: 'Avbryte utpakking som paagaar?'
   table:
     name: Navn
     extension: Type
@@ -353,6 +370,7 @@ files:
     label: Handlinger
     create_folder: 'Opprett mappe'
     download: 'Last ned'
+    extract_zip: 'Pakk ut ZIP'
     delete: Slett
     delete_selection: 'Slett utvalg'
     move_selection: 'Flytt utvalg'
@@ -637,6 +655,18 @@ files:
     rename_unchanged: 'Ingen endring oppdaget.'
     renamed: 'Filnavn oppdatert.'
     upload_name_conflict: 'En fil eller mappe med dette navnet finnes allerede på dette stedet.'
+    extract_done: 'Arkiv pakket ut.'
+    extract_failed: 'Utpakking av arkiv mislyktes.'
+    extract_not_zip: 'Kun .zip-filer kan pakkes ut.'
+    extract_session_not_found: 'Utpakkingssesjon ikke funnet eller utlopt.'
+    extract_password_protected: 'Dette ZIP-arkivet er passordbeskyttet.'
+    extract_invalid: 'ZIP-arkivet er uleselig eller skadet.'
+    extract_limit_files: 'For mange filer i arkivet.'
+    extract_limit_bytes: 'Arkivinnholdet overskrider tillatt storrelse.'
+    extract_limit_time: 'Utpakking tok for lang tid.'
+    extract_limit_ratio: 'Mistenkelig arkiv (for hoy kompresjonsratio).'
+    extract_conflict_abort: 'Utpakking avbrutt: navnekonflikt oppdaget.'
+    extract_cancelled: 'Utpakking avbrutt.'
     name_conflict_same_level: 'En fil eller mappe med dette navnet finnes allerede på dette stedet.'
     folder_rename_name_required: 'Mappenavn er påkrevd.'
     folder_rename_name_too_long: 'Mappenavnet er for langt.'

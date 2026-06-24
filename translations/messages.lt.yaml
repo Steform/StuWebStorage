@@ -325,6 +325,23 @@ files:
     progress_bar_aria: 'Failo įkėlimo eiga'
     xhr_network_error: 'Serveris nepasiekiamas. Patikrinkite ryšį ir bandykite dar kartą.'
     selected_byte_size_label: 'Dydis:'
+  extract:
+    modal:
+      title: 'Išskleisti ZIP archyvą'
+      close_aria: 'Uždaryti išskleidimo langą'
+      cancel: Atšaukti
+      submit: Išskleisti
+      destination_label: Paskirties vieta
+      mode_here: 'Išskleisti čia (dabartinis aplankas)'
+      mode_subfolder: 'Išskleisti į poaplankį'
+      conflict_label: 'Kai kyla pavadinimo konfliktas'
+      conflict_abort: 'Atšaukti išskleidimą'
+      conflict_skip: 'Praleisti konfliktinį failą'
+      conflict_rename: 'Automatiškai pervardyti'
+      delete_zip: 'Ištrinti ZIP po išskleidimo'
+      progress: 'Vyksta išskleidimas'
+      error_generic: 'Išskleidimas nepavyko. Bandykite dar kartą.'
+      cancel_confirm: 'Atšaukti vykdomą išskleidimą?'
   table:
     name: Pavadinimas
     extension: Tipas
@@ -353,6 +370,7 @@ files:
     label: Veiksmai
     create_folder: 'Sukurti aplanką'
     download: Atsisiųsti
+    extract_zip: 'Išskleisti ZIP'
     delete: Šalinti
     delete_selection: 'Šalinti pasirinkimą'
     move_selection: 'Perkelti pasirinkimą'
@@ -637,6 +655,18 @@ files:
     rename_unchanged: 'Pakeitimų neaptikta.'
     renamed: 'Failas sėkmingai pervadintas.'
     upload_name_conflict: 'Failas ar aplankas tokiu pavadinimu šioje vietoje jau yra.'
+    extract_done: 'Archyvas sėkmingai išskleistas.'
+    extract_failed: 'Archyvo išskleidimas nepavyko.'
+    extract_not_zip: 'Galima išskleisti tik .zip failus.'
+    extract_session_not_found: 'Išskleidimo sesija nerasta arba pasibaigė.'
+    extract_password_protected: 'Šis ZIP archyvas apsaugotas slaptažodžiu.'
+    extract_invalid: 'ZIP archyvas neperskaitomas arba sugadintas.'
+    extract_limit_files: 'Per daug failų archyve.'
+    extract_limit_bytes: 'Archyvo turinys viršija leistiną dydį.'
+    extract_limit_time: 'Išskleidimas užtruko per ilgai.'
+    extract_limit_ratio: 'Įtartinas archyvas (per didelis suspaudimo santykis).'
+    extract_conflict_abort: 'Išskleidimas atšauktas: aptiktas pavadinimo konfliktas.'
+    extract_cancelled: 'Išskleidimas atšauktas.'
     name_conflict_same_level: 'Failas ar aplankas tokiu pavadinimu šioje vietoje jau yra.'
     folder_rename_name_required: 'Reikalingas aplanko pavadinimas.'
     folder_rename_name_too_long: 'Aplanko pavadinimas per ilgas.'

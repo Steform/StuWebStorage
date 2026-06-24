@@ -469,6 +469,7 @@
     {% include 'files/_delete_confirm_modal.html.twig' %}
     {% include 'files/_move_bulk_modal.html.twig' %}
     {% include 'files/_rename_modal.html.twig' %}
+    {% include 'files/_extract_zip_modal.html.twig' %}
     <div class="modal fade" id="filesCreateFolderModal" tabindex="-1" aria-labelledby="filesCreateFolderModalTitle" aria-hidden="true" data-require-target-owner="{{ requireAdminTargetOwner|default(false) ? '1' : '0' }}" data-files-admin-owner-suggest-url="{{ path('admin_files_owner_suggest') }}">
         <div class="modal-dialog">
             <div class="modal-content">

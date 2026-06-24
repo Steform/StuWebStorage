@@ -20,6 +20,7 @@ use App\Service\File\ChunkedUploadService;
 use App\Service\File\FilesQueryScopeResolver;
 use App\Service\File\UserFilesPaneBuilderService;
 use App\Service\File\UserStorageQuotaService;
+use App\Service\File\ZipExtractService;
 use App\Service\Format\BinaryByteFormatter;
 use App\Service\File\FileEncryptionService;
 use App\Service\Share\FolderPublicTokenService;
@@ -81,6 +82,8 @@ class FilesController extends AbstractController
 
     private const CSRF_MOVE_BULK = 'files_move_bulk';
 
+    private const CSRF_EXTRACT = 'files_extract';
+
     private const MAX_UPLOAD_BYTES = 107374182400;
     private const MAX_TEXT_PREVIEW_BYTES = 20971520;
 
@@ -141,6 +144,7 @@ class FilesController extends AbstractController
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
         private readonly BinaryByteFormatter $binaryByteFormatter,
         private readonly ChunkedUploadService $chunkedUploadService,
+        private readonly ZipExtractService $zipExtractService,
         private readonly UserStorageQuotaService $userStorageQuotaService,
         private readonly FilesQueryScopeResolver $filesQueryScopeResolver,
         private readonly UserFilesPaneBuilderService $userFilesPaneBuilderService,
@@ -1161,6 +1165,7 @@ class FilesController extends AbstractController
             'csrfFolderSharePublic' => self::CSRF_FOLDER_SHARE_PUBLIC,
             'csrfFolderShareFriends' => self::CSRF_FOLDER_SHARE_FRIENDS,
             'csrfFolderRename' => self::CSRF_FOLDER_RENAME,
+            'csrfExtract' => self::CSRF_EXTRACT,
             'maxUploadBytes' => $this->resolveAppMaxUploadBytes(),
         ];
     }
@@ -1605,6 +1610,182 @@ class FilesController extends AbstractController
         }
 
         return $this->uploadSuccessJsonOrRedirect($request, $translator);
+    }
+
+    /**
+     * @brief Start a ZIP extraction job for one owned archive file.
+     * @param Request $request HTTP request (mode, conflict_policy, delete_zip).
+     * @param TranslatorInterface $translator Translator for JSON errors.
+     * @param int $id Shared file identifier.
+     * @return JsonResponse|Response
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    #[Route('/files/{id}/extract', name: 'files_extract_zip', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function extractZipStart(Request $request, TranslatorInterface $translator, int $id): JsonResponse|Response
+    {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_EXTRACT, (string) $request->request->get('_csrf_token', '')))) {
+            return $this->extractJsonOrRedirect($request, $translator, 'files.flash.csrf_invalid', 403);
+        }
+
+        /** @var User $user */
+        $user = $this->getUser();
+        $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
+        if (isset($resolved['error'])) {
+            return $this->extractJsonOrRedirect($request, $translator, $resolved['error'], 400);
+        }
+        $ownerId = $resolved['ownerId'];
+
+        $sharedFile = $this->sharedFileRepository->find($id);
+        if (!$sharedFile instanceof SharedFile) {
+            return $this->extractJsonOrRedirect($request, $translator, 'files.flash.not_found', 404);
+        }
+        if (!$this->canActorMutateOwnedSharedFile($user, $sharedFile)) {
+            return $this->extractJsonOrRedirect($request, $translator, 'files.flash.not_owner', 403);
+        }
+
+        $mode = trim((string) $request->request->get('mode', ZipExtractService::MODE_HERE));
+        $conflictPolicy = trim((string) $request->request->get('conflict_policy', ZipExtractService::CONFLICT_ABORT));
+        $deleteZip = filter_var($request->request->get('delete_zip', false), FILTER_VALIDATE_BOOL);
+
+        try {
+            $result = $this->zipExtractService->createJob($ownerId, $sharedFile, $mode, $conflictPolicy, $deleteZip);
+        } catch (\RuntimeException $e) {
+            return $this->extractJsonOrRedirect($request, $translator, ZipExtractService::mapExceptionToFlashKey($e), 400);
+        }
+
+        return new JsonResponse([
+            'status' => 'ok',
+            'job_id' => $result['job_id'],
+            'total_entries' => $result['total_entries'],
+            'total_bytes' => $result['total_bytes'],
+        ]);
+    }
+
+    /**
+     * @brief Process the next extraction batch and return progress JSON.
+     * @param Request $request HTTP request.
+     * @param TranslatorInterface $translator Translator for JSON errors.
+     * @param string $jobId Extraction job identifier.
+     * @return JsonResponse|Response
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    #[Route('/files/extract/{jobId}/tick', name: 'files_extract_zip_tick', methods: ['POST'], requirements: ['jobId' => '[a-f0-9]{32}'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function extractZipTick(Request $request, TranslatorInterface $translator, string $jobId): JsonResponse|Response
+    {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_EXTRACT, (string) $request->request->get('_csrf_token', '')))) {
+            return $this->extractJsonOrRedirect($request, $translator, 'files.flash.csrf_invalid', 403);
+        }
+
+        /** @var User $user */
+        $user = $this->getUser();
+        $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
+        if (isset($resolved['error'])) {
+            return $this->extractJsonOrRedirect($request, $translator, $resolved['error'], 400);
+        }
+        $ownerId = $resolved['ownerId'];
+
+        try {
+            $progress = $this->zipExtractService->tickJob($ownerId, $jobId);
+        } catch (\RuntimeException $e) {
+            return $this->extractJsonOrRedirect($request, $translator, ZipExtractService::mapExceptionToFlashKey($e), 400);
+        }
+
+        $payload = ['status' => 'ok'] + $progress;
+        if (($progress['done'] ?? false) && ($progress['phase'] ?? '') === 'done') {
+            $payload['message'] = $translator->trans('files.flash.extract_done', [], 'messages');
+        }
+        if (($progress['done'] ?? false) && ($progress['phase'] ?? '') === 'failed') {
+            $errorKey = (string) ($progress['error_message'] ?? 'zip_extract.invalid');
+            $payload['status'] = 'error';
+            $payload['message'] = $translator->trans(
+                ZipExtractService::mapExceptionToFlashKey(new \RuntimeException($errorKey)),
+                [],
+                'messages'
+            );
+        }
+
+        return new JsonResponse($payload);
+    }
+
+    /**
+     * @brief Cancel an in-progress extraction job.
+     * @param Request $request HTTP request.
+     * @param TranslatorInterface $translator Translator for JSON errors.
+     * @param string $jobId Extraction job identifier.
+     * @return JsonResponse|Response
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    #[Route('/files/extract/{jobId}/cancel', name: 'files_extract_zip_cancel', methods: ['POST'], requirements: ['jobId' => '[a-f0-9]{32}'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function extractZipCancel(Request $request, TranslatorInterface $translator, string $jobId): JsonResponse|Response
+    {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_EXTRACT, (string) $request->request->get('_csrf_token', '')))) {
+            return $this->extractJsonOrRedirect($request, $translator, 'files.flash.csrf_invalid', 403);
+        }
+
+        /** @var User $user */
+        $user = $this->getUser();
+        $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
+        if (isset($resolved['error'])) {
+            return $this->extractJsonOrRedirect($request, $translator, $resolved['error'], 400);
+        }
+        $ownerId = $resolved['ownerId'];
+
+        try {
+            $progress = $this->zipExtractService->cancelJob($ownerId, $jobId);
+        } catch (\RuntimeException $e) {
+            return $this->extractJsonOrRedirect($request, $translator, ZipExtractService::mapExceptionToFlashKey($e), 400);
+        }
+
+        return new JsonResponse([
+            'status' => 'ok',
+            'message' => $translator->trans('files.flash.extract_cancelled', [], 'messages'),
+        ] + $progress);
+    }
+
+    /**
+     * @brief JSON error or flash+redirect for ZIP extraction endpoints.
+     * @param Request $request HTTP request.
+     * @param TranslatorInterface $translator Translator.
+     * @param string $messageKey Flash message key.
+     * @param int $httpStatus HTTP status for JSON clients.
+     * @return JsonResponse|Response
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function extractJsonOrRedirect(Request $request, TranslatorInterface $translator, string $messageKey, int $httpStatus): JsonResponse|Response
+    {
+        if ($this->expectsJson($request)) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => $translator->trans($messageKey, [], 'messages'),
+            ], $httpStatus);
+        }
+        $this->addFlash('danger', $messageKey);
+
+        return $this->redirectToFilesIndex($request);
+    }
+
+    /**
+     * @brief Whether the authenticated user may mutate one owned shared file (owner or admin).
+     * @param User $user Authenticated user.
+     * @param SharedFile $sharedFile Target file.
+     * @return bool
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function canActorMutateOwnedSharedFile(User $user, SharedFile $sharedFile): bool
+    {
+        if ($sharedFile->getOwnerUserId() === (int) $user->getId()) {
+            return true;
+        }
+
+        return $this->isGranted('ROLE_ADMIN');
     }
 
     /**

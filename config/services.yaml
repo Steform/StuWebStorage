@@ -19,6 +19,11 @@ parameters:
   app.public_folder_zip_max_total_bytes: 524288000
   app.public_folder_zip_max_file_count: 2000
   app.public_folder_zip_max_build_seconds: 120
+  app.zip_extract_max_total_bytes: 524288000
+  app.zip_extract_max_file_count: 2000
+  app.zip_extract_max_seconds: 120
+  app.zip_extract_batch_size: 10
+  app.zip_extract_max_compression_ratio: 100
   app.upload_chunk_bytes: 8388608
   app.version: ''
   app.site_title: 'StuWebStorage'
@@ -176,6 +181,15 @@ services:
       $maxTotalBytes: '%app.public_folder_zip_max_total_bytes%'
       $maxFileCount: '%app.public_folder_zip_max_file_count%'
       $maxBuildSeconds: '%app.public_folder_zip_max_build_seconds%'
+
+  App\Service\File\ZipExtractService:
+    arguments:
+      $projectDir: '%kernel.project_dir%'
+      $maxTotalBytes: '%app.zip_extract_max_total_bytes%'
+      $maxFileCount: '%app.zip_extract_max_file_count%'
+      $maxSeconds: '%app.zip_extract_max_seconds%'
+      $batchSize: '%app.zip_extract_batch_size%'
+      $maxCompressionRatio: '%app.zip_extract_max_compression_ratio%'
 
   App\Controller\BugReportController:
     arguments:

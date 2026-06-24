@@ -325,6 +325,23 @@ files:
     progress_bar_aria: 'File upload progress'
     xhr_network_error: 'The server could not be reached. Check your connection and try again.'
     selected_byte_size_label: 'Size:'
+  extract:
+    modal:
+      title: 'Extract a ZIP archive'
+      close_aria: 'Close extraction dialog'
+      cancel: Cancel
+      submit: Extract
+      destination_label: Destination
+      mode_here: 'Extract here (current folder)'
+      mode_subfolder: 'Extract into a subfolder'
+      conflict_label: 'When a name conflict occurs'
+      conflict_abort: 'Cancel extraction'
+      conflict_skip: 'Skip conflicting file'
+      conflict_rename: 'Rename automatically'
+      delete_zip: 'Delete ZIP after extraction'
+      progress: 'Extraction in progress'
+      error_generic: 'Extraction failed. Try again.'
+      cancel_confirm: 'Cancel the extraction in progress?'
   table:
     name: Name
     extension: Type
@@ -353,6 +370,7 @@ files:
     label: Actions
     create_folder: 'Create folder'
     download: Download
+    extract_zip: 'Extract ZIP'
     delete: Delete
     delete_selection: 'Delete selection'
     move_selection: 'Move selection'
@@ -638,6 +656,18 @@ files:
     rename_unchanged: 'No change detected.'
     renamed: 'File renamed successfully.'
     upload_name_conflict: 'A file or folder with this name already exists in this location.'
+    extract_done: 'Archive extracted successfully.'
+    extract_failed: 'Archive extraction failed.'
+    extract_not_zip: 'Only .zip files can be extracted.'
+    extract_session_not_found: 'Extraction session not found or expired.'
+    extract_password_protected: 'This ZIP archive is password protected.'
+    extract_invalid: 'ZIP archive is unreadable or corrupt.'
+    extract_limit_files: 'Too many files in the archive.'
+    extract_limit_bytes: 'Archive contents exceed the allowed size.'
+    extract_limit_time: 'Extraction took too long.'
+    extract_limit_ratio: 'Suspicious archive (compression ratio too high).'
+    extract_conflict_abort: 'Extraction cancelled: name conflict detected.'
+    extract_cancelled: 'Extraction cancelled.'
     name_conflict_same_level: 'A file or folder with this name already exists in this location.'
     folder_rename_name_required: 'Folder name is required.'
     folder_rename_name_too_long: 'Folder name is too long.'

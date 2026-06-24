@@ -1,0 +1,74 @@
+<div
+    class="modal fade"
+    id="filesExtractZipModal"
+    tabindex="-1"
+    aria-labelledby="filesExtractZipModalTitle"
+    aria-hidden="true"
+    data-files-extract-start-url-template="{{ path('files_extract_zip', { id: 999999 }) }}"
+    data-files-extract-tick-url-template="{{ path('files_extract_zip_tick', { jobId: '00000000000000000000000000000000' }) }}"
+    data-files-extract-cancel-url-template="{{ path('files_extract_zip_cancel', { jobId: '00000000000000000000000000000000' }) }}"
+    data-msg-error="{{ 'files.extract.modal.error_generic'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-progress="{{ 'files.extract.modal.progress'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-cancel-confirm="{{ 'files.extract.modal.cancel_confirm'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="filesExtractZipModalTitle">{{ 'files.extract.modal.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-files-extract-dismiss aria-label="{{ 'files.extract.modal.close_aria'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <form id="files-extract-zip-form" method="post" action="">
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfExtract) }}" data-files-extract-csrf-input>
+                    {% include 'files/_listing_retain.html.twig' %}
+                    <p class="mb-3"><strong data-files-extract-target-name>—</strong></p>
+                    <div data-files-extract-options>
+                        <fieldset class="mb-3">
+                            <legend class="form-label fs-6 mb-2">{{ 'files.extract.modal.destination_label'|trans({}, 'messages', currentLocale) }}</legend>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="mode" id="files-extract-mode-here" value="here" checked>
+                                <label class="form-check-label" for="files-extract-mode-here">{{ 'files.extract.modal.mode_here'|trans({}, 'messages', currentLocale) }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="mode" id="files-extract-mode-subfolder" value="subfolder">
+                                <label class="form-check-label" for="files-extract-mode-subfolder">{{ 'files.extract.modal.mode_subfolder'|trans({}, 'messages', currentLocale) }}</label>
+                            </div>
+                        </fieldset>
+                        <fieldset class="mb-3">
+                            <legend class="form-label fs-6 mb-2">{{ 'files.extract.modal.conflict_label'|trans({}, 'messages', currentLocale) }}</legend>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="conflict_policy" id="files-extract-conflict-abort" value="abort" checked>
+                                <label class="form-check-label" for="files-extract-conflict-abort">{{ 'files.extract.modal.conflict_abort'|trans({}, 'messages', currentLocale) }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="conflict_policy" id="files-extract-conflict-skip" value="skip">
+                                <label class="form-check-label" for="files-extract-conflict-skip">{{ 'files.extract.modal.conflict_skip'|trans({}, 'messages', currentLocale) }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="conflict_policy" id="files-extract-conflict-rename" value="rename">
+                                <label class="form-check-label" for="files-extract-conflict-rename">{{ 'files.extract.modal.conflict_rename'|trans({}, 'messages', currentLocale) }}</label>
+                            </div>
+                        </fieldset>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" name="delete_zip" id="files-extract-delete-zip" value="1">
+                            <label class="form-check-label" for="files-extract-delete-zip">{{ 'files.extract.modal.delete_zip'|trans({}, 'messages', currentLocale) }}</label>
+                        </div>
+                    </div>
+                    <div id="files-extract-error" class="alert alert-danger d-none mt-3" role="alert" aria-live="assertive"></div>
+                    <div id="files-extract-progress-wrap" class="d-none mt-3">
+                        <p class="small text-muted mb-1" id="files-extract-phase" aria-live="polite"></p>
+                        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="files-extract-progress">
+                            <div id="files-extract-progress-bar" class="progress-bar"></div>
+                        </div>
+                        <p class="small text-muted mb-0 mt-1" id="files-extract-count" aria-live="polite"></p>
+                        <p class="small text-muted mb-0" id="files-extract-current" aria-live="polite"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-files-extract-dismiss>{{ 'files.extract.modal.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                    <button type="submit" class="btn btn-primary" data-files-extract-submit>{{ 'files.extract.modal.submit'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

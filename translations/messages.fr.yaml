@@ -325,6 +325,23 @@ files:
     progress_bar_aria: 'Progression de l''envoi du fichier'
     xhr_network_error: 'Le serveur est injoignable. Verifiez votre connexion et reessayez.'
     selected_byte_size_label: 'Taille :'
+  extract:
+    modal:
+      title: 'Extraire une archive ZIP'
+      close_aria: 'Fermer la fenetre d''extraction'
+      cancel: Annuler
+      submit: Extraire
+      destination_label: Destination
+      mode_here: 'Extraire ici (dossier courant)'
+      mode_subfolder: 'Extraire dans un sous-dossier'
+      conflict_label: 'En cas de conflit de nom'
+      conflict_abort: 'Annuler l''extraction'
+      conflict_skip: 'Ignorer le fichier en conflit'
+      conflict_rename: 'Renommer automatiquement'
+      delete_zip: 'Supprimer le ZIP apres extraction'
+      progress: 'Extraction en cours'
+      error_generic: 'L''extraction a echoue. Reessayez.'
+      cancel_confirm: 'Annuler l''extraction en cours ?'
   table:
     name: Nom
     extension: Type
@@ -353,6 +370,7 @@ files:
     label: Actions
     create_folder: 'Créer un dossier'
     download: Telecharger
+    extract_zip: 'Extraire le ZIP'
     delete: Supprimer
     delete_selection: 'Supprimer la selection'
     move_selection: 'Deplacer la selection'
@@ -638,6 +656,18 @@ files:
     rename_unchanged: 'Aucune modification detectee.'
     renamed: 'Fichier renomme avec succes.'
     upload_name_conflict: 'Un fichier ou un dossier avec ce nom existe deja a cet emplacement.'
+    extract_done: 'Archive extraite avec succes.'
+    extract_failed: 'L''extraction de l''archive a echoue.'
+    extract_not_zip: 'Seuls les fichiers .zip peuvent etre extraits.'
+    extract_session_not_found: 'Session d''extraction introuvable ou expiree.'
+    extract_password_protected: 'Cette archive ZIP est protegee par mot de passe.'
+    extract_invalid: 'Archive ZIP illisible ou corrompue.'
+    extract_limit_files: 'Trop de fichiers dans l''archive.'
+    extract_limit_bytes: 'Le contenu de l''archive depasse la taille autorisee.'
+    extract_limit_time: 'L''extraction a pris trop de temps.'
+    extract_limit_ratio: 'Archive suspecte (ratio de compression trop eleve).'
+    extract_conflict_abort: 'Extraction annulee : conflit de nom detecte.'
+    extract_cancelled: 'Extraction annulee.'
     name_conflict_same_level: 'Un fichier ou un dossier avec ce nom existe deja a cet emplacement.'
     folder_rename_name_required: 'Le nom du dossier est obligatoire.'
     folder_rename_name_too_long: 'Le nom du dossier est trop long.'

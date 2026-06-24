@@ -325,6 +325,23 @@ files:
     progress_bar_aria: 'Fortschritt des Datei-Uploads'
     xhr_network_error: 'Server nicht erreichbar. Verbindung pruefen und erneut versuchen.'
     selected_byte_size_label: 'Groesse:'
+  extract:
+    modal:
+      title: 'ZIP-Archiv entpacken'
+      close_aria: 'Entpacken-Dialog schliessen'
+      cancel: Abbrechen
+      submit: Entpacken
+      destination_label: Ziel
+      mode_here: 'Hier entpacken (aktueller Ordner)'
+      mode_subfolder: 'In einen Unterordner entpacken'
+      conflict_label: 'Bei Namenskonflikt'
+      conflict_abort: 'Entpacken abbrechen'
+      conflict_skip: 'Konfliktdatei ueberspringen'
+      conflict_rename: 'Automatisch umbenennen'
+      delete_zip: 'ZIP nach dem Entpacken loeschen'
+      progress: 'Entpacken laeuft'
+      error_generic: 'Entpacken fehlgeschlagen. Bitte erneut versuchen.'
+      cancel_confirm: 'Laufendes Entpacken abbrechen?'
   table:
     name: Name
     extension: Typ
@@ -353,6 +370,7 @@ files:
     label: Aktionen
     create_folder: 'Ordner erstellen'
     download: Herunterladen
+    extract_zip: 'ZIP entpacken'
     delete: Loeschen
     delete_selection: 'Auswahl loeschen'
     move_selection: 'Auswahl verschieben'
@@ -637,6 +655,18 @@ files:
     rename_unchanged: 'Keine Aenderung erkannt.'
     renamed: 'Datei erfolgreich umbenannt.'
     upload_name_conflict: 'Eine Datei oder ein Ordner mit diesem Namen existiert an diesem Ort bereits.'
+    extract_done: 'Archiv erfolgreich entpackt.'
+    extract_failed: 'Archiv konnte nicht entpackt werden.'
+    extract_not_zip: 'Nur .zip-Dateien koennen entpackt werden.'
+    extract_session_not_found: 'Entpack-Sitzung nicht gefunden oder abgelaufen.'
+    extract_password_protected: 'Dieses ZIP-Archiv ist passwortgeschuetzt.'
+    extract_invalid: 'ZIP-Archiv ist unlesbar oder beschaedigt.'
+    extract_limit_files: 'Zu viele Dateien im Archiv.'
+    extract_limit_bytes: 'Archivinhalt ueberschreitet die erlaubte Groesse.'
+    extract_limit_time: 'Entpacken hat zu lange gedauert.'
+    extract_limit_ratio: 'Verdaechtiges Archiv (Kompressionsverhaeltnis zu hoch).'
+    extract_conflict_abort: 'Entpacken abgebrochen: Namenskonflikt erkannt.'
+    extract_cancelled: 'Entpacken abgebrochen.'
     name_conflict_same_level: 'Eine Datei oder ein Ordner mit diesem Namen existiert an diesem Ort bereits.'
     folder_rename_name_required: 'Der Ordnername ist erforderlich.'
     folder_rename_name_too_long: 'Der Ordnername ist zu lang.'

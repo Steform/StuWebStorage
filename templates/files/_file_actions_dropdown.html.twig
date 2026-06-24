@@ -33,6 +33,17 @@
         <li>
             <a class="dropdown-item" href="{{ path('files_download', { id: file.id }) }}">{{ 'files.action.download'|trans({}, 'messages', currentLocale) }}</a>
         </li>
+        {% if fileExtPreview == 'zip' %}
+        <li>
+            <button
+                type="button"
+                class="dropdown-item"
+                data-files-row-action="extract-zip-open"
+                data-files-row-id="{{ file.id }}"
+                data-files-row-name="{{ file.originalFileName }}"
+            >{{ 'files.action.extract_zip'|trans({}, 'messages', currentLocale) }}</button>
+        </li>
+        {% endif %}
         <li>
             <button type="button" class="dropdown-item" data-files-row-action="share-public" data-files-row-id="{{ file.id }}">{{ 'files.action.share_public'|trans({}, 'messages', currentLocale) }}</button>
         </li>
