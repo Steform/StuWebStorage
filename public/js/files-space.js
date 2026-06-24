@@ -6415,7 +6415,7 @@
             barEl.style.width = String(Math.max(0, Math.min(100, percent))) + '%';
         }
         if (progressEl) {
-            progressEl.setAttribute('aria-valuenow', String(Math.max(0, Math.min(100, percent)));
+            progressEl.setAttribute('aria-valuenow', String(Math.max(0, Math.min(100, percent))));
         }
         if (countEl) {
             if (Number(payload.total || 0) > 0) {
