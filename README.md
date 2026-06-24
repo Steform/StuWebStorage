@@ -187,8 +187,11 @@ cp .env.exemple .env.local
 # Edit .env.local: DATABASE_URL, APP_SECRET, APP_FILE_ENCRYPTION_KEY, MAILER_DSN, DEFAULT_URI, …
 
 php bin/console doctrine:migrations:migrate --no-interaction
+composer import-icons
 php bin/console cache:clear
 ```
+
+File type icons use **Symfony UX Icons** (`vscode-icons`). In production (`APP_DEBUG=0`), icons are served offline — run `composer import-icons` after deploy or whenever [`config/icons/vscode-icons-used.txt`](config/icons/vscode-icons-used.txt) changes. Regenerate that list with `php bin/console app:file-icons:export`.
 
 Open `/setup` to create the first administrator, then `/` to access the platform.
 

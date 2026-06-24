@@ -229,16 +229,7 @@
                         {% endif %}
                         {% endif %}
                     >
-                        {% if isListImage %}
-                            {% set iconName = 'image' %}
-                        {% elseif ext in ['pdf'] %}
-                            {% set iconName = 'pdf' %}
-                        {% elseif ext in ['zip', 'rar', '7z', 'tar', 'gz'] %}
-                            {% set iconName = 'archive' %}
-                        {% else %}
-                            {% set iconName = 'file' %}
-                        {% endif %}
-                        <img src="{{ asset('images/files/' ~ iconName ~ '.svg') }}" alt="{{ isListImage ? '' : (ext != '' ? ext|upper : 'FILE') }}" class="files-file-type-icon" loading="lazy"{% if isListImage %} aria-hidden="true"{% endif %}>
+                        {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'list' } %}
                     </td>
                     <td
                         class="text-break files-col-name files-row-clickable text-start w-100{% if isListPreviewable %} files-col-name--previewable{% endif %}"

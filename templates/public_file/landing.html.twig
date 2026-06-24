@@ -44,7 +44,9 @@
                                 {% if isImageType %}
                                 <img src="{{ path('file_public_preview', { publicToken: publicToken }) }}" alt="{{ 'files.public_landing.preview_alt'|trans({ '%name%': sharedFile.originalFileName }, 'messages', currentLocale) }}" class="img-fluid public-landing__preview-img rounded" loading="lazy" width="400" height="300" data-public-landing-preview-main>
                                 {% else %}
-                                <img src="{{ asset('images/files/file.svg') }}" alt="" class="img-fluid public-landing__type-icon" width="120" height="120" data-public-landing-fallback-icon data-public-landing-fallback-type="file" aria-hidden="true">
+                                <div class="public-landing__type-icon" data-public-landing-fallback-icon data-public-landing-fallback-type="file" aria-hidden="true">
+                                    {% include 'components/_file_type_icon.html.twig' with { extension: sharedFile.fileExtension|default(''), size: 'landing' } %}
+                                </div>
                                 {% endif %}
                             </div>
                         </div>

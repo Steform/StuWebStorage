@@ -235,10 +235,37 @@
     box-shadow: 0 0.3rem 0.7rem rgba(0, 0, 0, 0.2);
 }
 
-.files-grid-card-compact .files-grid-card-compact__preview-icon {
+.files-grid-card-compact .files-grid-card-compact__preview-icon,
+.files-grid-card-compact .files-type-icon--grid {
     width: 2.2rem;
     height: 2.2rem;
     filter: drop-shadow(0 0.25rem 0.45rem rgba(0, 0, 0, 0.28));
+}
+
+.files-type-icon {
+    flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.files-type-icon--list {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.files-type-icon--grid {
+    width: 2.2rem;
+    height: 2.2rem;
+}
+
+.files-type-icon--landing {
+    width: 7.5rem;
+    height: 7.5rem;
+}
+
+.files-col-icon .files-type-icon--list {
+    max-width: 1.25rem;
+    max-height: 1.25rem;
 }
 
 .files-grid-card-compact .files-grid-card-compact__name {

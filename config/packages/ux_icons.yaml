@@ -1,0 +1,18 @@
+ux_icons:
+    default_icon_attributes:
+        class: 'files-type-icon'
+        width: '1.5rem'
+        height: '1.5rem'
+        aria-hidden: 'true'
+
+    ignore_not_found: false
+
+    iconify:
+        enabled: true
+        on_demand: '%kernel.debug%'
+
+    icon_sets:
+        vscode:
+            alias: 'vscode-icons'
+            icon_attributes:
+                class: 'files-type-icon files-type-icon--vscode'

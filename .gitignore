@@ -58,3 +58,6 @@
 /.env.test
 /.env.*.local
 !/.env.exemple
+
+# Local dev overrides (machine-specific)
+/config/packages/dev/z_framework.local.yaml

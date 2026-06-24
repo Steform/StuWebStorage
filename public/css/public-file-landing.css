@@ -9,9 +9,16 @@
 }
 
 .public-landing__type-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     max-width: 8rem;
-    height: auto;
     opacity: 0.85;
+}
+
+.public-landing__type-icon .files-type-icon--landing {
+    width: 7.5rem;
+    height: 7.5rem;
 }
 
 .public-landing__dl dt {

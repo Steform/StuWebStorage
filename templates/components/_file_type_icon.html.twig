@@ -1,0 +1,17 @@
+{% set descriptor = file_icon_descriptor(extension|default('')) %}
+{% set sizeClass = size|default('list') %}
+{% set iconAttributes = {
+    'class': ('files-type-icon files-type-icon--' ~ sizeClass ~ ' ' ~ (class|default('')))|trim,
+    'aria-hidden': decorative|default(true) ? 'true' : 'false',
+} %}
+{% if width is defined and width is not null %}
+    {% set iconAttributes = iconAttributes|merge({ width: width }) %}
+{% endif %}
+{% if height is defined and height is not null %}
+    {% set iconAttributes = iconAttributes|merge({ height: height }) %}
+{% endif %}
+{% if not decorative|default(true) %}
+    {% set iconAttributes = iconAttributes|merge({ 'aria-label': descriptor.ariaLabel }) %}
+    {% set iconAttributes = iconAttributes|merge({ 'aria-hidden': 'false' }) %}
+{% endif %}
+{{ file_ux_icon(extension|default(''), iconAttributes) }}

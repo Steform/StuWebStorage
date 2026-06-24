@@ -100,29 +100,12 @@
                         {% if isImage %}
                             <img src="{{ path('files_download', { id: file.id }) }}" alt="{{ file.originalFileName }}" class="files-grid-card-compact__preview-image" loading="lazy" data-files-media-preview-trigger data-src="{{ path('files_download', { id: file.id }) }}" data-media-preview-type="image" data-title="{{ file.originalFileName }}" data-alt="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
                         {% else %}
-                            {% if isPdf %}
-                                <div class="files-grid-card-compact__preview-pdf-trigger d-inline-flex align-items-center justify-content-center" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="pdf" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
-                                    <img src="{{ asset('images/files/pdf.svg') }}" alt="{{ ext != '' ? ext|upper : 'FILE' }}" class="files-grid-card-compact__preview-icon" loading="lazy">
-                                </div>
-                            {% elseif isVideo %}
-                                <div class="files-grid-card-compact__preview-stream-trigger d-inline-flex align-items-center justify-content-center" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="video" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
-                                    <i class="bi bi-film fs-2 text-secondary" aria-hidden="true"></i>
-                                </div>
-                            {% elseif isAudio %}
-                                <div class="files-grid-card-compact__preview-stream-trigger d-inline-flex align-items-center justify-content-center" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="audio" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
-                                    <i class="bi bi-music-note-beamed fs-2 text-secondary" aria-hidden="true"></i>
-                                </div>
-                            {% elseif isText %}
-                                <div class="files-grid-card-compact__preview-stream-trigger d-inline-flex align-items-center justify-content-center" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="text" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
-                                    <i class="bi bi-file-earmark-text fs-2 text-secondary" aria-hidden="true"></i>
+                            {% if isPreviewStream %}
+                                <div class="files-grid-card-compact__preview-stream-trigger d-inline-flex align-items-center justify-content-center{% if isPdf %} files-grid-card-compact__preview-pdf-trigger{% endif %}" data-files-media-preview-trigger data-src="{{ path('files_preview', { id: file.id }) }}" data-media-preview-type="{{ isPdf ? 'pdf' : (isVideo ? 'video' : (isAudio ? 'audio' : 'text')) }}" data-title="{{ file.originalFileName }}" tabindex="0" role="button" aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}">
+                                    {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'grid' } %}
                                 </div>
                             {% else %}
-                                {% if ext in ['zip', 'rar', '7z', 'tar', 'gz'] %}
-                                    {% set iconName = 'archive' %}
-                                {% else %}
-                                    {% set iconName = 'file' %}
-                                {% endif %}
-                                <img src="{{ asset('images/files/' ~ iconName ~ '.svg') }}" alt="{{ ext != '' ? ext|upper : 'FILE' }}" class="files-grid-card-compact__preview-icon" loading="lazy">
+                                {% include 'components/_file_type_icon.html.twig' with { extension: ext, size: 'grid' } %}
                             {% endif %}
                         {% endif %}
                     </div>

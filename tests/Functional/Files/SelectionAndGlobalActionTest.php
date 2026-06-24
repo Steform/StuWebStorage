@@ -412,7 +412,7 @@ class SelectionAndGlobalActionTest extends TestCase
         self::assertStringContainsString('.files-grid-card.files-grid-card-compact.files-grid-card-compact--chrome-less', $source);
         self::assertStringContainsString('.files-grid-card-compact .files-actions-dropdown > .dropdown-toggle', $source);
         self::assertStringContainsString('.files-grid-card-compact .files-grid-card-compact__preview-image', $source);
-        self::assertStringContainsString('.files-grid-card-compact .files-grid-card-compact__preview-icon', $source);
+        self::assertStringContainsString('.files-grid-card-compact .files-type-icon--grid', $source);
         self::assertStringContainsString('.files-grid-card-compact .files-grid-card-compact__share-badges', $source);
         self::assertStringContainsString('pointer-events: none;', $source);
     }
