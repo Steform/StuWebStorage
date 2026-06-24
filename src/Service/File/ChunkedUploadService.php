@@ -64,10 +64,9 @@ final class ChunkedUploadService
         }
 
         $uploadId = bin2hex(random_bytes(16));
+        $this->ensureWritableDirectory($this->chunkUploadRootDir());
         $baseDir = $this->sessionBaseDir($ownerUserId);
-        if (!is_dir($baseDir) && !mkdir($baseDir, 0775, true) && !is_dir($baseDir)) {
-            throw new \RuntimeException('chunk_upload.mkdir_failed');
-        }
+        $this->ensureWritableDirectory($baseDir);
 
         $partPath = $this->partPath($ownerUserId, $uploadId);
         $metaPath = $this->metaPath($ownerUserId, $uploadId);
@@ -220,9 +219,7 @@ final class ChunkedUploadService
 
         $relativeDir = \sprintf('var/shared/%d', $ownerId);
         $absoluteDir = $this->projectDir.'/'.$relativeDir;
-        if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
-            throw new \RuntimeException('chunk_upload.storage_failed');
-        }
+        $this->ensureWritableDirectory($absoluteDir);
 
         $storageName = bin2hex(random_bytes(16)).'.dat';
         $absolutePath = $absoluteDir.'/'.$storageName;
@@ -336,9 +333,32 @@ final class ChunkedUploadService
         file_put_contents($path, json_encode($meta, JSON_THROW_ON_ERROR));
     }
 
+    private function chunkUploadRootDir(): string
+    {
+        return $this->projectDir.'/var/chunk_upload';
+    }
+
+    /**
+     * @brief Create one directory when missing without surfacing PHP warnings to the HTTP layer.
+     * @param string $absoluteDir Absolute directory path.
+     * @return void
+     * @throws \RuntimeException When the directory cannot be created or is not writable.
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private function ensureWritableDirectory(string $absoluteDir): void
+    {
+        if (!is_dir($absoluteDir) && !@mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
+            throw new \RuntimeException('chunk_upload.mkdir_failed');
+        }
+        if (!is_writable($absoluteDir)) {
+            throw new \RuntimeException('chunk_upload.mkdir_failed');
+        }
+    }
+
     private function sessionBaseDir(int $ownerUserId): string
     {
-        return $this->projectDir.'/var/chunk_upload/'.$ownerUserId;
+        return $this->chunkUploadRootDir().'/'.$ownerUserId;
     }
 
     private function partPath(int $ownerUserId, string $uploadId): string

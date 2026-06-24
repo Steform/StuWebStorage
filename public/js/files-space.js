@@ -4,6 +4,28 @@
 (function () {
     'use strict';
 
+    /**
+     * @brief Parse a fetch Response as JSON or throw a user-facing network error.
+     * @param {Response} res Fetch response object.
+     * @return {Promise<{ok: boolean, json: Record<string, unknown>|null}>}
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    function parseFetchJsonResponse(res) {
+        return res.text().then(function (raw) {
+            /** @type {Record<string, unknown>|null} */
+            var parsed = null;
+            if (raw) {
+                try {
+                    parsed = JSON.parse(raw);
+                } catch (parseErr) {
+                    parsed = null;
+                }
+            }
+            return { ok: res.ok, json: parsed };
+        });
+    }
+
     var DEBOUNCE_MS = 300;
     var MIN_LIVE_SEARCH_LEN = 4;
     var MIN_GRANTEE_SEARCH_LEN = 2;
@@ -366,9 +388,7 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
             })
                 .then(function (res) {
-                    return res.json().then(function (j) {
-                        return { ok: res.ok, json: j };
-                    });
+                    return parseFetchJsonResponse(res);
                 })
                 .then(function (pack) {
                     if (!pack.ok || !pack.json || pack.json.status !== 'ok' || typeof pack.json.upload_id !== 'string') {
@@ -467,9 +487,7 @@
                     });
                 })
                 .then(function (res) {
-                    return res.json().then(function (j) {
-                        return { ok: res.ok, json: j };
-                    });
+                    return parseFetchJsonResponse(res);
                 })
                 .then(function (pack) {
                     setSubmittingUi(false);
@@ -1300,74 +1318,6 @@
     var sectionStateFallbackStore = {};
 
     /**
-     * @param {string} hypothesisId Hypothesis id.
-     * @param {string} location Location marker.
-     * @param {string} message Message text.
-     * @param {Record<string, unknown>} data Data payload.
-     * @return {void}
-     */
-    function postAgentDebug(hypothesisId, location, message, data) {
-        void hypothesisId;
-        void location;
-        void message;
-        void data;
-    }
-
-    /**
-     * @param {string} source Source trigger.
-     * @return {void}
-     */
-    function logRenderedOwnedSections(source) {
-        try {
-            var toggles = liveRegion.querySelectorAll('[data-files-section-toggle]');
-            var titles = [];
-            toggles.forEach(function (btn) {
-                titles.push(String(btn.textContent || '').trim());
-            });
-            var ownerBadges = liveRegion.querySelectorAll('[title][class*="text-body-secondary"]');
-            var rowTargets = liveRegion.querySelectorAll('[data-files-row-target]');
-            var rowActionToggles = liveRegion.querySelectorAll('button[id^="files-actions-"]');
-            var ownerGroupRows = liveRegion.querySelectorAll('tr[data-files-owner-group-row="1"]');
-            var debugState = liveRegion.querySelector('[data-files-debug-state]');
-            var hotfixMarker = document.getElementById('files-godview-contextmenu-hotfix-marker');
-            var hotfixScriptTags = document.querySelectorAll('script[src*="files-godview-contextmenu-hotfix.js"]');
-            var listingQueryRaw = liveRegion.getAttribute('data-files-listing-query') || '{}';
-            var listingQuery = {};
-            try {
-                listingQuery = JSON.parse(listingQueryRaw);
-            } catch (parseErr) {
-                listingQuery = {};
-            }
-            postAgentDebug('H11', 'public/js/files-space.js:logRenderedOwnedSections', 'Rendered section structure in listing shell (rev H22).', {
-                source: source,
-                path: window.location.pathname,
-                sectionCount: toggles.length,
-                sectionTitles: titles,
-                ownerBadgeCount: ownerBadges.length,
-                adminViewScope: listingQuery && listingQuery.admin_view_scope ? String(listingQuery.admin_view_scope) : '',
-                debugFilesCount: debugState ? String(debugState.getAttribute('data-files-debug-files-count') || '') : '',
-                debugOwnerDistinct: debugState ? String(debugState.getAttribute('data-files-debug-owner-distinct') || '') : '',
-                debugOwnerGroups: debugState ? String(debugState.getAttribute('data-files-debug-owner-groups') || '') : '',
-                debugAdminAll: debugState ? String(debugState.getAttribute('data-files-debug-admin-all') || '') : '',
-                debugAdminShareUsers: debugState ? String(debugState.getAttribute('data-files-debug-admin-share-users') || '') : '',
-                rowTargetCount: rowTargets.length,
-                rowActionToggleCount: rowActionToggles.length,
-                ownerGroupRowCount: ownerGroupRows.length,
-                hotfixLoadedFlag: window.__godviewContextMenuHotfixLoaded ? String(window.__godviewContextMenuHotfixLoaded) : '',
-                hotfixMarkerPresent: !!hotfixMarker,
-                hotfixScriptTagCount: hotfixScriptTags.length,
-                listingQueryRaw: listingQueryRaw,
-                currentUrl: window.location.href,
-            });
-        } catch (err) {
-            postAgentDebug('H11', 'public/js/files-space.js:logRenderedOwnedSections-error', 'Rendering probe failed unexpectedly.', {
-                source: source,
-                errorName: err && err.name ? String(err.name) : 'Error',
-            });
-        }
-    }
-
-    /**
      * @brief Initialize adaptive Popper behavior for row action dropdowns.
      * @param {ParentNode|Document} root Container where dropdown toggles are searched.
      * @return {void}
@@ -2141,7 +2091,6 @@
                 initFilesSectionAccordions(liveRegion);
                 applyColumnVisibility(liveRegion);
                 updateSelectionUi();
-                logRenderedOwnedSections('partial-swap');
                 var next = Object.assign({}, base);
                 if (qTrimmed === '') {
                     delete next.q;
@@ -2168,7 +2117,6 @@
             });
     }
 
-    logRenderedOwnedSections('initial-load');
     syncModalRetainStateFromListing(readListingState());
 
     /**
@@ -4218,9 +4166,7 @@
             headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
         })
             .then(function (res) {
-                return res.json().then(function (j) {
-                    return { ok: res.ok, json: j };
-                });
+                return parseFetchJsonResponse(res);
             })
             .then(function (pack) {
                 var modalRoot = formEl.closest('.modal');
@@ -6018,24 +5964,15 @@
         }, 0);
     }
 
-    window.__filesSpaceContextMenuHandlerActive = '1';
-    postAgentDebug('H19', 'public/js/files-space.js:before-contextmenu-bindings', 'Reached contextmenu binding section in files script.', {
-        path: window.location.pathname,
-    });
-
     document.addEventListener('contextmenu', function (event) {
         var cell = event.target && event.target.closest
             ? event.target.closest('[data-files-row-target]')
             : null;
-        postAgentDebug('H13', 'public/js/files-space.js:contextmenu-file-handler', 'File contextmenu handler target resolution.', {
-            hasCellTarget: !!cell,
-            targetTag: event.target && event.target.tagName ? String(event.target.tagName) : '',
-            targetClass: event.target && event.target.className ? String(event.target.className) : '',
-        });
+        var ignored = shouldIgnoreRowActionTarget(event.target);
         if (!cell) {
             return;
         }
-        if (shouldIgnoreRowActionTarget(event.target)) {
+        if (ignored) {
             return;
         }
         event.preventDefault();
@@ -6069,9 +6006,6 @@
 
         var menu = openContextMenuFromToggle(toggle, event.clientX, event.clientY);
         bindContextMenuCleanup(menu);
-    });
-    postAgentDebug('H15', 'public/js/files-space.js:contextmenu-handlers-bound', 'Contextmenu handlers for file and folder rows are bound.', {
-        path: window.location.pathname,
     });
 
     var longPressTimer = null;
