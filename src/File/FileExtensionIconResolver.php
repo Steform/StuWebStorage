@@ -12,12 +12,33 @@ namespace App\File;
  */
 final class FileExtensionIconResolver
 {
+    private readonly FileIconMappingProvider $mappingProvider;
+
     /**
-     * @param FileIconMappingProvider $mappingProvider YAML-backed icon mappings.
+     * @param FileIconMappingProvider|null $mappingProvider YAML-backed icon mappings (auto-created when omitted by stale prod cache).
      */
     public function __construct(
-        private readonly FileIconMappingProvider $mappingProvider,
+        ?FileIconMappingProvider $mappingProvider = null,
     ) {
+        $this->mappingProvider = $mappingProvider ?? self::createDefaultMappingProvider();
+    }
+
+    /**
+     * @brief Build mapping provider from project paths when DI container is stale.
+     *
+     * @param void No input parameter.
+     * @return FileIconMappingProvider
+     * @date 2026-06-24
+     * @author Stephane H.
+     */
+    private static function createDefaultMappingProvider(): FileIconMappingProvider
+    {
+        $projectDir = dirname(__DIR__, 2);
+
+        return new FileIconMappingProvider(
+            $projectDir.'/config/icons/mappings',
+            $projectDir.'/config/icons/categories.yaml',
+        );
     }
 
     /**
