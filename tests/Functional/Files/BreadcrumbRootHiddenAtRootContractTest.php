@@ -110,6 +110,7 @@ final class BreadcrumbRootHiddenAtRootContractTest extends TestCase
         self::assertStringContainsString('class="breadcrumb mb-0"', $guardedSlice);
         self::assertStringContainsString('{{ folderRootLabel }}', $guardedSlice);
         self::assertStringContainsString("'shared_folder': null", $guardedSlice);
+        self::assertStringContainsString('sharedBreadcrumbFolders', $guardedSlice);
     }
 
     /**
@@ -206,10 +207,11 @@ final class BreadcrumbRootHiddenAtRootContractTest extends TestCase
             'FilesController must zero out $sharedForMeCurrentFolderId when shared section is hidden.'
         );
 
-        self::assertMatchesRegularExpression(
-            '/if\s*\(\s*\$sharedForMeCurrentFolderId\s*>\s*0\s*&&\s*!\s*isset\s*\(\s*\$sharedForMeFolders\s*\[\s*\$sharedForMeCurrentFolderId\s*\]\s*\)\s*\)\s*\{\s*\$sharedForMeCurrentFolderId\s*=\s*0\s*;\s*\}/',
-            $source,
-            'FilesController must zero out $sharedForMeCurrentFolderId when the requested shared folder is unknown.'
+        $treeServiceSource = $this->readSource('src/Service/Share/SharedForMeTreeService.php');
+        self::assertStringContainsString(
+            'if ($currentFolderId > 0 && !isset($registry[$currentFolderId]))',
+            $treeServiceSource,
+            'SharedForMeTreeService must reset to root when the requested shared folder is unknown.'
         );
     }
 

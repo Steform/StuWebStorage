@@ -29,6 +29,12 @@ class FilesUploadModalIntegrationTest extends TestCase
         self::assertStringContainsString('data-files-listing-scope="owned"', $twig);
         self::assertStringContainsString('data-files-view-toggle="list"', $twig);
         self::assertStringContainsString('id="file-upload"', $twig);
+        self::assertStringContainsString('multiple', $twig);
+        self::assertStringContainsString('id="files-upload-queue"', $twig);
+        self::assertStringContainsString('id="files-upload-global-progress"', $twig);
+        self::assertStringContainsString('id="files-upload-folder-input"', $twig);
+        self::assertStringContainsString('webkitdirectory', $twig);
+        self::assertStringContainsString('files.upload.multi.modal_title', $twig);
         self::assertStringNotContainsString('name="visibility"', $twig);
         self::assertStringNotContainsString('name="expires_at"', $twig);
         self::assertStringNotContainsString('name="grantee_ids"', $twig);
@@ -63,6 +69,9 @@ class FilesUploadModalIntegrationTest extends TestCase
         $src = is_file($path) ? (string) file_get_contents($path) : '';
 
         self::assertStringContainsString('function bindFilesUploadProgress', $src);
+        self::assertStringContainsString('function uploadFileQueue', $src);
+        self::assertStringContainsString('function uploadSingleFile', $src);
+        self::assertStringContainsString('function assignFilesToInput', $src);
         self::assertStringContainsString('bindFilesUploadProgress(form, fileInput, uploadModalEl)', $src);
         self::assertStringContainsString('function formatFilesSize', $src);
         self::assertStringContainsString('filesUploadSessionUrl', $src);

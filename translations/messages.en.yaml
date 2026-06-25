@@ -325,6 +325,28 @@ files:
     progress_bar_aria: 'File upload progress'
     xhr_network_error: 'The server could not be reached. Check your connection and try again.'
     selected_byte_size_label: 'Size:'
+    multi:
+      modal_title: 'Upload files'
+      pick_files: 'Choose files'
+      pick_folder: 'Choose folder'
+      drop_hint: 'Drag and drop files or a folder, or use the buttons below.'
+      selection_summary: 'Selection:'
+      filter_system_label: 'Ignore system folders'
+      filter_system_hint: 'Excludes node_modules, .git, __pycache__, .DS_Store, and Thumbs.db.'
+      global_label: 'File %current% of %total%'
+      global_bytes: '%done% / %total%'
+      tree_detected: 'Folder tree detected (%root%)'
+      too_many_files: 'Too many files (%count%). Reduce the selection.'
+      confirm_many: 'Upload %count% files (%size%)?'
+      status:
+        pending: Pending
+        uploading: Uploading…
+        processing: Processing…
+        done: Done
+        error: Failed
+        cancelled: Cancelled
+      summary_ok: '%count% file(s) uploaded.'
+      summary_partial: '%ok%/%total% uploaded, %failed% failed.'
   extract:
     modal:
       title: 'Extract a ZIP archive'
@@ -664,6 +686,7 @@ files:
     rename_unchanged: 'No change detected.'
     renamed: 'File renamed successfully.'
     upload_name_conflict: 'A file or folder with this name already exists in this location.'
+    upload_path_invalid: 'Invalid relative upload path.'
     extract_done: 'Archive extracted successfully.'
     extract_failed: 'Archive extraction failed.'
     extract_not_zip: 'Only .zip files can be extracted.'

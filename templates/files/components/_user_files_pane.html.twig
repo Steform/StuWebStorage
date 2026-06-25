@@ -18,6 +18,7 @@
 {% set sharedOwnerLabelsByFileId = s.sharedOwnerLabelsByFileId|default({}) %}
 {% set sharedOwnerLabelsByFolderId = s.sharedOwnerLabelsByFolderId|default({}) %}
 {% set sharedForMeCurrentFolderId = s.sharedForMeCurrentFolderId|default(0) %}
+{% set sharedBreadcrumbFolders = s.sharedBreadcrumbFolders|default([]) %}
 {% set ls = listingScope|default('both') %}
 {% set ufKey = 'uf_' ~ pane.subjectUserId %}
 {% set sfKey = 'sf_' ~ pane.subjectUserId %}
@@ -83,6 +84,7 @@
                                 sharedOwnerLabelsByFileId: sharedOwnerLabelsByFileId,
                                 sharedOwnerLabelsByFolderId: sharedOwnerLabelsByFolderId,
                                 sharedForMeCurrentFolderId: sharedForMeCurrentFolderId,
+                                sharedBreadcrumbFolders: sharedBreadcrumbFolders,
                                 grantMaps: grantMaps,
                                 listingScope: ls,
                                 filesIndexRoute: filesIndexRoute|default('files_index'),
@@ -121,6 +123,7 @@
                                 sharedOwnerLabelsByFileId: sharedOwnerLabelsByFileId,
                                 sharedOwnerLabelsByFolderId: sharedOwnerLabelsByFolderId,
                                 sharedForMeCurrentFolderId: sharedForMeCurrentFolderId,
+                                sharedBreadcrumbFolders: sharedBreadcrumbFolders,
                                 grantMaps: grantMaps,
                                 listingScope: ls,
                                 filesIndexRoute: filesIndexRoute|default('files_index'),
@@ -170,6 +173,7 @@
                                 sharedOwnerLabelsByFileId: sharedOwnerLabelsByFileId,
                                 sharedOwnerLabelsByFolderId: sharedOwnerLabelsByFolderId,
                                 sharedForMeCurrentFolderId: sharedForMeCurrentFolderId,
+                                sharedBreadcrumbFolders: sharedBreadcrumbFolders,
                                 currentSortField: currentSortField,
                                 currentSortDirection: currentSortDirection,
                                 sortCycle: sortCycle,
@@ -218,6 +222,7 @@
                                 sharedOwnerLabelsByFileId: sharedOwnerLabelsByFileId,
                                 sharedOwnerLabelsByFolderId: sharedOwnerLabelsByFolderId,
                                 sharedForMeCurrentFolderId: sharedForMeCurrentFolderId,
+                                sharedBreadcrumbFolders: sharedBreadcrumbFolders,
                                 currentSortField: currentSortField,
                                 currentSortDirection: currentSortDirection,
                                 sortCycle: sortCycle,

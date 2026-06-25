@@ -28,21 +28,23 @@ final class EmptySharedFolderVisibilityContractTest extends TestCase
     }
 
     /**
-     * @brief Shared pane builder must derive visible shared folders from active files and their folder lineage only.
+     * @brief Shared pane builder must derive visible shared folders from active files via SharedForMeTreeService.
      * @return void
      * @date 2026-05-06
      * @author Stephane H.
      */
     public function testPaneBuilderBuildsSharedFoldersFromActiveFilesLineage(): void
     {
-        $source = $this->readSource('src/Service/File/UserFilesPaneBuilderService.php');
+        $paneBuilderSource = $this->readSource('src/Service/File/UserFilesPaneBuilderService.php');
+        $treeServiceSource = $this->readSource('src/Service/Share/SharedForMeTreeService.php');
 
-        self::assertStringContainsString('buildActiveSharedForMeFolders', $source);
-        self::assertStringContainsString('$folderCursor = $sharedForMeFile->getFolder();', $source);
-        self::assertStringContainsString('$folderCursor = $folderCursor->getParent();', $source);
-        self::assertStringNotContainsString('findFriendsSharedFoldersForGrantee', $source);
-        self::assertStringNotContainsString('$sharedForMeIntentFolders', $source);
-        self::assertStringContainsString("'hasSharedForMe' => \$allSharedForMeFiles !== [] || \$sharedForMeFolders !== []", $source);
+        self::assertStringContainsString('SharedForMeTreeService', $paneBuilderSource);
+        self::assertStringContainsString('buildListingContext', $paneBuilderSource);
+        self::assertStringContainsString('$folderCursor = $sharedForMeFile->getFolder();', $treeServiceSource);
+        self::assertStringContainsString('$folderCursor = $folderCursor->getParent();', $treeServiceSource);
+        self::assertStringNotContainsString('findFriendsSharedFoldersForGrantee', $paneBuilderSource);
+        self::assertStringNotContainsString('$sharedForMeIntentFolders', $paneBuilderSource);
+        self::assertStringContainsString("'hasSharedForMe' => \$allSharedForMeFiles !== [] || \$sharedListingContext->registry !== []", $paneBuilderSource);
     }
 
     /**
@@ -61,4 +63,3 @@ final class EmptySharedFolderVisibilityContractTest extends TestCase
         self::assertStringContainsString('sf.ownerUserId != :granteeUserId', $source);
     }
 }
-

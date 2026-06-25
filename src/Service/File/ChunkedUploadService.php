@@ -6,8 +6,6 @@ namespace App\Service\File;
 
 use App\Entity\Folder;
 use App\Entity\SharedFile;
-use App\Repository\FolderRepository;
-use App\Repository\SharedFileRepository;
 use App\Service\Share\FolderTreeService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -27,11 +25,10 @@ final class ChunkedUploadService
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly SharedFileRepository $sharedFileRepository,
-        private readonly FolderRepository $folderRepository,
         private readonly FolderTreeService $folderTreeService,
         private readonly FileEncryptionService $fileEncryptionService,
         private readonly UserStorageQuotaService $userStorageQuotaService,
+        private readonly FolderPathMaterializerService $folderPathMaterializerService,
         private readonly string $projectDir,
         private readonly int $chunkBytesDefault,
     ) {
@@ -43,12 +40,18 @@ final class ChunkedUploadService
      * @param int $expectedBytes Total plaintext bytes declared by client.
      * @param string $displayName Original filename.
      * @param int $folderRetainId Retained folder id from listing (0 root).
+     * @param string|null $relativePath Optional client-relative path for folder tree uploads.
      * @return array{upload_id: string, chunk_size_bytes: int, temp_max_bytes: int}
      * @date 2026-05-08
      * @author Stephane H.
      */
-    public function createSession(int $ownerUserId, int $expectedBytes, string $displayName, int $folderRetainId): array
-    {
+    public function createSession(
+        int $ownerUserId,
+        int $expectedBytes,
+        string $displayName,
+        int $folderRetainId,
+        ?string $relativePath = null,
+    ): array {
         $this->purgeExpiredForOwner($ownerUserId);
         try {
             $this->userStorageQuotaService->assertOwnerCanStoreBytes($ownerUserId, $expectedBytes);
@@ -61,6 +64,10 @@ final class ChunkedUploadService
         }
         if ($folderRetainId > 0 && !$this->folderTreeService->resolveCurrentFolder($ownerUserId, $folderRetainId) instanceof Folder) {
             throw new \RuntimeException('chunk_upload.folder_invalid');
+        }
+        $sanitizedRelativePath = $this->sanitizeRelativePath($relativePath);
+        if ($relativePath !== null && $relativePath !== '' && $sanitizedRelativePath === null) {
+            throw new \RuntimeException('chunk_upload.path_invalid');
         }
 
         $uploadId = bin2hex(random_bytes(16));
@@ -84,6 +91,9 @@ final class ChunkedUploadService
             'created_at' => time(),
             'next_chunk_index' => 0,
         ];
+        if ($sanitizedRelativePath !== null && $sanitizedRelativePath !== '') {
+            $meta['relative_path'] = $sanitizedRelativePath;
+        }
         if (file_put_contents($metaPath, json_encode($meta, JSON_THROW_ON_ERROR)) === false) {
             @unlink($partPath);
             throw new \RuntimeException('chunk_upload.meta_write_failed');
@@ -203,12 +213,25 @@ final class ChunkedUploadService
         if ($targetFolderId > 0 && !$targetFolder instanceof Folder) {
             throw new \RuntimeException('chunk_upload.folder_invalid');
         }
-        $normalizedDisplay = Folder::normalizeName($displayName);
 
-        if ($this->sharedFileRepository->findConflictingOwnedFileByNormalizedName($ownerId, $targetFolder, $normalizedDisplay, null) instanceof SharedFile) {
-            throw new \RuntimeException('chunk_upload.name_conflict');
+        $relativePath = trim((string) ($meta['relative_path'] ?? ''));
+        if ($relativePath !== '') {
+            $split = $this->folderPathMaterializerService->splitRelativeFilePath($relativePath);
+            $displayName = $split['file_name'];
+            $folderResult = $this->folderPathMaterializerService->ensureFolderPathFromRelative(
+                $ownerId,
+                $targetFolder,
+                $split['folder_path'],
+                FolderPathMaterializerService::CONFLICT_ABORT
+            );
+            if ($folderResult === FolderPathMaterializerService::CONFLICT_ABORT) {
+                throw new \RuntimeException('chunk_upload.path_invalid');
+            }
+            /** @var Folder|null $targetFolder */
+            $targetFolder = $folderResult;
         }
-        if ($this->folderRepository->findOneByOwnerParentAndNormalizedName($ownerId, $targetFolder, $normalizedDisplay) instanceof Folder) {
+
+        if ($this->folderPathMaterializerService->hasFileNameConflict($ownerId, $targetFolder, $displayName)) {
             throw new \RuntimeException('chunk_upload.name_conflict');
         }
 
@@ -369,5 +392,37 @@ final class ChunkedUploadService
     private function metaPath(int $ownerUserId, string $uploadId): string
     {
         return $this->sessionBaseDir($ownerUserId).'/'.$uploadId.self::META_SUFFIX;
+    }
+
+    /**
+     * @brief Normalize and validate a client relative upload path.
+     * @param string|null $relativePath Raw relative path from the client.
+     * @return string|null Sanitized path, empty string when absent, null when invalid.
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    private function sanitizeRelativePath(?string $relativePath): ?string
+    {
+        if ($relativePath === null) {
+            return '';
+        }
+        $relativePath = trim(str_replace('\\', '/', $relativePath));
+        if ($relativePath === '') {
+            return '';
+        }
+        if (str_starts_with($relativePath, '/')) {
+            return null;
+        }
+        $segments = explode('/', $relativePath);
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+            if ($segment === '..') {
+                return null;
+            }
+        }
+
+        return $relativePath;
     }
 }

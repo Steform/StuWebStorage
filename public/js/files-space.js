@@ -82,14 +82,187 @@
 
     /**
      * @param {HTMLInputElement} input File input.
+     * @param {FileList|File[]} files Files to assign.
+     * @return {void}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function assignFilesToInput(input, files) {
+        var buffer = new DataTransfer();
+        for (var i = 0; i < files.length; i++) {
+            buffer.items.add(files[i]);
+        }
+        input.files = buffer.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    /**
+     * @param {File} file Browser file handle.
+     * @param {string} [relativePathOverride] Optional explicit relative path.
+     * @return {{file: File, relativePath: string, displayName: string, size: number, state: string, error: string}}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function buildUploadEntryFromFile(file, relativePathOverride) {
+        var rel =
+            typeof relativePathOverride === 'string' && relativePathOverride !== ''
+                ? relativePathOverride
+                : file.webkitRelativePath || '';
+        var displayName = file.name;
+        if (rel !== '') {
+            var parts = rel.split('/');
+            displayName = parts[parts.length - 1] || file.name;
+        }
+
+        return {
+            file: file,
+            relativePath: rel,
+            displayName: displayName,
+            size: file.size,
+            state: 'pending',
+            error: ''
+        };
+    }
+
+    /**
+     * @param {string} relativePath Relative client path.
+     * @return {boolean}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function shouldFilterSystemUploadPath(relativePath) {
+        var norm = String(relativePath || '')
+            .replace(/\\/g, '/')
+            .toLowerCase();
+        if (norm === '') {
+            return false;
+        }
+        var segments = norm.split('/');
+        for (var i = 0; i < segments.length; i++) {
+            if (segments[i] === 'node_modules' || segments[i] === '.git' || segments[i] === '__pycache__') {
+                return true;
+            }
+        }
+        var base = segments[segments.length - 1] || '';
+        return base === '.ds_store' || base === 'thumbs.db';
+    }
+
+    /**
+     * @param {Array<{relativePath?: string}>} entries Upload queue entries.
+     * @return {Array<*>}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function filterUploadEntries(entries) {
+        var filterEl = document.getElementById('files-upload-filter-system');
+        if (!filterEl || !filterEl.checked) {
+            return entries;
+        }
+        return entries.filter(function (entry) {
+            return !shouldFilterSystemUploadPath(entry.relativePath || entry.file.webkitRelativePath || '');
+        });
+    }
+
+    /**
+     * @param {FileSystemEntry} entry Directory or file entry.
+     * @param {string} path Accumulated relative path.
+     * @return {Promise<Array<{file: File, relativePath: string}>>}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function traverseFileTreeEntry(entry, pathPrefix) {
+        return new Promise(function (resolve) {
+            if (entry.isFile) {
+                entry.file(function (file) {
+                    var rel = pathPrefix !== '' ? pathPrefix + '/' + file.name : file.name;
+                    resolve([{ file: file, relativePath: rel }]);
+                });
+                return;
+            }
+            if (!entry.isDirectory) {
+                resolve([]);
+                return;
+            }
+            var dirReader = entry.createReader();
+            var allEntries = [];
+            /**
+             * @return {void}
+             */
+            function readEntries() {
+                dirReader.readEntries(function (results) {
+                    if (!results || results.length < 1) {
+                        var base = pathPrefix !== '' ? pathPrefix + '/' + entry.name : entry.name;
+                        Promise.all(
+                            allEntries.map(function (childEntry) {
+                                return traverseFileTreeEntry(childEntry, base);
+                            })
+                        ).then(function (nested) {
+                            var flat = [];
+                            nested.forEach(function (group) {
+                                flat = flat.concat(group);
+                            });
+                            resolve(flat);
+                        });
+                        return;
+                    }
+                    allEntries = allEntries.concat(Array.prototype.slice.call(results));
+                    readEntries();
+                });
+            }
+            readEntries();
+        });
+    }
+
+    /**
+     * @param {DataTransfer} dataTransfer Drag-and-drop payload.
+     * @return {Promise<Array<*>>}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function collectUploadEntriesFromDataTransfer(dataTransfer) {
+        if (!dataTransfer) {
+            return Promise.resolve([]);
+        }
+        var items = dataTransfer.items;
+        if (items && items.length > 0 && typeof items[0].webkitGetAsEntry === 'function') {
+            var entryPromises = [];
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.kind !== 'file') {
+                    continue;
+                }
+                var entry = item.webkitGetAsEntry();
+                if (entry) {
+                    entryPromises.push(traverseFileTreeEntry(entry, ''));
+                }
+            }
+            if (entryPromises.length > 0) {
+                return Promise.all(entryPromises).then(function (groups) {
+                    var flat = [];
+                    groups.forEach(function (group) {
+                        flat = flat.concat(group);
+                    });
+                    return flat.map(function (item) {
+                        return buildUploadEntryFromFile(item.file, item.relativePath);
+                    });
+                });
+            }
+        }
+        var list = dataTransfer.files;
+        var out = [];
+        for (var j = 0; j < list.length; j++) {
+            out.push(buildUploadEntryFromFile(list[j]));
+        }
+        return Promise.resolve(out);
+    }
+
+    /**
+     * @param {HTMLInputElement} input File input.
      * @param {File} file Dropped file.
      * @return {void}
      */
     function assignFileToInput(input, file) {
-        var buffer = new DataTransfer();
-        buffer.items.add(file);
-        input.files = buffer.files;
-        input.dispatchEvent(new Event('change', { bubbles: true }));
+        assignFilesToInput(input, [file]);
     }
 
     /**
@@ -121,8 +294,21 @@
             if (!input || !e.dataTransfer || !e.dataTransfer.files || e.dataTransfer.files.length < 1) {
                 return;
             }
-            assignFileToInput(input, e.dataTransfer.files[0]);
-            showUploadModal(modalEl);
+            collectUploadEntriesFromDataTransfer(e.dataTransfer).then(function (entries) {
+                if (!entries.length) {
+                    return;
+                }
+                assignFilesToInput(
+                    input,
+                    entries.map(function (entry) {
+                        return entry.file;
+                    })
+                );
+                if (typeof window.filesUploadSetPendingEntries === 'function') {
+                    window.filesUploadSetPendingEntries(entries);
+                }
+                showUploadModal(modalEl);
+            });
         });
     }
 
@@ -159,31 +345,305 @@
                 }
                 e.preventDefault();
                 e.stopPropagation();
-                assignFileToInput(input, e.dataTransfer.files[0]);
-                showUploadModal(modalEl);
+                collectUploadEntriesFromDataTransfer(e.dataTransfer).then(function (entries) {
+                    if (!entries.length) {
+                        return;
+                    }
+                    assignFilesToInput(
+                        input,
+                        entries.map(function (entry) {
+                            return entry.file;
+                        })
+                    );
+                    if (typeof window.filesUploadSetPendingEntries === 'function') {
+                        window.filesUploadSetPendingEntries(entries);
+                    }
+                    showUploadModal(modalEl);
+                });
             },
             false
         );
     }
 
     /**
-     * @brief POST chunked upload via fetch/XHR with progress; on success JSON includes message, modal closes, listing partial refresh, toast.
+     * @brief Upload one file through session, chunk, and finalize endpoints.
+     * @param {*} entry Queue entry with file and relativePath.
+     * @param {*} context Upload runtime context.
+     * @return {Promise<{ok: boolean, message: string}>}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function uploadSingleFile(entry, context) {
+        var file = entry.file;
+        var sessionUrl = context.sessionUrl;
+        var chunkUrl = context.chunkUrl;
+        var finalizeUrl = context.finalizeUrl;
+        var csrf = context.csrf;
+        var appendRetainFields = context.appendRetainFields;
+        var msg = context.msg;
+
+        if (context.isCancelled()) {
+            return Promise.resolve({ ok: false, message: '', cancelled: true });
+        }
+
+        syncUploadTargetFolderInput(context.formEl);
+        var fdSession = new FormData();
+        fdSession.append('expected_bytes', String(file.size));
+        fdSession.append('original_name', file.name);
+        if (entry.relativePath) {
+            fdSession.append('relative_path', entry.relativePath);
+        }
+        appendRetainFields(fdSession);
+
+        return fetch(sessionUrl, {
+            method: 'POST',
+            body: fdSession,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
+        })
+            .then(function (res) {
+                return parseFetchJsonResponse(res);
+            })
+            .then(function (pack) {
+                if (!pack.ok || !pack.json || pack.json.status !== 'ok' || typeof pack.json.upload_id !== 'string') {
+                    var m0 = pack.json && pack.json.message ? pack.json.message : msg('msgXhrNetworkError');
+                    throw new Error(typeof m0 === 'string' ? m0 : msg('msgXhrNetworkError'));
+                }
+                return pack.json;
+            })
+            .then(function (sess) {
+                var uploadId = sess.upload_id;
+                var chunkSz = sess.chunk_size_bytes ? parseInt(sess.chunk_size_bytes, 10) : 8388608;
+                if (!chunkSz || chunkSz < 1024) {
+                    chunkSz = 8388608;
+                }
+                var offset = 0;
+                var idx = 0;
+
+                /**
+                 * @return {Promise<void>}
+                 */
+                function nextChunk() {
+                    if (context.isCancelled()) {
+                        return Promise.reject(new Error('__upload_cancelled__'));
+                    }
+                    if (offset >= file.size) {
+                        return Promise.resolve();
+                    }
+                    var end = Math.min(offset + chunkSz, file.size);
+                    var blob = file.slice(offset, end);
+                    return new Promise(function (resolve, reject) {
+                        var xhr = new XMLHttpRequest();
+                        context.setActiveXhr(xhr);
+                        xhr.open('POST', chunkUrl);
+                        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                        xhr.setRequestHeader('Accept', 'application/json');
+                        xhr.responseType = 'text';
+                        var chunkStart = offset;
+                        xhr.upload.onprogress = function (e) {
+                            if (e.lengthComputable && file.size > 0 && typeof context.onFileProgress === 'function') {
+                                context.onFileProgress(chunkStart + e.loaded, file.size);
+                            }
+                        };
+                        xhr.onload = function () {
+                            context.setActiveXhr(null);
+                            var raw = xhr.responseText || '';
+                            /** @type {{status?: string, message?: string}|null} */
+                            var pj = null;
+                            try {
+                                pj = JSON.parse(raw);
+                            } catch {
+                                pj = null;
+                            }
+                            if (xhr.status >= 200 && xhr.status < 300 && pj && pj.status === 'ok') {
+                                offset = end;
+                                idx += 1;
+                                resolve();
+                            } else {
+                                var em = (pj && pj.message) || msg('msgXhrNetworkError');
+                                reject(new Error(em));
+                            }
+                        };
+                        xhr.onerror = function () {
+                            context.setActiveXhr(null);
+                            reject(new Error(msg('msgXhrNetworkError')));
+                        };
+                        var fdC = new FormData();
+                        fdC.append('upload_id', uploadId);
+                        fdC.append('chunk_index', String(idx));
+                        fdC.append('_csrf_token', csrf);
+                        fdC.append('chunk', blob, 'chunk.bin');
+                        appendRetainFields(fdC, true);
+                        xhr.send(fdC);
+                    }).then(function () {
+                        return nextChunk();
+                    });
+                }
+
+                if (typeof context.onFilePhase === 'function') {
+                    context.onFilePhase('uploading');
+                }
+
+                return nextChunk().then(function () {
+                    if (typeof context.onFilePhase === 'function') {
+                        context.onFilePhase('processing');
+                    }
+                    var fdF = new FormData();
+                    fdF.append('upload_id', uploadId);
+                    appendRetainFields(fdF);
+                    return fetch(finalizeUrl, {
+                        method: 'POST',
+                        body: fdF,
+                        credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
+                    });
+                });
+            })
+            .then(function (res) {
+                return parseFetchJsonResponse(res);
+            })
+            .then(function (pack) {
+                if (pack.json && pack.json.status === 'ok') {
+                    return { ok: true, message: typeof pack.json.message === 'string' ? pack.json.message : '' };
+                }
+                if (pack.json && typeof pack.json.message === 'string' && pack.json.message !== '') {
+                    return { ok: false, message: pack.json.message };
+                }
+                return { ok: false, message: msg('msgXhrNetworkError') };
+            })
+            .catch(function (err) {
+                if (err && err.message === '__upload_cancelled__') {
+                    return { ok: false, message: '', cancelled: true };
+                }
+                return { ok: false, message: err && err.message ? err.message : msg('msgXhrNetworkError') };
+            });
+    }
+
+    /**
+     * @brief Sequentially upload a batch of entries with global byte progress.
+     * @param {Array<*>} entries Upload queue entries.
+     * @param {*} context Upload runtime context.
+     * @return {Promise<{okCount: number, failedCount: number, cancelled: boolean}>}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function uploadFileQueue(entries, context) {
+        var totalBytes = 0;
+        entries.forEach(function (entry) {
+            totalBytes += entry.size || 0;
+        });
+        var completedBytes = 0;
+        var okCount = 0;
+        var failedCount = 0;
+        var index = 0;
+
+        /**
+         * @return {Promise<{okCount: number, failedCount: number, cancelled: boolean}>}
+         */
+        function runNext() {
+            if (context.isCancelled()) {
+                for (var c = index; c < entries.length; c++) {
+                    if (entries[c].state === 'pending' || entries[c].state === 'uploading') {
+                        entries[c].state = 'cancelled';
+                        if (typeof context.onFileStateChange === 'function') {
+                            context.onFileStateChange(c, 'cancelled', '');
+                        }
+                    }
+                }
+                return Promise.resolve({ okCount: okCount, failedCount: failedCount, cancelled: true });
+            }
+            if (index >= entries.length) {
+                return Promise.resolve({ okCount: okCount, failedCount: failedCount, cancelled: false });
+            }
+            var currentIndex = index;
+            var entry = entries[currentIndex];
+            index += 1;
+            entry.state = 'uploading';
+            if (typeof context.onFileStateChange === 'function') {
+                context.onFileStateChange(currentIndex, 'uploading', '');
+            }
+            if (typeof context.onGlobalProgress === 'function') {
+                context.onGlobalProgress(completedBytes, totalBytes, currentIndex + 1, entries.length);
+            }
+
+            var fileContext = Object.assign({}, context, {
+                onFileProgress: function (loaded, total) {
+                    if (typeof context.onFileProgress === 'function') {
+                        context.onFileProgress(currentIndex, loaded, total);
+                    }
+                    if (typeof context.onGlobalProgress === 'function') {
+                        context.onGlobalProgress(completedBytes + loaded, totalBytes, currentIndex + 1, entries.length);
+                    }
+                },
+                onFilePhase: function (phase) {
+                    if (typeof context.onFileStateChange === 'function') {
+                        context.onFileStateChange(currentIndex, phase, '');
+                    }
+                }
+            });
+
+            return uploadSingleFile(entry, fileContext).then(function (result) {
+                if (result.cancelled) {
+                    entry.state = 'cancelled';
+                    if (typeof context.onFileStateChange === 'function') {
+                        context.onFileStateChange(currentIndex, 'cancelled', '');
+                    }
+                    return runNext();
+                }
+                completedBytes += entry.size || 0;
+                if (result.ok) {
+                    entry.state = 'done';
+                    okCount += 1;
+                    if (typeof context.onFileStateChange === 'function') {
+                        context.onFileStateChange(currentIndex, 'done', '');
+                    }
+                } else {
+                    entry.state = 'error';
+                    entry.error = result.message || '';
+                    failedCount += 1;
+                    if (typeof context.onFileStateChange === 'function') {
+                        context.onFileStateChange(currentIndex, 'error', entry.error);
+                    }
+                }
+                if (typeof context.onGlobalProgress === 'function') {
+                    context.onGlobalProgress(completedBytes, totalBytes, Math.min(index + 1, entries.length), entries.length);
+                }
+                return runNext();
+            });
+        }
+
+        return runNext();
+    }
+
+    /**
+     * @brief Wire multi-file upload modal: queue UI, global progress, sequential chunked uploads.
      * @param {HTMLFormElement} formEl Upload form.
      * @param {HTMLInputElement} fileInputEl File input.
      * @param {HTMLElement} modalEl Upload modal root (datasets for i18n labels).
      * @return {void}
-     * @date 2026-05-08
+     * @date 2026-06-25
      * @author Stephane H.
      */
     function bindFilesUploadProgress(formEl, fileInputEl, modalEl) {
         var errorEl = document.getElementById('files-upload-error');
         var progressWrap = document.getElementById('files-upload-progress-wrap');
-        var phaseEl = document.getElementById('files-upload-phase');
-        var detWrap = document.getElementById('files-upload-progress-determinate');
-        var barEl = document.getElementById('files-upload-progress-bar');
-        var indWrap = document.getElementById('files-upload-progress-indeterminate');
-        var percentEl = document.getElementById('files-upload-percent');
+        var queueWrap = document.getElementById('files-upload-queue-wrap');
+        var queueList = document.getElementById('files-upload-queue');
+        var globalLabel = document.getElementById('files-upload-global-label');
+        var globalBarWrap = document.getElementById('files-upload-global-progress-bar-wrap');
+        var globalBar = document.getElementById('files-upload-global-progress-bar');
+        var globalBytes = document.getElementById('files-upload-global-bytes');
+        var metaWrap = document.getElementById('files-upload-selected-meta');
+        var metaCountVal = document.getElementById('files-upload-selected-count-value');
+        var metaVal = document.getElementById('files-upload-selected-size-value');
+        var treeHint = document.getElementById('files-upload-tree-hint');
+        var folderInput = document.getElementById('files-upload-folder-input');
+        var pickFolderBtn = document.getElementById('files-upload-pick-folder');
         var uploadBusy = false;
+        var uploadCancelRequested = false;
+        var activeXhr = null;
+        var pendingEntriesOverride = null;
+        var queueEntries = [];
 
         /**
          * @param {string} camelKey Dataset key in camelCase (e.g. msgProgressSending).
@@ -192,6 +652,19 @@
         function msg(camelKey) {
             var ds = modalEl.dataset || {};
             return typeof ds[camelKey] === 'string' ? ds[camelKey] : '';
+        }
+
+        /**
+         * @param {string} tpl Template with placeholders.
+         * @param {Record<string, string>} replacements Placeholder map.
+         * @return {string}
+         */
+        function fillTemplate(tpl, replacements) {
+            var out = tpl;
+            Object.keys(replacements).forEach(function (key) {
+                out = out.split(key).join(replacements[key]);
+            });
+            return out;
         }
 
         /**
@@ -214,31 +687,163 @@
                 inp.disabled = !!active;
             });
             fileInputEl.disabled = !!active;
+            if (folderInput) {
+                folderInput.disabled = !!active;
+            }
+            if (pickFolderBtn) {
+                pickFolderBtn.disabled = !!active;
+            }
+        }
+
+        /**
+         * @param {string} state Queue item state token.
+         * @return {string}
+         */
+        function statusLabel(state) {
+            if (state === 'uploading') {
+                return msg('msgMultiStatusUploading');
+            }
+            if (state === 'processing') {
+                return msg('msgMultiStatusProcessing');
+            }
+            if (state === 'done') {
+                return msg('msgMultiStatusDone');
+            }
+            if (state === 'error') {
+                return msg('msgMultiStatusError');
+            }
+            if (state === 'cancelled') {
+                return msg('msgMultiStatusCancelled');
+            }
+            return msg('msgMultiStatusPending');
         }
 
         /**
          * @return {void}
          */
-        function hideProgressUi() {
-            if (progressWrap) {
-                progressWrap.classList.add('d-none');
+        function renderQueueUi() {
+            if (!queueList) {
+                return;
             }
-            if (detWrap) {
-                detWrap.classList.add('d-none');
-                detWrap.setAttribute('aria-valuenow', '0');
+            queueList.innerHTML = '';
+            queueEntries.forEach(function (entry, idx) {
+                var li = document.createElement('li');
+                li.className = 'files-upload-queue-item files-upload-queue-item--' + entry.state;
+                li.setAttribute('data-files-upload-queue-index', String(idx));
+
+                var title = document.createElement('div');
+                title.className = 'files-upload-queue-item__title';
+                title.textContent = entry.relativePath || entry.displayName;
+
+                var meta = document.createElement('div');
+                meta.className = 'files-upload-queue-item__meta small text-muted';
+                meta.textContent = formatFilesSize(entry.size);
+
+                var progress = document.createElement('div');
+                progress.className = 'progress files-upload-queue-item__progress';
+                progress.setAttribute('role', 'progressbar');
+                progress.setAttribute('aria-valuemin', '0');
+                progress.setAttribute('aria-valuemax', '100');
+                var bar = document.createElement('div');
+                bar.className = 'progress-bar';
+                bar.style.width = entry.state === 'done' ? '100%' : '0%';
+                bar.setAttribute('data-files-upload-queue-bar', String(idx));
+                progress.appendChild(bar);
+
+                var badge = document.createElement('span');
+                badge.className = 'badge text-bg-secondary files-upload-queue-item__status';
+                badge.setAttribute('data-files-upload-queue-status', String(idx));
+                badge.textContent = statusLabel(entry.state);
+
+                if (entry.error) {
+                    var err = document.createElement('div');
+                    err.className = 'small text-danger files-upload-queue-item__error';
+                    err.textContent = entry.error;
+                    li.appendChild(err);
+                }
+
+                li.appendChild(title);
+                li.appendChild(meta);
+                li.appendChild(progress);
+                li.appendChild(badge);
+                queueList.appendChild(li);
+            });
+        }
+
+        /**
+         * @param {number} index Entry index.
+         * @param {number} loaded Loaded bytes.
+         * @param {number} total Total bytes.
+         * @return {void}
+         */
+        function updateQueueItemProgress(index, loaded, total) {
+            var bar = queueList ? queueList.querySelector('[data-files-upload-queue-bar="' + String(index) + '"]') : null;
+            if (!bar || total <= 0) {
+                return;
             }
-            if (barEl) {
-                barEl.style.width = '0%';
+            var pct = Math.min(100, Math.round((loaded / total) * 100));
+            bar.style.width = String(pct) + '%';
+            bar.parentElement.setAttribute('aria-valuenow', String(pct));
+        }
+
+        /**
+         * @param {number} index Entry index.
+         * @param {string} state New state.
+         * @param {string} errorMessage Optional error text.
+         * @return {void}
+         */
+        function updateQueueItemState(index, state, errorMessage) {
+            if (!queueEntries[index]) {
+                return;
             }
-            if (indWrap) {
-                indWrap.classList.add('d-none');
+            queueEntries[index].state = state;
+            queueEntries[index].error = errorMessage || '';
+            var item = queueList ? queueList.querySelector('[data-files-upload-queue-index="' + String(index) + '"]') : null;
+            if (item) {
+                item.className = 'files-upload-queue-item files-upload-queue-item--' + state;
             }
-            if (percentEl) {
-                percentEl.textContent = '';
-                percentEl.classList.add('d-none');
+            var badge = queueList ? queueList.querySelector('[data-files-upload-queue-status="' + String(index) + '"]') : null;
+            if (badge) {
+                badge.textContent = statusLabel(state);
             }
-            if (phaseEl) {
-                phaseEl.textContent = '';
+            if (state === 'done') {
+                updateQueueItemProgress(index, 1, 1);
+            }
+            if (errorMessage && item) {
+                var errEl = item.querySelector('.files-upload-queue-item__error');
+                if (!errEl) {
+                    errEl = document.createElement('div');
+                    errEl.className = 'small text-danger files-upload-queue-item__error';
+                    item.insertBefore(errEl, item.firstChild);
+                }
+                errEl.textContent = errorMessage;
+            }
+        }
+
+        /**
+         * @param {number} completedBytes Bytes completed across the batch.
+         * @param {number} totalBytes Total bytes in batch.
+         * @param {number} currentIndex One-based current file index.
+         * @param {number} totalCount Total file count.
+         * @return {void}
+         */
+        function updateGlobalProgress(completedBytes, totalBytes, currentIndex, totalCount) {
+            if (globalLabel) {
+                globalLabel.textContent = fillTemplate(msg('msgMultiGlobalLabel'), {
+                    '%current%': String(currentIndex),
+                    '%total%': String(totalCount)
+                });
+            }
+            if (globalBytes) {
+                globalBytes.textContent = fillTemplate(msg('msgMultiGlobalBytes'), {
+                    '%done%': formatFilesSize(completedBytes),
+                    '%total%': formatFilesSize(totalBytes)
+                });
+            }
+            if (globalBar && globalBarWrap && totalBytes > 0) {
+                var pct = Math.min(100, Math.round((completedBytes / totalBytes) * 100));
+                globalBar.style.width = String(pct) + '%';
+                globalBarWrap.setAttribute('aria-valuenow', String(pct));
             }
         }
 
@@ -253,49 +858,169 @@
             }
         }
 
+        /**
+         * @return {Array<*>}
+         */
+        function buildEntriesFromInput() {
+            if (pendingEntriesOverride && pendingEntriesOverride.length) {
+                var pending = pendingEntriesOverride.slice();
+                pendingEntriesOverride = null;
+                return filterUploadEntries(pending);
+            }
+            var list = fileInputEl.files;
+            var built = [];
+            for (var i = 0; i < list.length; i++) {
+                built.push(buildUploadEntryFromFile(list[i]));
+            }
+            return filterUploadEntries(built);
+        }
+
+        /**
+         * @return {void}
+         */
+        function refreshSelectionMeta() {
+            var entries = buildEntriesFromInput();
+            queueEntries = entries;
+            var totalSize = 0;
+            var hasTree = false;
+            var rootName = '';
+            entries.forEach(function (entry) {
+                totalSize += entry.size || 0;
+                if (entry.relativePath && entry.relativePath.indexOf('/') >= 0) {
+                    hasTree = true;
+                    if (rootName === '') {
+                        rootName = entry.relativePath.split('/')[0] || '';
+                    }
+                }
+            });
+            if (!metaWrap || !metaVal || !metaCountVal) {
+                return;
+            }
+            if (!entries.length) {
+                metaWrap.classList.add('d-none');
+                if (queueWrap) {
+                    queueWrap.classList.add('d-none');
+                }
+                if (treeHint) {
+                    treeHint.classList.add('d-none');
+                }
+                renderQueueUi();
+                return;
+            }
+            metaCountVal.textContent = String(entries.length);
+            metaVal.textContent = formatFilesSize(totalSize);
+            metaWrap.classList.remove('d-none');
+            if (queueWrap) {
+                queueWrap.classList.remove('d-none');
+            }
+            if (treeHint) {
+                if (hasTree && rootName !== '') {
+                    treeHint.textContent = fillTemplate(msg('msgMultiTreeDetected'), { '%root%': rootName });
+                    treeHint.classList.remove('d-none');
+                } else {
+                    treeHint.classList.add('d-none');
+                    treeHint.textContent = '';
+                }
+            }
+            renderQueueUi();
+        }
+
+        window.filesUploadSetPendingEntries = function (entries) {
+            pendingEntriesOverride = Array.isArray(entries) ? entries.slice() : null;
+            refreshSelectionMeta();
+        };
+
         modalEl.addEventListener('hide.bs.modal', function (ev) {
             if (uploadBusy) {
+                uploadCancelRequested = true;
+                if (activeXhr) {
+                    activeXhr.abort();
+                }
                 ev.preventDefault();
             }
         });
 
         modalEl.addEventListener('hidden.bs.modal', function () {
+            uploadCancelRequested = false;
             if (!uploadBusy) {
-                hideProgressUi();
                 if (errorEl) {
                     errorEl.classList.add('d-none');
                     errorEl.textContent = '';
                 }
+                pendingEntriesOverride = null;
             }
         });
 
-        var metaWrap = document.getElementById('files-upload-selected-meta');
-        var metaVal = document.getElementById('files-upload-selected-size-value');
-        /**
-         * @return {void}
-         */
-        function refreshSelectedSize() {
-            var f = fileInputEl.files && fileInputEl.files[0];
-            if (!metaWrap || !metaVal) {
-                return;
-            }
-            if (!f) {
-                metaWrap.classList.add('d-none');
-                return;
-            }
-            metaVal.textContent = formatFilesSize(f.size);
-            metaWrap.classList.remove('d-none');
+        fileInputEl.addEventListener('change', function () {
+            pendingEntriesOverride = null;
+            refreshSelectionMeta();
+        });
+
+        if (folderInput) {
+            folderInput.addEventListener('change', function () {
+                var built = [];
+                for (var i = 0; i < folderInput.files.length; i++) {
+                    built.push(buildUploadEntryFromFile(folderInput.files[i]));
+                }
+                pendingEntriesOverride = filterUploadEntries(built);
+                assignFilesToInput(
+                    fileInputEl,
+                    built.map(function (entry) {
+                        return entry.file;
+                    })
+                );
+                folderInput.value = '';
+                refreshSelectionMeta();
+            });
         }
-        fileInputEl.addEventListener('change', refreshSelectedSize);
+
+        if (pickFolderBtn && folderInput) {
+            pickFolderBtn.addEventListener('click', function () {
+                if (!uploadBusy) {
+                    folderInput.click();
+                }
+            });
+        }
+
+        var filterSystemEl = document.getElementById('files-upload-filter-system');
+        if (filterSystemEl) {
+            filterSystemEl.addEventListener('change', refreshSelectionMeta);
+        }
 
         formEl.addEventListener('submit', function (ev) {
             ev.preventDefault();
             if (!formEl.reportValidity()) {
                 return;
             }
-            var file = fileInputEl.files && fileInputEl.files[0];
-            if (!file) {
+
+            var entries = buildEntriesFromInput();
+            if (!entries.length) {
                 return;
+            }
+
+            var maxFilesBlock = parseInt(modalEl.dataset.filesUploadMaxFilesBlock || '2000', 10);
+            var maxFilesWarn = parseInt(modalEl.dataset.filesUploadMaxFilesWarn || '500', 10);
+            var maxBytes = parseInt(modalEl.dataset.filesUploadMaxBytes || '0', 10);
+            if (entries.length > maxFilesBlock) {
+                showError(fillTemplate(msg('msgMultiTooManyFiles'), { '%count%': String(entries.length) }));
+                return;
+            }
+            var totalSize = 0;
+            entries.forEach(function (entry) {
+                totalSize += entry.size || 0;
+                if (maxBytes > 0 && entry.size > maxBytes) {
+                    entry.state = 'error';
+                    entry.error = msg('msgXhrNetworkError');
+                }
+            });
+            if (entries.length > maxFilesWarn) {
+                var confirmTpl = msg('msgMultiConfirmMany');
+                if (confirmTpl !== '' && !window.confirm(fillTemplate(confirmTpl, {
+                    '%count%': String(entries.length),
+                    '%size%': formatFilesSize(totalSize)
+                }))) {
+                    return;
+                }
             }
 
             var sessionUrl = modalEl.dataset.filesUploadSessionUrl || '';
@@ -310,27 +1035,16 @@
                 errorEl.classList.add('d-none');
                 errorEl.textContent = '';
             }
-            setSubmittingUi(true);
 
+            uploadCancelRequested = false;
+            queueEntries = entries.slice();
+            renderQueueUi();
+            setSubmittingUi(true);
+            if (queueWrap) {
+                queueWrap.classList.remove('d-none');
+            }
             if (progressWrap) {
-                progressWrap.classList.remove('d-none');
-            }
-            if (phaseEl) {
-                phaseEl.textContent = msg('msgProgressSending');
-            }
-            if (detWrap) {
-                var ariaBar = msg('msgProgressBarAria');
-                if (ariaBar) {
-                    detWrap.setAttribute('aria-label', ariaBar);
-                }
-                detWrap.classList.remove('d-none');
-                detWrap.setAttribute('aria-valuenow', '0');
-            }
-            if (barEl) {
-                barEl.style.width = '0%';
-            }
-            if (indWrap) {
-                indWrap.classList.add('d-none');
+                progressWrap.classList.add('d-none');
             }
 
             var csrfInp = formEl.querySelector('[name="_csrf_token"]');
@@ -353,183 +1067,78 @@
                 });
             }
 
-            /**
-             * @param {number} loadedSoFar Bytes uploaded so far.
-             * @return {void}
-             */
-            function updateProgressBar(loadedSoFar) {
-                if (!detWrap || !barEl || !phaseEl || file.size <= 0) {
+            var context = {
+                formEl: formEl,
+                sessionUrl: sessionUrl,
+                chunkUrl: chunkUrl,
+                finalizeUrl: finalizeUrl,
+                csrf: csrf,
+                appendRetainFields: appendRetainFields,
+                msg: msg,
+                isCancelled: function () {
+                    return uploadCancelRequested;
+                },
+                setActiveXhr: function (xhr) {
+                    activeXhr = xhr;
+                },
+                onFileProgress: function (index, loaded, total) {
+                    updateQueueItemProgress(index, loaded, total);
+                },
+                onFileStateChange: function (index, state, errorMessage) {
+                    updateQueueItemState(index, state, errorMessage);
+                },
+                onGlobalProgress: function (completedBytes, totalBytes, currentIndex, totalCount) {
+                    updateGlobalProgress(completedBytes, totalBytes, currentIndex, totalCount);
+                }
+            };
+
+            uploadFileQueue(queueEntries, context).then(function (summary) {
+                setSubmittingUi(false);
+                uploadCancelRequested = false;
+                activeXhr = null;
+
+                var listingShell = document.getElementById('files-live-region');
+                var toastMsg = '';
+                if (summary.cancelled) {
+                    toastMsg = fillTemplate(msg('msgMultiSummaryPartial'), {
+                        '%ok%': String(summary.okCount),
+                        '%total%': String(queueEntries.length),
+                        '%failed%': String(summary.failedCount)
+                    });
+                } else if (summary.failedCount > 0) {
+                    toastMsg = fillTemplate(msg('msgMultiSummaryPartial'), {
+                        '%ok%': String(summary.okCount),
+                        '%total%': String(queueEntries.length),
+                        '%failed%': String(summary.failedCount)
+                    });
+                } else {
+                    toastMsg = fillTemplate(msg('msgMultiSummaryOk'), { '%count%': String(summary.okCount) });
+                }
+
+                if (summary.failedCount === 0 && !summary.cancelled && listingShell && typeof runPartialFetch === 'function') {
+                    if (toastMsg !== '' && typeof pushFilesToast === 'function') {
+                        pushFilesToast(toastMsg, 'success');
+                    }
+                    if (window.bootstrap && window.bootstrap.Modal) {
+                        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                    }
+                    formEl.reset();
+                    fileInputEl.value = '';
+                    pendingEntriesOverride = null;
+                    refreshSelectionMeta();
+                    var searchQ = document.getElementById('files-search-q');
+                    runPartialFetch(searchQ ? String(searchQ.value || '').trim() : '');
                     return;
                 }
-                detWrap.classList.remove('d-none');
-                if (indWrap) {
-                    indWrap.classList.add('d-none');
+
+                if (toastMsg !== '' && typeof pushFilesToast === 'function') {
+                    pushFilesToast(toastMsg, summary.failedCount > 0 || summary.cancelled ? 'warning' : 'success');
                 }
-                var pct = Math.min(100, Math.round((loadedSoFar / file.size) * 100));
-                barEl.style.width = pct + '%';
-                detWrap.setAttribute('aria-valuenow', String(pct));
-                phaseEl.textContent = msg('msgProgressSending');
-                if (percentEl) {
-                    percentEl.textContent = String(pct) + '%';
-                    percentEl.classList.remove('d-none');
+                if (summary.okCount > 0 && listingShell && typeof runPartialFetch === 'function') {
+                    var searchQ2 = document.getElementById('files-search-q');
+                    runPartialFetch(searchQ2 ? String(searchQ2.value || '').trim() : '');
                 }
-            }
-
-            syncUploadTargetFolderInput(formEl);
-            var fdSession = new FormData();
-            fdSession.append('expected_bytes', String(file.size));
-            fdSession.append('original_name', file.name);
-            appendRetainFields(fdSession);
-
-            fetch(sessionUrl, {
-                method: 'POST',
-                body: fdSession,
-                credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
-            })
-                .then(function (res) {
-                    return parseFetchJsonResponse(res);
-                })
-                .then(function (pack) {
-                    if (!pack.ok || !pack.json || pack.json.status !== 'ok' || typeof pack.json.upload_id !== 'string') {
-                        var m0 = pack.json && pack.json.message ? pack.json.message : msg('msgXhrNetworkError');
-                        throw new Error(typeof m0 === 'string' ? m0 : msg('msgXhrNetworkError'));
-                    }
-                    return pack.json;
-                })
-                .then(function (sess) {
-                    var uploadId = sess.upload_id;
-                    var chunkSz = sess.chunk_size_bytes ? parseInt(sess.chunk_size_bytes, 10) : 8388608;
-                    if (!chunkSz || chunkSz < 1024) {
-                        chunkSz = 8388608;
-                    }
-                    var offset = 0;
-                    var idx = 0;
-
-                    /**
-                     * @return {Promise<void>}
-                     */
-                    function nextChunk() {
-                        if (offset >= file.size) {
-                            return Promise.resolve();
-                        }
-                        var end = Math.min(offset + chunkSz, file.size);
-                        var blob = file.slice(offset, end);
-                        return new Promise(function (resolve, reject) {
-                            var xhr = new XMLHttpRequest();
-                            xhr.open('POST', chunkUrl);
-                            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                            xhr.setRequestHeader('Accept', 'application/json');
-                            xhr.responseType = 'text';
-                            var chunkStart = offset;
-                            xhr.upload.onprogress = function (e) {
-                                if (e.lengthComputable && file.size > 0) {
-                                    updateProgressBar(chunkStart + e.loaded);
-                                }
-                            };
-                            xhr.onload = function () {
-                                var raw = xhr.responseText || '';
-                                /** @type {{status?: string, message?: string}|null} */
-                                var pj = null;
-                                try {
-                                    pj = JSON.parse(raw);
-                                } catch {
-                                    pj = null;
-                                }
-                                if (xhr.status >= 200 && xhr.status < 300 && pj && pj.status === 'ok') {
-                                    offset = end;
-                                    idx += 1;
-                                    resolve();
-                                } else {
-                                    var em = (pj && pj.message) || msg('msgXhrNetworkError');
-                                    reject(new Error(em));
-                                }
-                            };
-                            xhr.onerror = function () {
-                                reject(new Error(msg('msgXhrNetworkError')));
-                            };
-                            var fdC = new FormData();
-                            fdC.append('upload_id', uploadId);
-                            fdC.append('chunk_index', String(idx));
-                            fdC.append('_csrf_token', csrf);
-                            fdC.append('chunk', blob, 'chunk.bin');
-                            appendRetainFields(fdC, true);
-                            xhr.send(fdC);
-                        }).then(function () {
-                            return nextChunk();
-                        });
-                    }
-
-                    return nextChunk().then(function () {
-                        if (phaseEl) {
-                            phaseEl.textContent = msg('msgProgressProcessing');
-                        }
-                        if (detWrap) {
-                            detWrap.classList.add('d-none');
-                        }
-                        if (indWrap) {
-                            indWrap.classList.remove('d-none');
-                        }
-                        if (percentEl) {
-                            percentEl.classList.add('d-none');
-                        }
-
-                        var fdF = new FormData();
-                        fdF.append('upload_id', uploadId);
-                        appendRetainFields(fdF);
-
-                        return fetch(finalizeUrl, {
-                            method: 'POST',
-                            body: fdF,
-                            credentials: 'same-origin',
-                            headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
-                        });
-                    });
-                })
-                .then(function (res) {
-                    return parseFetchJsonResponse(res);
-                })
-                .then(function (pack) {
-                    setSubmittingUi(false);
-                    var pj = pack.json;
-                    if (pj && pj.status === 'ok') {
-                        hideProgressUi();
-                        if (formEl) {
-                            formEl.reset();
-                        }
-                        if (fileInputEl) {
-                            fileInputEl.value = '';
-                        }
-                        refreshSelectedSize();
-                        if (window.bootstrap && window.bootstrap.Modal) {
-                            window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-                        }
-                        var listingShell = document.getElementById('files-live-region');
-                        if (listingShell && typeof runPartialFetch === 'function') {
-                            if (typeof pj.message === 'string' && pj.message !== '') {
-                                pushFilesToast(String(pj.message), 'success');
-                            }
-                            var searchQ = document.getElementById('files-search-q');
-                            runPartialFetch(searchQ ? String(searchQ.value || '').trim() : '');
-                        } else if (typeof pj.redirect === 'string' && pj.redirect !== '') {
-                            window.location.assign(pj.redirect);
-                        }
-                        return;
-                    }
-                    if (pj && typeof pj.message === 'string' && pj.message !== '') {
-                        showError(pj.message);
-                        hideProgressUi();
-                        return;
-                    }
-                    showError(msg('msgXhrNetworkError'));
-                    hideProgressUi();
-                })
-                .catch(function (err) {
-                    setSubmittingUi(false);
-                    var t = err && err.message ? err.message : msg('msgXhrNetworkError');
-                    showError(t);
-                    hideProgressUi();
-                });
+            });
         });
     }
 

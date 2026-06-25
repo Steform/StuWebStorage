@@ -19,6 +19,7 @@ use App\Repository\UserRepository;
 use App\Service\Share\FolderPropertiesService;
 use App\Service\Share\FolderPublicTokenService;
 use App\Service\Share\FolderTreeService;
+use App\Service\Share\SharedForMeTreeService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -52,6 +53,7 @@ final class UserFilesPaneBuilderService
         private readonly FolderTreeService $folderTreeService,
         private readonly FolderPropertiesService $folderPropertiesService,
         private readonly FolderPublicTokenService $folderPublicTokenService,
+        private readonly SharedForMeTreeService $sharedForMeTreeService,
         private readonly UrlGeneratorInterface $urlGenerator,
     ) {
     }
@@ -173,43 +175,27 @@ final class UserFilesPaneBuilderService
             $allSharedForMeFiles = $this->sharedFileRepository->findSharedForGranteeAll($subjectUserId, $criteria);
         }
 
-        $sharedForMeFolders = $this->buildActiveSharedForMeFolders($allSharedForMeFiles);
-        ksort($sharedForMeFolders);
-        $sharedForMeCurrentFolderId = $useNamespacedFolderQueryKeys
+        $requestedSharedFolderId = $useNamespacedFolderQueryKeys
             ? (int) $request->query->get(UserPaneFolderQueryKeys::sharedFolderKey($subjectUserId), 0)
             : (int) $request->query->get('shared_folder', 0);
         if (!$showSharedListingSection) {
-            $sharedForMeCurrentFolderId = 0;
+            $requestedSharedFolderId = 0;
         }
-        if ($sharedForMeCurrentFolderId > 0 && !isset($sharedForMeFolders[$sharedForMeCurrentFolderId])) {
-            $sharedForMeCurrentFolderId = 0;
-        }
-
-        $sharedForMeFiles = array_values(array_filter(
+        $sharedListingContext = $this->sharedForMeTreeService->buildListingContext(
             $allSharedForMeFiles,
-            static function (SharedFile $sharedFile) use ($sharedForMeCurrentFolderId): bool {
-                $folderId = $sharedFile->getFolder()?->getId();
-                if ($sharedForMeCurrentFolderId > 0) {
-                    return $folderId === $sharedForMeCurrentFolderId;
-                }
-
-                return $folderId === null;
-            }
-        ));
-
-        $sharedFolderSizeBytes = [];
-        foreach ($allSharedForMeFiles as $sharedForMeFile) {
-            $sharedFolderId = (int) ($sharedForMeFile->getFolder()?->getId() ?? 0);
+            $requestedSharedFolderId,
+        );
+        $sharedForMeCurrentFolderId = $sharedListingContext->currentFolderId;
+        $sharedBreadcrumbFolders = $sharedListingContext->breadcrumbFolders;
+        $sharedForMeFiles = $sharedListingContext->filesAtLevel;
+        $sharedFolderSizeBytes = $sharedListingContext->folderSizeBytes;
+        $sharedForMeFolders = [];
+        foreach ($sharedListingContext->foldersAtLevel as $sharedForMeFolderRow) {
+            $sharedFolderId = (int) ($sharedForMeFolderRow['id'] ?? 0);
             if ($sharedFolderId < 1) {
                 continue;
             }
-            $sharedFolderSizeBytes[$sharedFolderId] = (int) ($sharedFolderSizeBytes[$sharedFolderId] ?? 0) + (int) $sharedForMeFile->getByteSize();
-        }
-        foreach ($sharedForMeFolders as $sharedForMeFolder) {
-            $sharedFolderId = (int) ($sharedForMeFolder['id'] ?? 0);
-            if ($sharedFolderId < 1) {
-                continue;
-            }
+            $sharedForMeFolders[$sharedFolderId] = $sharedForMeFolderRow;
             if (!isset($sharedFolderSizeBytes[$sharedFolderId])) {
                 $sharedFolderSizeBytes[$sharedFolderId] = 0;
             }
@@ -218,17 +204,17 @@ final class UserFilesPaneBuilderService
         $sharedOwnerLabelsByFolderId = [];
         $sharedOwnerIds = [];
         $sharedOwnerByFolderId = [];
+        foreach ($sharedListingContext->registry as $sharedFolderId => $sharedFolderNode) {
+            $sharedOwnerId = $sharedFolderNode->ownerUserId;
+            if ($sharedOwnerId > 0) {
+                $sharedOwnerIds[$sharedOwnerId] = $sharedOwnerId;
+                $sharedOwnerByFolderId[$sharedFolderId] = $sharedOwnerId;
+            }
+        }
         foreach ($allSharedForMeFiles as $sharedForMeFile) {
             $sharedOwnerId = (int) $sharedForMeFile->getOwnerUserId();
             if ($sharedOwnerId > 0) {
                 $sharedOwnerIds[$sharedOwnerId] = $sharedOwnerId;
-            }
-            $sharedFolderId = (int) ($sharedForMeFile->getFolder()?->getId() ?? 0);
-            if ($sharedFolderId > 0 && $sharedOwnerId > 0) {
-                $currentFolderOwnerId = (int) ($sharedOwnerByFolderId[$sharedFolderId] ?? 0);
-                if ($currentFolderOwnerId < 1 || $sharedOwnerId < $currentFolderOwnerId) {
-                    $sharedOwnerByFolderId[$sharedFolderId] = $sharedOwnerId;
-                }
             }
         }
         $sharedOwnerLabelsByUserId = [];
@@ -297,11 +283,12 @@ final class UserFilesPaneBuilderService
         $shared = [
             'sharedForMeFiles' => $sharedForMeFiles,
             'sharedForMeFolders' => array_values($sharedForMeFolders),
+            'sharedBreadcrumbFolders' => $sharedBreadcrumbFolders,
             'sharedFolderSizeBytes' => $sharedFolderSizeBytes,
             'sharedOwnerLabelsByFileId' => $sharedOwnerLabelsByFileId,
             'sharedOwnerLabelsByFolderId' => $sharedOwnerLabelsByFolderId,
             'sharedForMeCurrentFolderId' => $sharedForMeCurrentFolderId,
-            'hasSharedForMe' => $allSharedForMeFiles !== [] || $sharedForMeFolders !== [],
+            'hasSharedForMe' => $allSharedForMeFiles !== [] || $sharedListingContext->registry !== [],
         ];
 
         return new UserFilesPaneViewModel(
@@ -353,33 +340,6 @@ final class UserFilesPaneBuilderService
         );
 
         return $sharedForMeFolders;
-    }
-
-    /**
-     * @brief Build shared-for-me folder rows from active shared files only, including active parent lineage for subtree navigation.
-     * @param array<int, SharedFile> $activeSharedFiles Active shared files visible to grantee.
-     * @return array<int, array{id: int, name: string}>
-     * @date 2026-05-06
-     * @author Stephane H.
-     */
-    private function buildActiveSharedForMeFolders(array $activeSharedFiles): array
-    {
-        $folders = [];
-        foreach ($activeSharedFiles as $sharedForMeFile) {
-            $folderCursor = $sharedForMeFile->getFolder();
-            while ($folderCursor instanceof Folder) {
-                $folderId = (int) ($folderCursor->getId() ?? 0);
-                if ($folderId > 0) {
-                    $folders[$folderId] = [
-                        'id' => $folderId,
-                        'name' => $folderCursor->getName(),
-                    ];
-                }
-                $folderCursor = $folderCursor->getParent();
-            }
-        }
-
-        return $folders;
     }
 
     /**

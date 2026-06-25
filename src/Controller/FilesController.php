@@ -646,9 +646,11 @@ class FilesController extends AbstractController
             $currentFolderShareState = null;
             $allSharedForMeFiles = [];
             $sharedForMeFolders = [];
+            $sharedBreadcrumbFolders = [];
             $sharedForMeCurrentFolderId = 0;
             $sharedForMeFiles = [];
             $sharedFolderSizeBytes = [];
+            $sharedOwnerLabelsByFolderIdFromPane = [];
             $grantMaps = [];
             foreach ($userFilesPanes as $p) {
                 foreach ($p->grantMaps as $fid => $g) {
@@ -701,23 +703,10 @@ class FilesController extends AbstractController
             $breadcrumbFolders = $o['breadcrumbFolders'];
             $sharedForMeFiles = $s['sharedForMeFiles'];
             $sharedForMeFolders = $s['sharedForMeFolders'];
-            $sharedForMeFoldersById = [];
-            foreach ($sharedForMeFolders as $sharedForMeFolderRow) {
-                if (!\is_array($sharedForMeFolderRow)) {
-                    continue;
-                }
-                $sharedForMeFolderId = (int) ($sharedForMeFolderRow['id'] ?? 0);
-                if ($sharedForMeFolderId < 1) {
-                    continue;
-                }
-                $sharedForMeFoldersById[$sharedForMeFolderId] = [
-                    'id' => $sharedForMeFolderId,
-                    'name' => (string) ($sharedForMeFolderRow['name'] ?? ''),
-                ];
-            }
-            $sharedForMeFolders = $sharedForMeFoldersById;
+            $sharedBreadcrumbFolders = $s['sharedBreadcrumbFolders'] ?? [];
             $sharedFolderSizeBytes = $s['sharedFolderSizeBytes'];
             $sharedForMeCurrentFolderId = $s['sharedForMeCurrentFolderId'];
+            $sharedOwnerLabelsByFolderIdFromPane = $s['sharedOwnerLabelsByFolderId'] ?? [];
             $grantMaps = $singlePane->grantMaps;
             $total = \count($files);
             $granteeForSharedListing = $adminContext ? $subjectId : $currentUserId;
@@ -727,97 +716,21 @@ class FilesController extends AbstractController
             if (!$paneShowShared) {
                 $sharedForMeCurrentFolderId = 0;
             }
-            if ($sharedForMeCurrentFolderId > 0 && !isset($sharedForMeFolders[$sharedForMeCurrentFolderId])) {
-                $sharedForMeCurrentFolderId = 0;
-            }
-            $sharedForMeFiles = array_values(array_filter(
-                $allSharedForMeFiles,
-                static function (SharedFile $sharedFile) use ($sharedForMeCurrentFolderId): bool {
-                    $folderId = $sharedFile->getFolder()?->getId();
-                    if ($sharedForMeCurrentFolderId > 0) {
-                        return $folderId === $sharedForMeCurrentFolderId;
-                    }
-
-                    return $folderId === null;
-                }
-            ));
-            $hasFilesInRequestedSharedFolder = false;
-            $hasRequestedSharedFolderInListing = false;
-            if ($sharedForMeCurrentFolderId > 0) {
-                foreach ($sharedForMeFolders as $sharedForMeFolderCheck) {
-                    if (!\is_array($sharedForMeFolderCheck)) {
-                        continue;
-                    }
-                    if ((int) ($sharedForMeFolderCheck['id'] ?? 0) === $sharedForMeCurrentFolderId) {
-                        $hasRequestedSharedFolderInListing = true;
-                        break;
-                    }
-                }
-                foreach ($allSharedForMeFiles as $sharedForMeFileInRequestedFolderCheck) {
-                    if ((int) ($sharedForMeFileInRequestedFolderCheck->getFolder()?->getId() ?? 0) === $sharedForMeCurrentFolderId) {
-                        $hasFilesInRequestedSharedFolder = true;
-                        break;
-                    }
-                }
-                if (!$hasFilesInRequestedSharedFolder && !$hasRequestedSharedFolderInListing) {
-                    $sharedForMeCurrentFolderId = 0;
-                    $sharedForMeFiles = array_values(array_filter(
-                        $allSharedForMeFiles,
-                        static fn (SharedFile $sharedFile): bool => $sharedFile->getFolder()?->getId() === null
-                    ));
-                }
-            }
-            $sharedFolderSizeBytes = [];
-            foreach ($allSharedForMeFiles as $sharedForMeFile) {
-                $sharedFolderId = (int) ($sharedForMeFile->getFolder()?->getId() ?? 0);
-                if ($sharedFolderId < 1) {
-                    continue;
-                }
-                $sharedFolderSizeBytes[$sharedFolderId] = (int) ($sharedFolderSizeBytes[$sharedFolderId] ?? 0) + (int) $sharedForMeFile->getByteSize();
-            }
         }
 
         $sharedForMeFolders = isset($sharedForMeFolders) && \is_array($sharedForMeFolders) ? $sharedForMeFolders : [];
-        foreach ($allSharedForMeFiles as $sharedForMeFile) {
-            $sharedFolder = $sharedForMeFile->getFolder();
-            $sharedFolderId = $sharedFolder?->getId();
-            if ($sharedFolderId === null || $sharedFolderId <= 0) {
-                continue;
-            }
-            $sharedForMeFolders[$sharedFolderId] = [
-                'id' => $sharedFolderId,
-                'name' => $sharedFolder->getName(),
-            ];
-        }
-        ksort($sharedForMeFolders);
+        $sharedBreadcrumbFolders = isset($sharedBreadcrumbFolders) && \is_array($sharedBreadcrumbFolders) ? $sharedBreadcrumbFolders : [];
+        $sharedOwnerLabelsByFolderIdFromPane = isset($sharedOwnerLabelsByFolderIdFromPane) && \is_array($sharedOwnerLabelsByFolderIdFromPane)
+            ? $sharedOwnerLabelsByFolderIdFromPane
+            : [];
         if (!$paneShowShared) {
             $sharedForMeCurrentFolderId = 0;
         }
-        if ($sharedForMeCurrentFolderId > 0 && !isset($sharedForMeFolders[$sharedForMeCurrentFolderId])) {
-            $sharedForMeCurrentFolderId = 0;
-        }
         if (!isset($sharedForMeFiles)) {
-            $sharedForMeFiles = array_values(array_filter(
-                $allSharedForMeFiles,
-                static function (SharedFile $sharedFile) use ($sharedForMeCurrentFolderId): bool {
-                    $folderId = $sharedFile->getFolder()?->getId();
-                    if ($sharedForMeCurrentFolderId > 0) {
-                        return $folderId === $sharedForMeCurrentFolderId;
-                    }
-
-                    return $folderId === null;
-                }
-            ));
+            $sharedForMeFiles = [];
         }
         if (!isset($sharedFolderSizeBytes)) {
             $sharedFolderSizeBytes = [];
-            foreach ($allSharedForMeFiles as $sharedForMeFile) {
-                $sharedFolderId = (int) ($sharedForMeFile->getFolder()?->getId() ?? 0);
-                if ($sharedFolderId < 1) {
-                    continue;
-                }
-                $sharedFolderSizeBytes[$sharedFolderId] = (int) ($sharedFolderSizeBytes[$sharedFolderId] ?? 0) + (int) $sharedForMeFile->getByteSize();
-            }
         }
         $connection = $this->entityManager->getConnection();
         $grantRowsForUser = $adminContext ? 0 : (int) $connection->fetchOne(
@@ -967,6 +880,10 @@ class FilesController extends AbstractController
                 if ($sharedFolderId < 1) {
                     continue;
                 }
+                if (isset($sharedOwnerLabelsByFolderIdFromPane[$sharedFolderId])) {
+                    $ownerLabelsByFolderId[$sharedFolderId] = (string) $sharedOwnerLabelsByFolderIdFromPane[$sharedFolderId];
+                    continue;
+                }
                 $sharedFolderOwnerId = (int) ($sharedOwnerByFolderId[$sharedFolderId] ?? 0);
                 if ($sharedFolderOwnerId < 1) {
                     continue;
@@ -975,7 +892,18 @@ class FilesController extends AbstractController
             }
         }
         if ($showSharedListingSection && $criteria->sortField === 'pseudo' && !$criteria->isSortNeutral()) {
-            $sharedForMeFolders = $this->sortSharedFoldersByOwnerLabel($sharedForMeFolders, $ownerLabelsByFolderId, $criteria->sortDirection);
+            $sharedForMeFoldersKeyed = [];
+            foreach ($sharedForMeFolders as $sharedForMeFolderRow) {
+                if (!\is_array($sharedForMeFolderRow)) {
+                    continue;
+                }
+                $sharedFolderId = (int) ($sharedForMeFolderRow['id'] ?? 0);
+                if ($sharedFolderId > 0) {
+                    $sharedForMeFoldersKeyed[$sharedFolderId] = $sharedForMeFolderRow;
+                }
+            }
+            $sharedForMeFoldersKeyed = $this->sortSharedFoldersByOwnerLabel($sharedForMeFoldersKeyed, $ownerLabelsByFolderId, $criteria->sortDirection);
+            $sharedForMeFolders = array_values($sharedForMeFoldersKeyed);
         }
 
         $listingQueryMerged = $criteria->toQueryParams();
@@ -1071,6 +999,7 @@ class FilesController extends AbstractController
             'breadcrumbFolders' => $breadcrumbFolders,
             'sharedForMeFiles' => $useUserFilesPanes && $adminContext ? [] : $sharedForMeFiles,
             'sharedForMeFolders' => $useUserFilesPanes && $adminContext ? [] : array_values($sharedForMeFolders),
+            'sharedBreadcrumbFolders' => $useUserFilesPanes && $adminContext ? [] : $sharedBreadcrumbFolders,
             'sharedFolderSizeBytes' => $sharedFolderSizeBytes,
             'sharedForMeCurrentFolderId' => $sharedForMeCurrentFolderId,
             'hasSharedForMe' => $allSharedForMeFiles !== [] || $sharedForMeFolders !== [],
@@ -1504,6 +1433,8 @@ class FilesController extends AbstractController
             return $this->chunkUploadJsonOrRedirect($request, $translator, $resolvedFolder['error'], 400);
         }
         $folderRetain = $resolvedFolder['folderId'];
+        $relativePathRaw = trim((string) $request->request->get('relative_path', ''));
+        $relativePath = $relativePathRaw !== '' ? $relativePathRaw : null;
 
         $maxUploadBytes = $this->resolveAppMaxUploadBytes();
         if ($expectedBytes < 0 || $expectedBytes > $maxUploadBytes) {
@@ -1511,7 +1442,13 @@ class FilesController extends AbstractController
         }
 
         try {
-            $payload = $this->chunkedUploadService->createSession($ownerId, $expectedBytes, $originalName, $folderRetain);
+            $payload = $this->chunkedUploadService->createSession(
+                $ownerId,
+                $expectedBytes,
+                $originalName,
+                $folderRetain,
+                $relativePath
+            );
         } catch (\RuntimeException $e) {
             return $this->chunkUploadJsonOrRedirect($request, $translator, $this->mapChunkExceptionToFlashKey($e), 400);
         }
@@ -1855,6 +1792,7 @@ class FilesController extends AbstractController
             'chunk_upload.quota_exceeded', 'storage_quota.exceeded' => 'files.flash.quota_exceeded',
             'chunk_upload.incomplete' => 'files.flash.upload_invalid',
             'chunk_upload.name_conflict' => 'files.flash.upload_name_conflict',
+            'chunk_upload.path_invalid' => 'files.flash.upload_path_invalid',
             'chunk_upload.part_missing' => 'files.flash.upload_invalid',
             'chunk_upload.storage_failed', 'chunk_upload.append_failed', 'chunk_upload.part_init_failed', 'chunk_upload.meta_write_failed', 'chunk_upload.mkdir_failed' => 'files.flash.storage_failed',
             default => 'files.flash.upload_invalid',

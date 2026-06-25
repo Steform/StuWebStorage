@@ -406,6 +406,23 @@
         data-msg-progress-processing="{{ 'files.upload.progress_processing'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-progress-bar-aria="{{ 'files.upload.progress_bar_aria'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-xhr-network-error="{{ 'files.upload.xhr_network_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-global-label="{{ 'files.upload.multi.global_label'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-global-bytes="{{ 'files.upload.multi.global_bytes'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-status-pending="{{ 'files.upload.multi.status.pending'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-status-uploading="{{ 'files.upload.multi.status.uploading'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-status-processing="{{ 'files.upload.multi.status.processing'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-status-done="{{ 'files.upload.multi.status.done'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-status-error="{{ 'files.upload.multi.status.error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-status-cancelled="{{ 'files.upload.multi.status.cancelled'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-summary-ok="{{ 'files.upload.multi.summary_ok'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-summary-partial="{{ 'files.upload.multi.summary_partial'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-tree-detected="{{ 'files.upload.multi.tree_detected'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-too-many-files="{{ 'files.upload.multi.too_many_files'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-filter-system-hint="{{ 'files.upload.multi.filter_system_hint'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-confirm-many="{{ 'files.upload.multi.confirm_many'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-files-upload-max-files-block="{{ 2000 }}"
+        data-files-upload-max-files-warn="{{ 500 }}"
+        data-files-upload-max-bytes="{{ maxUploadBytes }}"
         data-files-upload-session-url="{{ path('files_upload_session') }}"
         data-files-upload-chunk-url="{{ path('files_upload_chunk') }}"
         data-files-upload-finalize-url="{{ path('files_upload_finalize') }}"
@@ -413,7 +430,7 @@
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title h5" id="filesUploadModalTitle">{{ 'files.upload.modal_title'|trans({}, 'messages', currentLocale) }}</h2>
+                    <h2 class="modal-title h5" id="filesUploadModalTitle">{{ 'files.upload.multi.modal_title'|trans({}, 'messages', currentLocale) }}</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" data-files-upload-dismiss aria-label="{{ 'files.upload.modal_close'|trans({}, 'messages', currentLocale) }}"></button>
                 </div>
                 <form id="files-upload-form" action="{{ path('files_upload') }}" method="post" enctype="multipart/form-data">
@@ -430,15 +447,40 @@
                         </div>
                         <div id="files-upload-error" class="alert alert-danger d-none" role="alert" aria-live="assertive"></div>
                         <p id="files-upload-selected-meta" class="small text-muted mb-2 d-none">
+                            <span id="files-upload-selected-count-label">{{ 'files.upload.multi.selection_summary'|trans({}, 'messages', currentLocale) }}</span>
+                            <span id="files-upload-selected-count-value"></span>
+                            <span class="mx-1" aria-hidden="true">—</span>
                             <span id="files-upload-selected-size-label">{{ 'files.upload.selected_byte_size_label'|trans({}, 'messages', currentLocale) }}</span>
                             <span id="files-upload-selected-size-value"></span>
                         </p>
-                        <p class="text-muted small files-drop-hint mb-3">{{ 'files.upload.drop_hint'|trans({}, 'messages', currentLocale) }}</p>
+                        <p id="files-upload-tree-hint" class="small text-info mb-2 d-none" aria-live="polite"></p>
+                        <p class="text-muted small files-drop-hint mb-3">{{ 'files.upload.multi.drop_hint'|trans({}, 'messages', currentLocale) }}</p>
                         <div class="row g-3">
                             <div class="col-12">
-                                <label class="form-label" for="file-upload">{{ 'files.upload.file_label'|trans({}, 'messages', currentLocale) }}</label>
-                                <input class="form-control" id="file-upload" type="file" name="file" required autocomplete="off">
+                                <label class="form-label" for="file-upload">{{ 'files.upload.multi.pick_files'|trans({}, 'messages', currentLocale) }}</label>
+                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                    <input class="form-control flex-grow-1" id="file-upload" type="file" name="file" multiple required autocomplete="off">
+                                    <button type="button" class="btn btn-outline-secondary flex-shrink-0" id="files-upload-pick-folder">{{ 'files.upload.multi.pick_folder'|trans({}, 'messages', currentLocale) }}</button>
+                                </div>
+                                <input class="d-none" id="files-upload-folder-input" type="file" webkitdirectory directory multiple autocomplete="off" tabindex="-1" aria-hidden="true">
                             </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="files-upload-filter-system" checked>
+                                    <label class="form-check-label" for="files-upload-filter-system">{{ 'files.upload.multi.filter_system_label'|trans({}, 'messages', currentLocale) }}</label>
+                                </div>
+                                <p class="form-text small mb-0">{{ 'files.upload.multi.filter_system_hint'|trans({}, 'messages', currentLocale) }}</p>
+                            </div>
+                        </div>
+                        <div id="files-upload-queue-wrap" class="d-none mt-3">
+                            <div id="files-upload-global-progress" class="mb-3">
+                                <p class="small text-muted mb-1" id="files-upload-global-label" aria-live="polite"></p>
+                                <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="files-upload-global-progress-bar-wrap">
+                                    <div id="files-upload-global-progress-bar" class="progress-bar" style="width: 0%"></div>
+                                </div>
+                                <p class="small text-muted mb-0 mt-1" id="files-upload-global-bytes"></p>
+                            </div>
+                            <ul id="files-upload-queue" class="list-unstyled files-upload-queue mb-0" aria-live="polite"></ul>
                         </div>
                         <p class="text-muted small mt-2 mb-0">{{ 'files.upload.bytes_hint'|trans({'%formatted_size%': maxUploadBytes|files_size_format}, 'messages', currentLocale) }}</p>
                         <div id="files-upload-progress-wrap" class="d-none mt-3">
@@ -453,7 +495,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-files-upload-dismiss>{{ 'files.upload.modal_cancel'|trans({}, 'messages', currentLocale) }}</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-files-upload-dismiss data-files-upload-cancel>{{ 'files.upload.modal_cancel'|trans({}, 'messages', currentLocale) }}</button>
                         <button type="submit" class="btn btn-primary" data-files-upload-submit{% if adminContext|default(false) %} data-files-target-owner-submit{% endif %}{% if requireAdminTargetOwner|default(false) %} disabled{% endif %}>{{ 'files.upload.submit'|trans({}, 'messages', currentLocale) }}</button>
                     </div>
                 </form>

@@ -38,6 +38,7 @@ final class AdminListingScopeSharedVisibilityTest extends KernelTestCase
             'currentFolder' => null,
             'sharedForMeFiles' => [],
             'sharedForMeFolders' => [],
+            'sharedBreadcrumbFolders' => [],
             'sharedFolderSizeBytes' => [],
             'sharedForMeCurrentFolderId' => 0,
             'total' => 0,

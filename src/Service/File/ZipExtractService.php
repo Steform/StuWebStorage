@@ -52,6 +52,7 @@ final class ZipExtractService
         private readonly PublicDownloadChallengeRepository $publicDownloadChallengeRepository,
         private readonly PublicShareService $publicShareService,
         private readonly FriendsShareService $friendsShareService,
+        private readonly FolderPathMaterializerService $folderPathMaterializerService,
         private readonly string $projectDir,
     ) {
     }
@@ -250,7 +251,7 @@ final class ZipExtractService
                 $meta['current_entry'] = $sanitizedPath;
 
                 if ($isDir) {
-                    $this->ensureFolderPathFromRelative(
+                    $this->folderPathMaterializerService->ensureFolderPathFromRelative(
                         $ownerUserId,
                         $baseFolder,
                         $sanitizedPath,
@@ -402,7 +403,7 @@ final class ZipExtractService
 
         if ($mode === self::MODE_SUBFOLDER && $sourceFile instanceof SharedFile) {
             $subfolderName = $this->deriveSubfolderName($sourceFile->getOriginalFileName());
-            $resolved = $this->resolveFolderSegmentName(
+            $resolved = $this->folderPathMaterializerService->resolveFolderSegmentName(
                 $ownerUserId,
                 $targetFolder,
                 $subfolderName,
@@ -645,20 +646,20 @@ final class ZipExtractService
             return 'skipped';
         }
 
-        $folderResult = $this->ensureFolderPathFromRelative(
+        $folderResult = $this->folderPathMaterializerService->ensureFolderPathFromRelative(
             $ownerUserId,
             $baseFolder,
             implode('/', $parts),
             $conflictPolicy,
             $meta
         );
-        if ($folderResult === 'abort') {
+        if ($folderResult === FolderPathMaterializerService::CONFLICT_ABORT) {
             return 'abort';
         }
         /** @var Folder|null $parentFolder */
         $parentFolder = $folderResult;
 
-        $resolvedName = $this->resolveFileName(
+        $resolvedName = $this->folderPathMaterializerService->resolveFileName(
             $ownerUserId,
             $parentFolder,
             $fileName,
@@ -726,213 +727,6 @@ final class ZipExtractService
         }
 
         return 'extracted';
-    }
-
-    /**
-     * @param int $ownerUserId Owner id.
-     * @param Folder|null $baseFolder Root folder for relative paths.
-     * @param string $relativePath Relative folder path (may be empty).
-     * @param string $conflictPolicy Conflict policy constant.
-     * @param array<string, mixed> $meta Mutable job meta.
-     * @return Folder|null|string Folder, empty string when no path, or abort.
-     * @date 2026-06-24
-     * @author Stephane H.
-     */
-    private function ensureFolderPathFromRelative(
-        int $ownerUserId,
-        ?Folder $baseFolder,
-        string $relativePath,
-        string $conflictPolicy,
-        array &$meta,
-    ): Folder|null|string {
-        $relativePath = trim($relativePath, '/');
-        if ($relativePath === '') {
-            return $baseFolder;
-        }
-
-        $segments = explode('/', $relativePath);
-        $cursor = $baseFolder;
-        foreach ($segments as $segment) {
-            if ($segment === '') {
-                continue;
-            }
-            $resolved = $this->resolveFolderSegmentName($ownerUserId, $cursor, $segment, $conflictPolicy, $meta);
-            if ($resolved['action'] === 'abort') {
-                return 'abort';
-            }
-            if ($resolved['action'] === 'skip') {
-                return $conflictPolicy === self::CONFLICT_SKIP ? $cursor : 'abort';
-            }
-            $folder = $resolved['folder'];
-            if ($folder === null) {
-                $folder = new Folder($ownerUserId, $resolved['name'], $cursor);
-                $this->entityManager->persist($folder);
-                $this->entityManager->flush();
-                $fid = (int) ($folder->getId() ?? 0);
-                if ($fid > 0) {
-                    /** @var list<int> $createdFolderIds */
-                    $createdFolderIds = $meta['created_folder_ids'] ?? [];
-                    $createdFolderIds[] = $fid;
-                    $meta['created_folder_ids'] = $createdFolderIds;
-                }
-            }
-            $cursor = $folder;
-        }
-
-        return $cursor;
-    }
-
-    /**
-     * @param int $ownerUserId Owner id.
-     * @param Folder|null $parent Parent folder.
-     * @param string $segment Raw folder segment name.
-     * @param string $conflictPolicy Conflict policy constant.
-     * @param array<string, mixed>|null $meta Optional job meta for tracking created folders.
-     * @return array{action: string, name: string, folder: Folder|null}
-     * @date 2026-06-24
-     * @author Stephane H.
-     */
-    private function resolveFolderSegmentName(
-        int $ownerUserId,
-        ?Folder $parent,
-        string $segment,
-        string $conflictPolicy,
-        ?array &$meta,
-    ): array {
-        $normalized = Folder::normalizeName($segment);
-        $existingFolder = $this->folderRepository->findOneByOwnerParentAndNormalizedName($ownerUserId, $parent, $normalized);
-        if ($existingFolder instanceof Folder) {
-            return ['action' => 'use', 'name' => $existingFolder->getName(), 'folder' => $existingFolder];
-        }
-
-        if ($this->sharedFileRepository->findConflictingOwnedFileByNormalizedName($ownerUserId, $parent, $normalized, null) instanceof SharedFile) {
-            return $this->resolveConflictAction($ownerUserId, $parent, $segment, $conflictPolicy, true, $meta);
-        }
-
-        return ['action' => 'create', 'name' => $segment, 'folder' => null];
-    }
-
-    /**
-     * @param int $ownerUserId Owner id.
-     * @param Folder|null $parent Parent folder.
-     * @param string $fileName Desired file name.
-     * @param string $conflictPolicy Conflict policy constant.
-     * @return string|null Resolved unique file name or null when skipped/aborted.
-     * @date 2026-06-24
-     * @author Stephane H.
-     */
-    private function resolveFileName(
-        int $ownerUserId,
-        ?Folder $parent,
-        string $fileName,
-        string $conflictPolicy,
-    ): ?string {
-        $normalized = Folder::normalizeName($fileName);
-        $hasFileConflict = $this->sharedFileRepository->findConflictingOwnedFileByNormalizedName($ownerUserId, $parent, $normalized, null) instanceof SharedFile;
-        $hasFolderConflict = $this->folderRepository->findOneByOwnerParentAndNormalizedName($ownerUserId, $parent, $normalized) instanceof Folder;
-
-        if (!$hasFileConflict && !$hasFolderConflict) {
-            return $fileName;
-        }
-
-        if ($conflictPolicy === self::CONFLICT_SKIP) {
-            return null;
-        }
-        if ($conflictPolicy === self::CONFLICT_ABORT) {
-            return null;
-        }
-
-        return $this->buildRenamedFileName($ownerUserId, $parent, $fileName);
-    }
-
-    /**
-     * @param int $ownerUserId Owner id.
-     * @param Folder|null $parent Parent folder.
-     * @param string $originalName Original display name.
-     * @return string
-     * @date 2026-06-24
-     * @author Stephane H.
-     */
-    private function buildRenamedFileName(int $ownerUserId, ?Folder $parent, string $originalName): string
-    {
-        $base = pathinfo($originalName, PATHINFO_FILENAME);
-        $ext = pathinfo($originalName, PATHINFO_EXTENSION);
-        if ($base === '') {
-            $base = $originalName;
-        }
-
-        for ($n = 1; $n <= 999; ++$n) {
-            $candidate = $ext !== '' ? \sprintf('%s (%d).%s', $base, $n, $ext) : \sprintf('%s (%d)', $base, $n);
-            $normalized = Folder::normalizeName($candidate);
-            $fileConflict = $this->sharedFileRepository->findConflictingOwnedFileByNormalizedName($ownerUserId, $parent, $normalized, null) instanceof SharedFile;
-            $folderConflict = $this->folderRepository->findOneByOwnerParentAndNormalizedName($ownerUserId, $parent, $normalized) instanceof Folder;
-            if (!$fileConflict && !$folderConflict) {
-                return $candidate;
-            }
-        }
-
-        return $originalName.'_'.bin2hex(random_bytes(4));
-    }
-
-    /**
-     * @param int $ownerUserId Owner id.
-     * @param Folder|null $parent Parent folder.
-     * @param string $segment Original segment name.
-     * @param string $conflictPolicy Conflict policy constant.
-     * @param bool $isFolder Whether the conflict target is a folder segment.
-     * @param array<string, mixed>|null $meta Optional job meta.
-     * @return array{action: string, name: string, folder: Folder|null}
-     * @date 2026-06-24
-     * @author Stephane H.
-     */
-    private function resolveConflictAction(
-        int $ownerUserId,
-        ?Folder $parent,
-        string $segment,
-        string $conflictPolicy,
-        bool $isFolder,
-        ?array &$meta,
-    ): array {
-        if ($conflictPolicy === self::CONFLICT_SKIP) {
-            return ['action' => 'skip', 'name' => $segment, 'folder' => null];
-        }
-        if ($conflictPolicy === self::CONFLICT_ABORT) {
-            return ['action' => 'abort', 'name' => $segment, 'folder' => null];
-        }
-
-        $renamed = $isFolder
-            ? $this->buildRenamedFolderName($ownerUserId, $parent, $segment, $meta)
-            : $this->buildRenamedFileName($ownerUserId, $parent, $segment);
-
-        return ['action' => 'create', 'name' => $renamed, 'folder' => null];
-    }
-
-    /**
-     * @param int $ownerUserId Owner id.
-     * @param Folder|null $parent Parent folder.
-     * @param string $originalName Original folder name.
-     * @param array<string, mixed>|null $meta Optional job meta.
-     * @return string
-     * @date 2026-06-24
-     * @author Stephane H.
-     */
-    private function buildRenamedFolderName(
-        int $ownerUserId,
-        ?Folder $parent,
-        string $originalName,
-        ?array &$meta,
-    ): string {
-        for ($n = 1; $n <= 999; ++$n) {
-            $candidate = \sprintf('%s (%d)', $originalName, $n);
-            $normalized = Folder::normalizeName($candidate);
-            $fileConflict = $this->sharedFileRepository->findConflictingOwnedFileByNormalizedName($ownerUserId, $parent, $normalized, null) instanceof SharedFile;
-            $folderConflict = $this->folderRepository->findOneByOwnerParentAndNormalizedName($ownerUserId, $parent, $normalized) instanceof Folder;
-            if (!$fileConflict && !$folderConflict) {
-                return $candidate;
-            }
-        }
-
-        return $originalName.'_'.bin2hex(random_bytes(4));
     }
 
     /**

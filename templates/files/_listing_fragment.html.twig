@@ -571,14 +571,20 @@
             <li class="breadcrumb-item">
                 <a href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'shared_folder': null})) }}">{{ folderRootLabel }}</a>
             </li>
-            {% for sharedFolder in sharedForMeFolders %}
-                {% if sharedFolder.id == sharedForMeCurrentFolderId %}
-                    <li class="breadcrumb-item active" aria-current="page">{{ sharedFolder.name }}</li>
+            {% for breadcrumbFolder in sharedBreadcrumbFolders|default([]) %}
+                {% if loop.last %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ breadcrumbFolder.name }}</li>
+                {% else %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'shared_folder': breadcrumbFolder.id})) }}">{{ breadcrumbFolder.name }}</a>
+                    </li>
                 {% endif %}
             {% endfor %}
         </ol>
     </nav>
-{% elseif sharedForMeFolders is not empty and layoutView == 'grid' %}
+{% endif %}
+{% if layoutView == 'grid' %}
+    {% if sharedForMeFolders is not empty %}
     <div class="row g-2 g-md-3 mb-3 files-listing-grid">
         {% for sharedFolder in sharedForMeFolders %}
             <div class="col-6 col-sm-4 col-md-3 col-lg-2 col-xl-1">
@@ -603,8 +609,7 @@
             </div>
         {% endfor %}
     </div>
-{% endif %}
-{% if layoutView == 'grid' %}
+    {% endif %}
     <div class="row g-2 g-md-3 mb-0 files-listing-grid" data-files-selection-scope="shared" data-files-selection-group="shared">
         {% for file in sharedForMeFiles %}
             {# Preview stream extensions: align with FilesController::PREVIEW_STREAM_BY_EXTENSION #}
@@ -675,7 +680,7 @@
                 </div>
             </div>
         {% else %}
-            {% if sharedForMeCurrentFolderId > 0 or sharedForMeFolders is empty %}
+            {% if sharedForMeFolders is empty %}
                 <div class="col-12">
                     <p class="text-muted mb-0">{{ 'files.section.shared_for_me_empty'|trans({}, 'messages', currentLocale) }}</p>
                 </div>
@@ -732,8 +737,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% if sharedForMeCurrentFolderId == 0 %}
-                    {% for sharedFolder in sharedForMeFolders %}
+                {% for sharedFolder in sharedForMeFolders %}
                         <tr data-files-shared-folder-id="{{ sharedFolder.id }}">
                             <td class="files-col-select text-start">
                                 <div class="form-check m-0">
@@ -761,8 +765,7 @@
                                 </div>
                             </td>
                         </tr>
-                    {% endfor %}
-                {% endif %}
+                {% endfor %}
                 {% for file in sharedForMeFiles %}
                     <tr>
                         <td class="files-col-select text-start">
@@ -848,7 +851,7 @@
                         <td class="files-actions-anchor-cell">{% include 'files/_file_actions_dropdown_shared_for_me.html.twig' with { file: file } %}</td>
                     </tr>
                 {% else %}
-                    {% if sharedForMeCurrentFolderId > 0 or sharedForMeFolders is empty %}
+                    {% if sharedForMeFolders is empty %}
                         <tr>
                             <td colspan="6" class="text-muted">{{ (listingScope|default('both') == 'shared' ? 'files.listing_scope.empty_shared' : 'files.section.shared_for_me_empty')|trans({}, 'messages', currentLocale) }}</td>
                         </tr>

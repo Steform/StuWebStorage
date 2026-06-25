@@ -314,7 +314,7 @@ class SelectionAndGlobalActionTest extends TestCase
 
         self::assertSame(2, substr_count($source, 'data-files-folder-action="rename-open"'), 'Owned folder menus must declare rename-open exactly in grid and table blocks.');
         self::assertStringContainsString("'files.folder.action.rename'|trans", $source);
-        $sharedGridSectionStart = strpos($source, '{% elseif sharedForMeFolders is not empty and layoutView == \'grid\' %}');
+        $sharedGridSectionStart = strpos($source, '{% if sharedForMeFolders is not empty %}');
         self::assertNotFalse($sharedGridSectionStart);
         $fromSharedForMeGrid = substr($source, $sharedGridSectionStart);
         self::assertStringNotContainsString(

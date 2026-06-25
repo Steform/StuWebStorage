@@ -8,9 +8,13 @@
         <li class="breadcrumb-item">
             <a href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (sfKey): null })) }}">{{ folderRootLabel }}</a>
         </li>
-        {% for sharedFolder in sharedForMeFolders %}
-            {% if sharedFolder.id == sharedForMeCurrentFolderId %}
-                <li class="breadcrumb-item active" aria-current="page">{{ sharedFolder.name }}</li>
+        {% for breadcrumbFolder in sharedBreadcrumbFolders|default([]) %}
+            {% if loop.last %}
+                <li class="breadcrumb-item active" aria-current="page">{{ breadcrumbFolder.name }}</li>
+            {% else %}
+                <li class="breadcrumb-item">
+                    <a href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({ (sfKey): breadcrumbFolder.id })) }}">{{ breadcrumbFolder.name }}</a>
+                </li>
             {% endif %}
         {% endfor %}
     </ol>
@@ -21,7 +25,7 @@
         <input class="form-check-input" type="checkbox" id="files-select-all-shared-grid-pane-{{ pane.subjectUserId }}" data-files-select-all data-files-select-all-scope="shared" data-files-select-all-pane="{{ pane.paneId }}" aria-label="{{ 'files.selection.aria_select_all'|trans({}, 'messages', currentLocale) }}">
     </div>
 </div>
-{% if sharedForMeCurrentFolderId == 0 and sharedForMeFolders is not empty %}
+{% if sharedForMeFolders is not empty %}
     <div class="row g-2 g-md-3 mb-3 files-listing-grid" data-files-pane-scope="{{ pane.paneId }}">
         {% for sharedFolder in sharedForMeFolders %}
             <div class="col-6 col-sm-4 col-md-3 col-lg-2 col-xl-1" data-files-pane-row="{{ pane.paneId }}">
@@ -103,7 +107,7 @@
             </div>
         </div>
     {% else %}
-        {% if sharedForMeCurrentFolderId > 0 or sharedForMeFolders is empty %}
+        {% if sharedForMeFolders is empty %}
             <div class="col-12">
                 <p class="text-muted">{{ (listingScope|default('both') == 'shared' ? 'files.listing_scope.empty_shared' : 'files.section.shared_for_me_empty')|trans({}, 'messages', currentLocale) }}</p>
             </div>

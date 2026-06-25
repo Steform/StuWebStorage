@@ -26,6 +26,18 @@ final class ChunkUploadRoutesContractTest extends TestCase
     }
 
     /**
+     * @return string
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    private function readChunkedUploadService(): string
+    {
+        $path = dirname(__DIR__, 3).'/src/Service/File/ChunkedUploadService.php';
+
+        return is_readable($path) ? (string) file_get_contents($path) : '';
+    }
+
+    /**
      * @return void
      * @date 2026-05-08
      * @author Stephane H.
@@ -44,7 +56,15 @@ final class ChunkUploadRoutesContractTest extends TestCase
         self::assertStringContainsString("'chunk_upload.folder_invalid' => 'files.flash.target_folder_invalid'", $src);
         self::assertStringContainsString("'chunk_upload.quota_exceeded', 'storage_quota.exceeded' => 'files.flash.quota_exceeded'", $src);
         self::assertStringContainsString('assertOwnerCanStoreBytes($ownerId', $src);
+        self::assertStringContainsString('createSession(', $src);
+        self::assertStringContainsString("'relative_path'", $src);
+        self::assertStringContainsString("'chunk_upload.path_invalid' => 'files.flash.upload_path_invalid'", $src);
         self::assertStringContainsString('finalizeAndPersist($ownerId, $uploadId, $maxUploadBytes)', $src);
         self::assertStringContainsString('resolveUploadOrFolderTargetOwnerId', $src);
+
+        $chunked = $this->readChunkedUploadService();
+        self::assertStringContainsString('folderPathMaterializerService', $chunked);
+        self::assertStringContainsString("'relative_path'", $chunked);
+        self::assertStringContainsString('chunk_upload.path_invalid', $chunked);
     }
 }

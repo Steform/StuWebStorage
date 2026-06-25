@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service\File;
 
 use App\Dto\File\ZipExtractLimits;
+use App\Service\File\FolderPathMaterializerService;
 use App\Service\File\ZipExtractLimitsResolver;
 use App\Service\File\ZipExtractService;
 use PHPUnit\Framework\TestCase;
@@ -56,6 +57,11 @@ final class ZipExtractServiceTest extends TestCase
             publicDownloadChallengeRepository: $this->createMock(\App\Repository\PublicDownloadChallengeRepository::class),
             publicShareService: $this->createMock(\App\Service\Share\PublicShareService::class),
             friendsShareService: $this->createMock(\App\Service\Share\FriendsShareService::class),
+            folderPathMaterializerService: new FolderPathMaterializerService(
+                $this->createMock(\Doctrine\ORM\EntityManagerInterface::class),
+                $sharedFileRepository,
+                $this->createMock(\App\Repository\FolderRepository::class),
+            ),
             projectDir: sys_get_temp_dir(),
         );
     }
