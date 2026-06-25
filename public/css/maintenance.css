@@ -1,3 +1,8 @@
+.maintenance-page__brand {
+    pointer-events: none;
+    user-select: none;
+}
+
 .maintenance-page {
     min-height: calc(100vh - 4rem);
     display: flex;

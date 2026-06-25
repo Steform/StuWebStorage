@@ -1043,7 +1043,7 @@ maintenance:
   meta:
     title: Maintenance
   title: 'Maintenance en cours'
-  description: 'La plateforme est temporairement indisponible pour les connexions publiques.'
+  description: 'La plateforme est temporairement indisponible. Seuls les administrateurs peuvent se connecter via /login.'
   banner:
     title: 'Maintenance en cours'
     default_message: 'Les connexions sont temporairement suspendues. Revenez plus tard.'

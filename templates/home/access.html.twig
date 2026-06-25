@@ -4,6 +4,19 @@
 
 {% block title %}{{ 'storage.home.access.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
 
+{% block top_navigation %}
+    <header class="home-access__brand text-center py-4" aria-hidden="true">
+        <span class="d-inline-flex align-items-center gap-2 fw-semibold text-body-secondary">
+            <i class="bi bi-cloud-arrow-up-fill text-primary" aria-hidden="true"></i>
+            <span>{{ storage_site_title() }}</span>
+        </span>
+    </header>
+{% endblock %}
+
+{% block floating_actions %}{% endblock %}
+
+{% block modals %}{% endblock %}
+
 {% block stylesheets %}
     {{ parent() }}
     <link href="{{ asset('css/home-access.css') }}" rel="stylesheet">

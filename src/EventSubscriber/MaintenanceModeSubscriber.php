@@ -13,10 +13,26 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Twig\Environment;
 
 /**
- * @brief Replace the public homepage with a maintenance page when maintenance mode is active.
+ * @brief Block the platform for non-admin visitors while maintenance mode is active.
  */
 final class MaintenanceModeSubscriber implements EventSubscriberInterface
 {
+    /**
+     * @var list<string>
+     */
+    private const EXEMPT_PATH_PREFIXES = [
+        '/login',
+        '/logout',
+        '/setup',
+        '/locale',
+        '/theme',
+        '/css',
+        '/js',
+        '/images',
+        '/_profiler',
+        '/_wdt',
+    ];
+
     /**
      * @param SiteAccessGateService $siteAccessGateService Platform settings service.
      * @param AuthorizationCheckerInterface $authorizationChecker Security authorization helper.
@@ -45,11 +61,11 @@ final class MaintenanceModeSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @brief Serve maintenance page on homepage when maintenance mode is active.
+     * @brief Serve maintenance page on all routes except login and static assets for non-admins.
      *
      * @param RequestEvent $event Kernel request event.
      * @return void
-     * @date 2026-06-23
+     * @date 2026-06-25
      * @author Stephane H.
      */
     public function onKernelRequest(RequestEvent $event): void
@@ -67,11 +83,43 @@ final class MaintenanceModeSubscriber implements EventSubscriberInterface
         }
 
         $pathInfo = $event->getRequest()->getPathInfo();
-        if ($pathInfo !== '/') {
+        if ($this->isExemptPath($pathInfo)) {
             return;
         }
 
-        $response = new Response(
+        $event->setResponse($this->buildMaintenanceResponse());
+    }
+
+    /**
+     * @brief Check whether a request path stays reachable during maintenance for non-admins.
+     *
+     * @param string $pathInfo Request path info.
+     * @return bool True when the route must remain accessible.
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    private function isExemptPath(string $pathInfo): bool
+    {
+        foreach (self::EXEMPT_PATH_PREFIXES as $prefix) {
+            if ($pathInfo === $prefix || str_starts_with($pathInfo, $prefix.'/')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @brief Build HTTP 503 maintenance page response.
+     *
+     * @param void No input parameter.
+     * @return Response Maintenance page with cache-busting headers.
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    private function buildMaintenanceResponse(): Response
+    {
+        return new Response(
             $this->twig->render('maintenance/index.html.twig', [
                 'maintenanceMessage' => $this->siteAccessGateService->getMaintenanceMessage(),
             ]),
@@ -81,7 +129,5 @@ final class MaintenanceModeSubscriber implements EventSubscriberInterface
                 'Cache-Control' => 'no-store, no-cache, must-revalidate',
             ],
         );
-
-        $event->setResponse($response);
     }
 }

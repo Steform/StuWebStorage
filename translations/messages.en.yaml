@@ -1043,7 +1043,7 @@ maintenance:
   meta:
     title: Maintenance
   title: 'Maintenance in progress'
-  description: 'The platform is temporarily unavailable for public sign-in.'
+  description: 'The platform is temporarily unavailable. Only administrators can sign in via /login.'
   banner:
     title: 'Maintenance in progress'
     default_message: 'Sign-in is temporarily suspended. Please check back later.'

@@ -46,6 +46,26 @@ final class StorageHomePageTest extends WebTestCase
     }
 
     /**
+     * @brief Antibot gate page hides navigation so only direct /login bypass remains for admins.
+     *
+     * @return void
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    public function testAntibotGatePageHidesNavigation(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/home/access');
+
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('data-home-access-root', $content);
+        self::assertStringNotContainsString('id="storageNavCollapse"', $content);
+        self::assertStringNotContainsString('floating-actions', $content);
+        self::assertStringNotContainsString('href="/login"', $content);
+    }
+
+    /**
      * @brief Anonymous visitors reach homepage when antibot gate is disabled.
      *
      * @return void

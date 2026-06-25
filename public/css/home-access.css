@@ -1,3 +1,8 @@
+.home-access__brand {
+    pointer-events: none;
+    user-select: none;
+}
+
 .home-access__root {
     min-height: 12rem;
 }
