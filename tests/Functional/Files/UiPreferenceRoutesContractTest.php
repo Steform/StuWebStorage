@@ -75,5 +75,20 @@ final class UiPreferenceRoutesContractTest extends TestCase
         self::assertStringContainsString('function migrateLegacyLocalStorageOnce()', $source);
         self::assertStringContainsString('function saveBackendPreferences(deviceId, pref)', $source);
         self::assertStringContainsString('function applyViewAndScopeWithReload(pref)', $source);
+        self::assertStringContainsString('filesSortField', $source);
+        self::assertStringContainsString('filesSortDirection', $source);
+    }
+
+    /**
+     * @return void
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    public function testFilesControllerAppliesPersistedSortWhenQueryIsNeutral(): void
+    {
+        $source = $this->readSource('src/Controller/FilesController.php');
+
+        self::assertStringContainsString('applyUserSortPreferenceWhenNeutral', $source);
+        self::assertStringContainsString('filesUiPreferenceService->resolveListingSortPreference', $source);
     }
 }

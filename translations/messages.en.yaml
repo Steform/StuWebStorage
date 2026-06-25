@@ -347,6 +347,9 @@ files:
         cancelled: Cancelled
       summary_ok: '%count% file(s) uploaded.'
       summary_partial: '%ok%/%total% uploaded, %failed% failed.'
+      queue_show_all: 'Show all %count% files'
+      queue_hidden_pending: '… and %count% more pending'
+      queue_summary_preview: '%count% files (%size%) — compact preview. Details appear during upload.'
   extract:
     modal:
       title: 'Extract a ZIP archive'

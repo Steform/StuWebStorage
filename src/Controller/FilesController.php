@@ -18,6 +18,7 @@ use App\Service\Admin\AdminGodviewSessionStateService;
 use App\Service\Audit\DownloadAuditService;
 use App\Service\File\ChunkedUploadService;
 use App\Service\File\FilesQueryScopeResolver;
+use App\Service\File\FilesUiPreferenceService;
 use App\Service\File\UserFilesPaneBuilderService;
 use App\Service\File\UserStorageQuotaService;
 use App\Service\File\ZipExtractLimitsResolver;
@@ -149,6 +150,7 @@ class FilesController extends AbstractController
         private readonly ZipExtractLimitsResolver $zipExtractLimitsResolver,
         private readonly UserStorageQuotaService $userStorageQuotaService,
         private readonly FilesQueryScopeResolver $filesQueryScopeResolver,
+        private readonly FilesUiPreferenceService $filesUiPreferenceService,
         private readonly UserFilesPaneBuilderService $userFilesPaneBuilderService,
         private readonly AdminGodviewSessionStateService $adminGodviewSessionStateService,
         private readonly string $projectDir,
@@ -558,6 +560,7 @@ class FilesController extends AbstractController
         $subjectUserIdFromScope = $scope['subjectUserId'];
         $ownedScopeUserId = $scope['ownerUserId'];
         $protoCriteria = $this->parseListingCriteriaFromQueryBag($request->query);
+        $protoCriteria = $this->applyUserSortPreferenceWhenNeutral($user, $protoCriteria);
         $canSend = $this->isGranted('ROLE_SHARE_SEND');
         if ($this->isGranted('ROLE_SHARE') && !$canSend && !$adminContext) {
             $protoCriteria = new SharedFileOwnerListCriteria(
@@ -4791,6 +4794,41 @@ class FilesController extends AbstractController
         }
 
         return $chips;
+    }
+
+    /**
+     * @brief Apply persisted listing sort when the request has no explicit sort query params.
+     * @param User $user Authenticated viewer.
+     * @param SharedFileOwnerListCriteria $criteria Parsed listing criteria.
+     * @return SharedFileOwnerListCriteria
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    private function applyUserSortPreferenceWhenNeutral(User $user, SharedFileOwnerListCriteria $criteria): SharedFileOwnerListCriteria
+    {
+        if (!$criteria->isSortNeutral()) {
+            return $criteria;
+        }
+
+        $sort = $this->filesUiPreferenceService->resolveListingSortPreference($user);
+
+        return new SharedFileOwnerListCriteria(
+            $criteria->searchQuery,
+            $sort['field'],
+            $sort['direction'],
+            $criteria->filterPublic,
+            $criteria->extensionFilters,
+            $criteria->view,
+            $criteria->filterHasGrant,
+            $criteria->granteeUserIds,
+            $criteria->uploadedAfter,
+            $criteria->uploadedBefore,
+            $criteria->updatedAfter,
+            $criteria->updatedBefore,
+            $criteria->expiresAfter,
+            $criteria->expiresBefore,
+            $criteria->listingScope,
+        );
     }
 
     /**

@@ -35,6 +35,9 @@ class FilesUploadModalIntegrationTest extends TestCase
         self::assertStringContainsString('id="files-upload-folder-input"', $twig);
         self::assertStringContainsString('webkitdirectory', $twig);
         self::assertStringContainsString('files.upload.multi.modal_title', $twig);
+        self::assertStringContainsString('files-upload-modal-footer', $twig);
+        self::assertStringContainsString('files-upload-modal-content', $twig);
+        self::assertStringContainsString('data-files-upload-queue-detail-limit', $twig);
         self::assertStringNotContainsString('name="visibility"', $twig);
         self::assertStringNotContainsString('name="expires_at"', $twig);
         self::assertStringNotContainsString('name="grantee_ids"', $twig);
@@ -54,6 +57,11 @@ class FilesUploadModalIntegrationTest extends TestCase
         self::assertStringContainsString('maxUploadBytes|files_size_format', $twig);
         self::assertStringContainsString("'%formatted_size%':", $twig);
         self::assertStringNotContainsString("'%bytes%': maxUploadBytes", $twig);
+
+        $cssPath = dirname(__DIR__, 3).'/public/css/files-space.css';
+        $css = is_file($cssPath) ? (string) file_get_contents($cssPath) : '';
+        self::assertStringContainsString('.files-upload-modal-footer', $css);
+        self::assertStringContainsString('#files-upload-queue-wrap', $css);
     }
 
     /**

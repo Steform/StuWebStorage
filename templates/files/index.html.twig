@@ -420,6 +420,10 @@
         data-msg-multi-too-many-files="{{ 'files.upload.multi.too_many_files'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-filter-system-hint="{{ 'files.upload.multi.filter_system_hint'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-confirm-many="{{ 'files.upload.multi.confirm_many'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-queue-show-all="{{ 'files.upload.multi.queue_show_all'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-queue-hidden-pending="{{ 'files.upload.multi.queue_hidden_pending'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-queue-summary-preview="{{ 'files.upload.multi.queue_summary_preview'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-files-upload-queue-detail-limit="{{ 50 }}"
         data-files-upload-max-files-block="{{ 2000 }}"
         data-files-upload-max-files-warn="{{ 500 }}"
         data-files-upload-max-bytes="{{ maxUploadBytes }}"
@@ -427,8 +431,8 @@
         data-files-upload-chunk-url="{{ path('files_upload_chunk') }}"
         data-files-upload-finalize-url="{{ path('files_upload_finalize') }}"
     >
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable files-upload-modal-dialog">
+            <div class="modal-content files-upload-modal-content">
                 <div class="modal-header">
                     <h2 class="modal-title h5" id="filesUploadModalTitle">{{ 'files.upload.multi.modal_title'|trans({}, 'messages', currentLocale) }}</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" data-files-upload-dismiss aria-label="{{ 'files.upload.modal_close'|trans({}, 'messages', currentLocale) }}"></button>
@@ -494,7 +498,7 @@
                             <p class="small text-muted mb-0 mt-1 d-none" id="files-upload-percent" aria-hidden="true"></p>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer files-upload-modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-files-upload-dismiss data-files-upload-cancel>{{ 'files.upload.modal_cancel'|trans({}, 'messages', currentLocale) }}</button>
                         <button type="submit" class="btn btn-primary" data-files-upload-submit{% if adminContext|default(false) %} data-files-target-owner-submit{% endif %}{% if requireAdminTargetOwner|default(false) %} disabled{% endif %}>{{ 'files.upload.submit'|trans({}, 'messages', currentLocale) }}</button>
                     </div>
@@ -607,5 +611,5 @@
 
 {% block extra_scripts %}
         <script src="{{ asset('js/files-space.js') }}?v={{ 'now'|date('U') }}" defer></script>
-        <script src="{{ asset('js/files-ui-preferences.js') }}?v=20260503-device-prefs" defer></script>
+        <script src="{{ asset('js/files-ui-preferences.js') }}?v=20260625-sort-prefs" defer></script>
 {% endblock %}

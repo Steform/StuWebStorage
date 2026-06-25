@@ -347,6 +347,9 @@ files:
         cancelled: 'Abgebrochen'
       summary_ok: '%count% Datei(en) hochgeladen.'
       summary_partial: '%ok%/%total% hochgeladen, %failed% fehlgeschlagen.'
+      queue_show_all: 'Alle %count% Dateien anzeigen'
+      queue_hidden_pending: '… und %count% weitere ausstehend'
+      queue_summary_preview: '%count% Dateien (%size%) — kompakte Vorschau. Details beim Upload.'
   extract:
     modal:
       title: 'ZIP-Archiv entpacken'

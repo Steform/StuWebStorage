@@ -25,6 +25,20 @@ class FilesUiPreferenceService
     /**
      * @var array<int, string>
      */
+    private const ALLOWED_SORT_FIELDS = ['name', 'size', 'uploaded', 'modified', 'ext'];
+
+    /**
+     * @var array<int, string>
+     */
+    private const ALLOWED_SORT_DIRECTIONS = ['asc', 'desc'];
+
+    private const DEFAULT_SORT_FIELD = 'name';
+
+    private const DEFAULT_SORT_DIRECTION = 'asc';
+
+    /**
+     * @var array<int, string>
+     */
     private const ALLOWED_COLUMN_KEYS = ['type', 'size', 'share_public', 'share_friends', 'uploaded', 'modified'];
 
     /**
@@ -121,9 +135,16 @@ class FilesUiPreferenceService
         $normalized = $this->normalizeIncomingPayload($payload);
         $row->setFilesViewMode((string) $normalized['filesViewMode']);
         $row->setFilesScope((string) $normalized['filesScope']);
+        $row->setFilesSortField((string) $normalized['filesSortField']);
+        $row->setFilesSortDirection((string) $normalized['filesSortDirection']);
         $cloudState = $normalized['cloudVisibilityState'];
         $row->setCloudVisibilityState(is_array($cloudState) ? $cloudState : null);
         $row->touchUpdatedAt();
+        $this->repository->syncSortPreferenceForUser(
+            $user,
+            (string) $normalized['filesSortField'],
+            (string) $normalized['filesSortDirection'],
+        );
         $this->entityManager->flush();
 
         return [
@@ -135,7 +156,7 @@ class FilesUiPreferenceService
     /**
      * @brief Return default preference payload.
      * @param void No input parameter.
-     * @return array{filesViewMode: string, filesScope: string, cloudVisibilityState: array<string, mixed>}
+     * @return array{filesViewMode: string, filesScope: string, filesSortField: string, filesSortDirection: string, cloudVisibilityState: array<string, mixed>}
      * @date 2026-05-03
      * @author Stephane H.
      */
@@ -144,10 +165,35 @@ class FilesUiPreferenceService
         return [
             'filesViewMode' => 'list',
             'filesScope' => 'both',
+            'filesSortField' => self::DEFAULT_SORT_FIELD,
+            'filesSortDirection' => self::DEFAULT_SORT_DIRECTION,
             'cloudVisibilityState' => [
                 'columns' => self::COLUMN_DEFAULTS,
                 'sections' => self::SECTION_DEFAULTS,
             ],
+        ];
+    }
+
+    /**
+     * @brief Resolve listing sort preference for one user (cross-device, default name ascending).
+     * @param User $user Target user.
+     * @return array{field: string, direction: string}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    public function resolveListingSortPreference(User $user): array
+    {
+        $latest = $this->repository->findLatestSortPreferenceByUser($user);
+        if ($latest === null) {
+            return [
+                'field' => self::DEFAULT_SORT_FIELD,
+                'direction' => self::DEFAULT_SORT_DIRECTION,
+            ];
+        }
+
+        return [
+            'field' => $this->normalizeSortField((string) $latest['field']),
+            'direction' => $this->normalizeSortDirection((string) $latest['direction']),
         ];
     }
 
@@ -174,7 +220,7 @@ class FilesUiPreferenceService
     /**
      * @brief Normalize incoming payload and clamp unsupported values to defaults.
      * @param array<string, mixed> $payload Raw request payload.
-     * @return array{filesViewMode: string, filesScope: string, cloudVisibilityState: array<string, mixed>}
+     * @return array{filesViewMode: string, filesScope: string, filesSortField: string, filesSortDirection: string, cloudVisibilityState: array<string, mixed>}
      * @date 2026-05-03
      * @author Stephane H.
      */
@@ -191,6 +237,9 @@ class FilesUiPreferenceService
             $scope = $defaults['filesScope'];
         }
 
+        $sortField = $this->normalizeSortField((string) ($payload['filesSortField'] ?? $defaults['filesSortField']));
+        $sortDirection = $this->normalizeSortDirection((string) ($payload['filesSortDirection'] ?? $defaults['filesSortDirection']));
+
         $cloudState = $payload['cloudVisibilityState'] ?? [];
         if (!is_array($cloudState)) {
             $cloudState = [];
@@ -199,6 +248,8 @@ class FilesUiPreferenceService
         return [
             'filesViewMode' => $view,
             'filesScope' => $scope,
+            'filesSortField' => $sortField,
+            'filesSortDirection' => $sortDirection,
             'cloudVisibilityState' => [
                 'columns' => $this->normalizeColumns($cloudState['columns'] ?? null),
                 'sections' => $this->normalizeSections($cloudState['sections'] ?? null),
@@ -209,7 +260,7 @@ class FilesUiPreferenceService
     /**
      * @brief Hydrate normalized payload from persisted entity.
      * @param UserDeviceUiPreference $row Persisted row.
-     * @return array{filesViewMode: string, filesScope: string, cloudVisibilityState: array<string, mixed>}
+     * @return array{filesViewMode: string, filesScope: string, filesSortField: string, filesSortDirection: string, cloudVisibilityState: array<string, mixed>}
      * @date 2026-05-03
      * @author Stephane H.
      */
@@ -218,8 +269,47 @@ class FilesUiPreferenceService
         return $this->normalizeIncomingPayload([
             'filesViewMode' => $row->getFilesViewMode(),
             'filesScope' => $row->getFilesScope(),
+            'filesSortField' => $row->getFilesSortField(),
+            'filesSortDirection' => $row->getFilesSortDirection(),
             'cloudVisibilityState' => $row->getCloudVisibilityState(),
         ]);
+    }
+
+    /**
+     * @brief Normalize one sort field token.
+     * @param string $value Raw sort field token.
+     * @return string
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    private function normalizeSortField(string $value): string
+    {
+        $normalized = strtolower(trim($value));
+        if ($normalized === 'type') {
+            $normalized = 'ext';
+        }
+        if (!in_array($normalized, self::ALLOWED_SORT_FIELDS, true)) {
+            return self::DEFAULT_SORT_FIELD;
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @brief Normalize one sort direction token.
+     * @param string $value Raw sort direction token.
+     * @return string
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    private function normalizeSortDirection(string $value): string
+    {
+        $normalized = strtolower(trim($value));
+        if (!in_array($normalized, self::ALLOWED_SORT_DIRECTIONS, true)) {
+            return self::DEFAULT_SORT_DIRECTION;
+        }
+
+        return $normalized;
     }
 
     /**

@@ -347,6 +347,9 @@ files:
         cancelled: 'Avbrutt'
       summary_ok: '%count% fil(er) lastet opp.'
       summary_partial: '%ok%/%total% lastet opp, %failed% feilet.'
+      queue_show_all: 'Vis alle %count% filer'
+      queue_hidden_pending: '… og %count% flere venter'
+      queue_summary_preview: '%count% filer (%size%) — kompakt forhåndsvisning. Detaljer vises under opplasting.'
   extract:
     modal:
       title: 'Pakk ut et ZIP-arkiv'

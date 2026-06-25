@@ -644,6 +644,13 @@
         var activeXhr = null;
         var pendingEntriesOverride = null;
         var queueEntries = [];
+        var queueListExpanded = false;
+        var uploadBatchActive = false;
+        var postBatchReview = false;
+        var queueDetailLimit = parseInt(modalEl.dataset.filesUploadQueueDetailLimit || '50', 10);
+        if (!queueDetailLimit || queueDetailLimit < 1) {
+            queueDetailLimit = 50;
+        }
 
         /**
          * @param {string} camelKey Dataset key in camelCase (e.g. msgProgressSending).
@@ -719,6 +726,138 @@
         }
 
         /**
+         * @param {*} entry Queue entry.
+         * @param {number} idx Entry index.
+         * @return {HTMLLIElement}
+         */
+        function createQueueListItem(entry, idx) {
+            var li = document.createElement('li');
+            li.className = 'files-upload-queue-item files-upload-queue-item--' + entry.state;
+            li.setAttribute('data-files-upload-queue-index', String(idx));
+
+            var title = document.createElement('div');
+            title.className = 'files-upload-queue-item__title';
+            title.textContent = entry.relativePath || entry.displayName;
+
+            var meta = document.createElement('div');
+            meta.className = 'files-upload-queue-item__meta small text-muted';
+            meta.textContent = formatFilesSize(entry.size);
+
+            var progress = document.createElement('div');
+            progress.className = 'progress files-upload-queue-item__progress';
+            progress.setAttribute('role', 'progressbar');
+            progress.setAttribute('aria-valuemin', '0');
+            progress.setAttribute('aria-valuemax', '100');
+            var bar = document.createElement('div');
+            bar.className = 'progress-bar';
+            bar.style.width = entry.state === 'done' ? '100%' : '0%';
+            bar.setAttribute('data-files-upload-queue-bar', String(idx));
+            progress.appendChild(bar);
+
+            var badge = document.createElement('span');
+            badge.className = 'badge text-bg-secondary files-upload-queue-item__status';
+            badge.setAttribute('data-files-upload-queue-status', String(idx));
+            badge.textContent = statusLabel(entry.state);
+
+            if (entry.error) {
+                var err = document.createElement('div');
+                err.className = 'small text-danger files-upload-queue-item__error';
+                err.textContent = entry.error;
+                li.appendChild(err);
+            }
+
+            li.appendChild(title);
+            li.appendChild(meta);
+            li.appendChild(progress);
+            li.appendChild(badge);
+
+            return li;
+        }
+
+        /**
+         * @return {number[]} Indices to render in the queue list.
+         */
+        function resolveQueueVisibleIndices() {
+            var total = queueEntries.length;
+            if (postBatchReview) {
+                var errorIndices = [];
+                for (var r = 0; r < total; r++) {
+                    var reviewState = queueEntries[r].state;
+                    if (reviewState === 'error' || reviewState === 'cancelled') {
+                        errorIndices.push(r);
+                    }
+                }
+                return errorIndices;
+            }
+            if (total <= queueDetailLimit) {
+                var all = [];
+                for (var a = 0; a < total; a++) {
+                    all.push(a);
+                }
+                return all;
+            }
+            if (!uploadBatchActive) {
+                return queueListExpanded ? (function () {
+                    var expanded = [];
+                    for (var e = 0; e < total; e++) {
+                        expanded.push(e);
+                    }
+                    return expanded;
+                })() : [];
+            }
+
+            var visible = {};
+            var activeIdx = -1;
+            for (var i = 0; i < total; i++) {
+                var state = queueEntries[i].state;
+                if (state === 'error' || state === 'cancelled') {
+                    visible[i] = true;
+                }
+                if (state === 'uploading' || state === 'processing') {
+                    activeIdx = i;
+                    visible[i] = true;
+                }
+            }
+            var pendingShown = 0;
+            var startScan = activeIdx >= 0 ? activeIdx + 1 : 0;
+            for (var j = startScan; j < total && pendingShown < 3; j++) {
+                if (queueEntries[j].state === 'pending') {
+                    visible[j] = true;
+                    pendingShown += 1;
+                }
+            }
+            var indices = Object.keys(visible)
+                .map(function (k) {
+                    return parseInt(k, 10);
+                })
+                .sort(function (a, b) {
+                    return a - b;
+                });
+            return indices;
+        }
+
+        /**
+         * @return {number}
+         */
+        function countHiddenPendingQueueItems() {
+            var visible = resolveQueueVisibleIndices();
+            if (visible.length === 0 && !uploadBatchActive && queueEntries.length > queueDetailLimit) {
+                return queueEntries.length;
+            }
+            var visibleMap = {};
+            visible.forEach(function (idx) {
+                visibleMap[idx] = true;
+            });
+            var hidden = 0;
+            for (var i = 0; i < queueEntries.length; i++) {
+                if (!visibleMap[i] && queueEntries[i].state === 'pending') {
+                    hidden += 1;
+                }
+            }
+            return hidden;
+        }
+
+        /**
          * @return {void}
          */
         function renderQueueUi() {
@@ -726,48 +865,60 @@
                 return;
             }
             queueList.innerHTML = '';
-            queueEntries.forEach(function (entry, idx) {
-                var li = document.createElement('li');
-                li.className = 'files-upload-queue-item files-upload-queue-item--' + entry.state;
-                li.setAttribute('data-files-upload-queue-index', String(idx));
+            var total = queueEntries.length;
+            if (total < 1) {
+                return;
+            }
 
-                var title = document.createElement('div');
-                title.className = 'files-upload-queue-item__title';
-                title.textContent = entry.relativePath || entry.displayName;
-
-                var meta = document.createElement('div');
-                meta.className = 'files-upload-queue-item__meta small text-muted';
-                meta.textContent = formatFilesSize(entry.size);
-
-                var progress = document.createElement('div');
-                progress.className = 'progress files-upload-queue-item__progress';
-                progress.setAttribute('role', 'progressbar');
-                progress.setAttribute('aria-valuemin', '0');
-                progress.setAttribute('aria-valuemax', '100');
-                var bar = document.createElement('div');
-                bar.className = 'progress-bar';
-                bar.style.width = entry.state === 'done' ? '100%' : '0%';
-                bar.setAttribute('data-files-upload-queue-bar', String(idx));
-                progress.appendChild(bar);
-
-                var badge = document.createElement('span');
-                badge.className = 'badge text-bg-secondary files-upload-queue-item__status';
-                badge.setAttribute('data-files-upload-queue-status', String(idx));
-                badge.textContent = statusLabel(entry.state);
-
-                if (entry.error) {
-                    var err = document.createElement('div');
-                    err.className = 'small text-danger files-upload-queue-item__error';
-                    err.textContent = entry.error;
-                    li.appendChild(err);
-                }
-
-                li.appendChild(title);
-                li.appendChild(meta);
-                li.appendChild(progress);
-                li.appendChild(badge);
-                queueList.appendChild(li);
+            var totalSize = 0;
+            queueEntries.forEach(function (entry) {
+                totalSize += entry.size || 0;
             });
+
+            if (!uploadBatchActive && total > queueDetailLimit && !queueListExpanded) {
+                var summaryLi = document.createElement('li');
+                summaryLi.className = 'files-upload-queue-summary';
+                var summaryText = document.createElement('p');
+                summaryText.className = 'small text-muted mb-2';
+                summaryText.textContent = fillTemplate(msg('msgMultiQueueSummaryPreview'), {
+                    '%count%': String(total),
+                    '%size%': formatFilesSize(totalSize)
+                });
+                var showAllBtn = document.createElement('button');
+                showAllBtn.type = 'button';
+                showAllBtn.className = 'btn btn-sm btn-outline-secondary';
+                showAllBtn.textContent = fillTemplate(msg('msgMultiQueueShowAll'), { '%count%': String(total) });
+                showAllBtn.addEventListener('click', function () {
+                    queueListExpanded = true;
+                    renderQueueUi();
+                });
+                summaryLi.appendChild(summaryText);
+                summaryLi.appendChild(showAllBtn);
+                queueList.appendChild(summaryLi);
+                return;
+            }
+
+            var indices = resolveQueueVisibleIndices();
+            indices.forEach(function (idx) {
+                queueList.appendChild(createQueueListItem(queueEntries[idx], idx));
+            });
+
+            var hiddenPending = countHiddenPendingQueueItems();
+            if (hiddenPending > 0) {
+                var moreLi = document.createElement('li');
+                moreLi.className = 'files-upload-queue-summary small text-muted py-1';
+                moreLi.textContent = fillTemplate(msg('msgMultiQueueHiddenPending'), {
+                    '%count%': String(hiddenPending)
+                });
+                queueList.appendChild(moreLi);
+            }
+
+            var activeItem = queueList.querySelector(
+                '.files-upload-queue-item--uploading, .files-upload-queue-item--processing'
+            );
+            if (activeItem && typeof activeItem.scrollIntoView === 'function') {
+                activeItem.scrollIntoView({ block: 'nearest' });
+            }
         }
 
         /**
@@ -817,6 +968,9 @@
                     item.insertBefore(errEl, item.firstChild);
                 }
                 errEl.textContent = errorMessage;
+            }
+            if (uploadBatchActive && queueEntries.length > queueDetailLimit) {
+                renderQueueUi();
             }
         }
 
@@ -942,6 +1096,9 @@
 
         modalEl.addEventListener('hidden.bs.modal', function () {
             uploadCancelRequested = false;
+            uploadBatchActive = false;
+            queueListExpanded = false;
+            postBatchReview = false;
             if (!uploadBusy) {
                 if (errorEl) {
                     errorEl.classList.add('d-none');
@@ -1037,6 +1194,8 @@
             }
 
             uploadCancelRequested = false;
+            uploadBatchActive = true;
+            queueListExpanded = false;
             queueEntries = entries.slice();
             renderQueueUi();
             setSubmittingUi(true);
@@ -1095,24 +1254,32 @@
             uploadFileQueue(queueEntries, context).then(function (summary) {
                 setSubmittingUi(false);
                 uploadCancelRequested = false;
+                uploadBatchActive = false;
                 activeXhr = null;
 
                 var listingShell = document.getElementById('files-live-region');
                 var toastMsg = '';
                 if (summary.cancelled) {
+                    postBatchReview = summary.failedCount > 0;
                     toastMsg = fillTemplate(msg('msgMultiSummaryPartial'), {
                         '%ok%': String(summary.okCount),
                         '%total%': String(queueEntries.length),
                         '%failed%': String(summary.failedCount)
                     });
                 } else if (summary.failedCount > 0) {
+                    postBatchReview = true;
                     toastMsg = fillTemplate(msg('msgMultiSummaryPartial'), {
                         '%ok%': String(summary.okCount),
                         '%total%': String(queueEntries.length),
                         '%failed%': String(summary.failedCount)
                     });
                 } else {
+                    postBatchReview = false;
                     toastMsg = fillTemplate(msg('msgMultiSummaryOk'), { '%count%': String(summary.okCount) });
+                }
+
+                if (postBatchReview) {
+                    renderQueueUi();
                 }
 
                 if (summary.failedCount === 0 && !summary.cancelled && listingShell && typeof runPartialFetch === 'function') {

@@ -347,6 +347,9 @@ files:
         cancelled: 'Annule'
       summary_ok: '%count% fichier(s) envoye(s).'
       summary_partial: '%ok%/%total% envoye(s), %failed% echec(s).'
+      queue_show_all: 'Afficher les %count% fichiers'
+      queue_hidden_pending: '… et %count% autre(s) en attente'
+      queue_summary_preview: '%count% fichiers (%size%) — apercu reduit. Le detail s''affichera pendant l''envoi.'
   extract:
     modal:
       title: 'Extraire une archive ZIP'

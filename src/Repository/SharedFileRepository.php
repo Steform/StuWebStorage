@@ -602,7 +602,8 @@ class SharedFileRepository extends ServiceEntityRepository
     private function applyOwnerListOrderBy(QueryBuilder $qb, SharedFileOwnerListCriteria $criteria): void
     {
         if ($criteria->isSortNeutral()) {
-            $qb->orderBy('sf.id', 'DESC');
+            $qb->orderBy('sf.originalFileName', 'ASC');
+            $qb->addOrderBy('sf.id', 'DESC');
 
             return;
         }

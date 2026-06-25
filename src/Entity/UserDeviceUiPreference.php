@@ -32,6 +32,12 @@ class UserDeviceUiPreference
     #[ORM\Column(name: 'files_scope', length: 8, options: ['default' => 'both'])]
     private string $filesScope = 'both';
 
+    #[ORM\Column(name: 'files_sort_field', length: 32, options: ['default' => 'name'])]
+    private string $filesSortField = 'name';
+
+    #[ORM\Column(name: 'files_sort_direction', length: 4, options: ['default' => 'asc'])]
+    private string $filesSortDirection = 'asc';
+
     /**
      * @var array<string, mixed>|null
      */
@@ -150,6 +156,54 @@ class UserDeviceUiPreference
     public function setFilesScope(string $filesScope): void
     {
         $this->filesScope = $filesScope;
+    }
+
+    /**
+     * @brief Get files listing sort field preference.
+     * @param void No input parameter.
+     * @return string
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    public function getFilesSortField(): string
+    {
+        return $this->filesSortField;
+    }
+
+    /**
+     * @brief Set files listing sort field preference.
+     * @param string $filesSortField Whitelisted sort field key.
+     * @return void
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    public function setFilesSortField(string $filesSortField): void
+    {
+        $this->filesSortField = $filesSortField;
+    }
+
+    /**
+     * @brief Get files listing sort direction preference.
+     * @param void No input parameter.
+     * @return string
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    public function getFilesSortDirection(): string
+    {
+        return $this->filesSortDirection;
+    }
+
+    /**
+     * @brief Set files listing sort direction preference.
+     * @param string $filesSortDirection Sort direction (`asc` or `desc`).
+     * @return void
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    public function setFilesSortDirection(string $filesSortDirection): void
+    {
+        $this->filesSortDirection = $filesSortDirection;
     }
 
     /**

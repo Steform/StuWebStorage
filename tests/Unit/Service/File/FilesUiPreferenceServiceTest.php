@@ -70,9 +70,35 @@ final class FilesUiPreferenceServiceTest extends TestCase
 
         self::assertSame('list', $normalized['filesViewMode']);
         self::assertSame('both', $normalized['filesScope']);
+        self::assertSame('name', $normalized['filesSortField']);
+        self::assertSame('asc', $normalized['filesSortDirection']);
         self::assertSame(false, $normalized['cloudVisibilityState']['columns']['type']);
         self::assertArrayNotHasKey('intruder', $normalized['cloudVisibilityState']['columns']);
         self::assertSame(false, $normalized['cloudVisibilityState']['sections']['my_files']);
         self::assertArrayNotHasKey('extra', $normalized['cloudVisibilityState']['sections']);
+    }
+
+    /**
+     * @return void
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    public function testNormalizeIncomingPayloadNormalizesSortTokens(): void
+    {
+        $normalized = $this->service->normalizeIncomingPayload([
+            'filesSortField' => 'type',
+            'filesSortDirection' => 'desc',
+        ]);
+
+        self::assertSame('ext', $normalized['filesSortField']);
+        self::assertSame('desc', $normalized['filesSortDirection']);
+
+        $fallback = $this->service->normalizeIncomingPayload([
+            'filesSortField' => 'invalid',
+            'filesSortDirection' => 'sideways',
+        ]);
+
+        self::assertSame('name', $fallback['filesSortField']);
+        self::assertSame('asc', $fallback['filesSortDirection']);
     }
 }

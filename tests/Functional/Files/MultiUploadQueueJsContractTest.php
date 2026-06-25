@@ -44,6 +44,8 @@ final class MultiUploadQueueJsContractTest extends TestCase
         self::assertStringContainsString("fdSession.append('relative_path'", $src);
         self::assertStringContainsString('function shouldFilterSystemUploadPath', $src);
         self::assertStringContainsString('files-upload-queue', $src);
-        self::assertStringContainsString('files-upload-global-progress', $src);
+        self::assertStringContainsString('function resolveQueueVisibleIndices', $src);
+        self::assertStringContainsString('queueListExpanded', $src);
+        self::assertStringContainsString('msgMultiQueueShowAll', $src);
     }
 }

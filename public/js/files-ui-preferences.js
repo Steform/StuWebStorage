@@ -102,6 +102,8 @@
         return {
             filesViewMode: 'list',
             filesScope: 'both',
+            filesSortField: 'name',
+            filesSortDirection: 'asc',
             cloudVisibilityState: {
                 columns: {
                     type: true,
@@ -231,6 +233,39 @@
     }
 
     /**
+     * @brief Normalize listing sort field token from query state.
+     * @param {unknown} raw Raw sort field value.
+     * @return {string}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function normalizeSortField(raw) {
+        var value = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+        if (value === 'type') {
+            value = 'ext';
+        }
+        if (value === 'name' || value === 'size' || value === 'uploaded' || value === 'modified' || value === 'ext') {
+            return value;
+        }
+        return 'name';
+    }
+
+    /**
+     * @brief Normalize listing sort direction token from query state.
+     * @param {unknown} raw Raw sort direction value.
+     * @return {string}
+     * @date 2026-06-25
+     * @author Stephane H.
+     */
+    function normalizeSortDirection(raw) {
+        var value = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+        if (value === 'asc' || value === 'desc') {
+            return value;
+        }
+        return 'asc';
+    }
+
+    /**
      * @brief Return current UI state snapshot from listing/query and localStorage.
      * @param void No input parameter.
      * @return {Record<string, unknown>}
@@ -258,6 +293,8 @@
         return {
             filesViewMode: view === 'grid' ? 'grid' : 'list',
             filesScope: (scope === 'owned' || scope === 'shared') ? scope : 'both',
+            filesSortField: normalizeSortField(listing.sort),
+            filesSortDirection: normalizeSortDirection(listing.dir),
             cloudVisibilityState: {
                 columns: columns,
                 sections: sections
@@ -482,7 +519,7 @@
     function bindSaveListeners() {
         document.addEventListener('click', function (event) {
             var node = event.target && event.target.closest
-                ? event.target.closest('a[data-files-view-toggle], a[data-files-listing-scope]')
+                ? event.target.closest('a[data-files-view-toggle], a[data-files-listing-scope], a[href*="sort="], a[href*="dir="]')
                 : null;
             if (!node) {
                 return;
@@ -492,7 +529,7 @@
 
         document.addEventListener('change', function (event) {
             var target = event.target;
-            if (target && target.matches && target.matches('[data-files-col-toggle]')) {
+            if (target && target.matches && target.matches('[data-files-col-toggle], #adv-sort, #adv-dir')) {
                 queueSaveCurrentPreferences();
             }
         });

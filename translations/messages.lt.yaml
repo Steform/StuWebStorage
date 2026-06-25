@@ -347,6 +347,9 @@ files:
         cancelled: 'Atšaukta'
       summary_ok: 'Įkelta %count% failų.'
       summary_partial: 'Įkelta %ok%/%total%, %failed% klaidų.'
+      queue_show_all: 'Rodyti visus %count% failus'
+      queue_hidden_pending: '… ir dar %count% laukia'
+      queue_summary_preview: '%count% failų (%size%) — sutrumpinta peržiūra. Detalės siuntimo metu.'
   extract:
     modal:
       title: 'Išskleisti ZIP archyvą'
