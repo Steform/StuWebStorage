@@ -38,12 +38,18 @@ final class TextFileEditorJsContractTest extends TestCase
     {
         $editorJs = $this->readSource('public/js/text-file-editor.js');
         self::assertStringContainsString('window.TextFileEditor', $editorJs);
-        self::assertStringContainsString('codemirror@6.0.1', $editorJs);
+        self::assertStringContainsString("import('@codemirror/state')", $editorJs);
+        self::assertStringContainsString("import('@codemirror/view')", $editorJs);
         self::assertStringContainsString('credentials: \'same-origin\'', $editorJs);
         self::assertStringContainsString('X-CSRF-Token', $editorJs);
         self::assertStringContainsString('text/plain; charset=utf-8', $editorJs);
         self::assertStringContainsString('marked.parse', $editorJs);
         self::assertStringContainsString('files:text-content-saved', $editorJs);
+
+        $indexTwig = $this->readSource('templates/files/index.html.twig');
+        self::assertStringContainsString('type="importmap"', $indexTwig);
+        self::assertStringContainsString('@codemirror/state', $indexTwig);
+        self::assertStringContainsString('dist/index.js', $indexTwig);
 
         $filesSpaceJs = $this->readSource('public/js/files-space.js');
         self::assertStringContainsString('data-files-row-action="edit-text-open"', $filesSpaceJs);

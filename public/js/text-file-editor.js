@@ -7,7 +7,7 @@
     var MODAL_ID = 'textFileEditorModal';
     var MOUNT_ID = 'textFileEditorMount';
     var editorView = null;
-    var editorModulesPromise = null;
+    var coreModulesPromise = null;
     var loadAbortController = null;
     var isDirty = false;
     var suppressDirty = false;
@@ -44,6 +44,41 @@
     }
 
     /**
+     * @brief Lazy-load CodeMirror core from a single ESM entry (one @codemirror/state instance).
+     * @return {Promise<{EditorView: Function, basicSetup: unknown, EditorState: Function}>}
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    function loadCoreModules() {
+        if (!coreModulesPromise) {
+            coreModulesPromise = Promise.all([
+                import('@codemirror/state'),
+                import('@codemirror/view'),
+                import('@codemirror/commands'),
+            ]).then(function (parts) {
+                var state = parts[0];
+                var view = parts[1];
+                var commands = parts[2];
+                var baseExtensions = [
+                    view.lineNumbers(),
+                    commands.history(),
+                    view.highlightActiveLine(),
+                    view.drawSelection(),
+                    view.keymap.of(commands.defaultKeymap.concat(commands.historyKeymap)),
+                    view.EditorView.lineWrapping,
+                ];
+                return {
+                    EditorView: view.EditorView,
+                    EditorState: state.EditorState,
+                    baseExtensions: baseExtensions,
+                };
+            });
+        }
+
+        return coreModulesPromise;
+    }
+
+    /**
      * @brief Lazy-load CodeMirror modules for the requested file extension.
      * @param {string} extension Lowercase file extension.
      * @return {Promise<{EditorView: Function, basicSetup: unknown, EditorState: Function, langExtension: unknown|null}>}
@@ -51,33 +86,26 @@
      * @author Stephane H.
      */
     function loadEditorModules(extension) {
-        if (!editorModulesPromise) {
-            editorModulesPromise = (async function () {
-                var base = 'https://esm.sh';
-                var viewPkg = await import(base + '/codemirror@6.0.1');
-                var statePkg = await import(base + '/@codemirror/state@6.4.1');
-                var langByExt = {
-                    md: () => import(base + '/@codemirror/lang-markdown@6.3.2').then(function (m) { return m.markdown(); }),
-                    markdown: () => import(base + '/@codemirror/lang-markdown@6.3.2').then(function (m) { return m.markdown(); }),
-                    json: () => import(base + '/@codemirror/lang-json@6.0.1').then(function (m) { return m.json(); }),
-                    yaml: () => import(base + '/@codemirror/lang-yaml@6.1.2').then(function (m) { return m.yaml(); }),
-                    yml: () => import(base + '/@codemirror/lang-yaml@6.1.2').then(function (m) { return m.yaml(); }),
-                    xml: () => import(base + '/@codemirror/lang-xml@6.1.0').then(function (m) { return m.xml(); }),
-                };
-                var ext = String(extension || '').toLowerCase();
-                var langLoader = langByExt[ext];
-                var langExtension = langLoader ? await langLoader() : null;
+        return loadCoreModules().then(async function (core) {
+            var langByExt = {
+                md: function () { return import('@codemirror/lang-markdown').then(function (m) { return m.markdown(); }); },
+                markdown: function () { return import('@codemirror/lang-markdown').then(function (m) { return m.markdown(); }); },
+                json: function () { return import('@codemirror/lang-json').then(function (m) { return m.json(); }); },
+                yaml: function () { return import('@codemirror/lang-yaml').then(function (m) { return m.yaml(); }); },
+                yml: function () { return import('@codemirror/lang-yaml').then(function (m) { return m.yaml(); }); },
+                xml: function () { return import('@codemirror/lang-xml').then(function (m) { return m.xml(); }); },
+            };
+            var ext = String(extension || '').toLowerCase();
+            var langLoader = langByExt[ext];
+            var langExtension = langLoader ? await langLoader() : null;
 
-                return {
-                    EditorView: viewPkg.EditorView,
-                    basicSetup: viewPkg.basicSetup,
-                    EditorState: statePkg.EditorState,
-                    langExtension: langExtension,
-                };
-            })();
-        }
-
-        return editorModulesPromise;
+            return {
+                EditorView: core.EditorView,
+                EditorState: core.EditorState,
+                baseExtensions: core.baseExtensions,
+                langExtension: langExtension,
+            };
+        });
     }
 
     /**
@@ -195,7 +223,7 @@
             return;
         }
 
-        var extensions = [modules.basicSetup];
+        var extensions = modules.baseExtensions.slice();
         if (modules.langExtension) {
             extensions.push(modules.langExtension);
         }
