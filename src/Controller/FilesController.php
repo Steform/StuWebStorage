@@ -27,6 +27,8 @@ use App\Service\File\ZipExtractLimitsResolver;
 use App\Service\File\ZipExtractService;
 use App\Service\Format\BinaryByteFormatter;
 use App\Service\File\FileEncryptionService;
+use App\Service\Http\HttpByteRange;
+use App\Service\Http\InvalidByteRangeException;
 use App\Service\Share\FolderAncestorService;
 use App\Service\Share\FolderPublicTokenService;
 use App\Service\Share\FolderShareAuthorizationService;
@@ -3473,7 +3475,7 @@ class FilesController extends AbstractController
      * @date 2026-05-06
      * @author Stephane H.
      */
-    #[Route('/files/preview/{id}', name: 'files_preview', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[Route('/files/preview/{id}', name: 'files_preview', methods: ['GET', 'HEAD'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_USER')]
     public function preview(Request $request, int $id): Response
     {
@@ -3507,22 +3509,65 @@ class FilesController extends AbstractController
             return new Response('', Response::HTTP_REQUEST_ENTITY_TOO_LARGE);
         }
 
-        $ip = (string) ($request->getClientIp() ?? '0.0.0.0');
-        $actor = (string) $user->getUserIdentifier();
-        $this->downloadAuditService->create($actor, $ip, $sharedFile->getPublicToken());
+        $kind = (string) ($streamProfile['kind'] ?? '');
+        $rangeEnabled = \in_array($kind, ['video', 'audio', 'pdf'], true);
+        $byteSize = $sharedFile->getByteSize();
+        $hasRangeHeader = $request->headers->has('Range');
+
+        if (!$hasRangeHeader) {
+            $ip = (string) ($request->getClientIp() ?? '0.0.0.0');
+            $actor = (string) $user->getUserIdentifier();
+            $this->downloadAuditService->create($actor, $ip, $sharedFile->getPublicToken());
+        }
 
         $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', $sharedFile->getOriginalFileName());
         if ($safeName === '' || $safeName === '_') {
             $safeName = 'preview.'.$ext;
         }
 
-        $response = new StreamedResponse(function () use ($storagePath): void {
-            $this->fileEncryptionService->streamDecryptStorageToStdout($storagePath);
-        });
+        $byteRange = null;
+        if ($rangeEnabled) {
+            try {
+                $byteRange = HttpByteRange::tryFromRequest($request, $byteSize);
+            } catch (InvalidByteRangeException) {
+                return new Response('', Response::HTTP_REQUESTED_RANGE_NOT_SATISFIABLE, [
+                    'Content-Range' => 'bytes */'.$byteSize,
+                ]);
+            }
+        }
+
+        $usePartialContent = $byteRange !== null
+            && $rangeEnabled
+            && $this->fileEncryptionService->isV2StorageFormat($storagePath);
+
+        $statusCode = $usePartialContent ? Response::HTTP_PARTIAL_CONTENT : Response::HTTP_OK;
+
+        if ($request->isMethod('HEAD')) {
+            $response = new Response('', $statusCode);
+        } elseif ($usePartialContent) {
+            $rangeStart = $byteRange->getStart();
+            $rangeLength = $byteRange->getLength();
+            $response = new StreamedResponse(function () use ($storagePath, $rangeStart, $rangeLength): void {
+                $this->fileEncryptionService->streamDecryptStorageRangeToStdout($storagePath, $rangeStart, $rangeLength);
+            }, $statusCode);
+        } else {
+            $response = new StreamedResponse(function () use ($storagePath): void {
+                $this->fileEncryptionService->streamDecryptStorageToStdout($storagePath);
+            }, $statusCode);
+        }
+
         $response->headers->set('Content-Type', $streamProfile['mime']);
         $response->headers->set('Content-Disposition', 'inline; filename="'.$safeName.'"');
-        $response->headers->set('Content-Length', (string) $sharedFile->getByteSize());
-        if (($streamProfile['kind'] ?? '') === 'text') {
+        if ($rangeEnabled) {
+            $response->headers->set('Accept-Ranges', 'bytes');
+        }
+        if ($usePartialContent && $byteRange !== null) {
+            $response->headers->set('Content-Range', $byteRange->contentRangeHeader());
+            $response->headers->set('Content-Length', (string) $byteRange->getLength());
+        } else {
+            $response->headers->set('Content-Length', (string) $byteSize);
+        }
+        if ($kind === 'text') {
             $response->headers->set('X-Content-Type-Options', 'nosniff');
             $response->headers->set('Cache-Control', 'private, max-age=0, no-store');
         }

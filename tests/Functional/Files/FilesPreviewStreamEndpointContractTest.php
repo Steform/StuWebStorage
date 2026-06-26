@@ -57,5 +57,13 @@ final class FilesPreviewStreamEndpointContractTest extends TestCase
         self::assertStringContainsString("Response::HTTP_REQUEST_ENTITY_TOO_LARGE", $source);
         self::assertStringContainsString("'X-Content-Type-Options', 'nosniff'", $source);
         self::assertStringContainsString("'Cache-Control', 'private, max-age=0, no-store'", $source);
+        self::assertStringContainsString("methods: ['GET', 'HEAD']", $source);
+        self::assertStringContainsString('HttpByteRange::tryFromRequest', $source);
+        self::assertStringContainsString('streamDecryptStorageRangeToStdout', $source);
+        self::assertStringContainsString("'Accept-Ranges', 'bytes'", $source);
+        self::assertStringContainsString('HTTP_PARTIAL_CONTENT', $source);
+        self::assertStringContainsString('HTTP_REQUESTED_RANGE_NOT_SATISFIABLE', $source);
+        self::assertStringContainsString('$hasRangeHeader', $source);
+        self::assertStringContainsString("['video', 'audio', 'pdf']", $source);
     }
 }

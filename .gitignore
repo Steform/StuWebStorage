@@ -19,6 +19,10 @@
 /var/log/*
 !var/log/.gitkeep
 
+# Encrypted user uploads (runtime storage, not source)
+/var/shared/*
+!/var/shared/.gitkeep
+
 # Parameters
 /app/config/parameters.yml
 /app/config/parameters.ini

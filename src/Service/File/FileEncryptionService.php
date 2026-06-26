@@ -184,6 +184,77 @@ class FileEncryptionService
     }
 
     /**
+     * @brief Stream a plaintext byte range from v2 storage to stdout.
+     * @param string $storagePath Encrypted file path.
+     * @param int $plainStart Inclusive plaintext start offset.
+     * @param int $plainLength Number of plaintext bytes to emit.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function streamDecryptStorageRangeToStdout(string $storagePath, int $plainStart, int $plainLength): void
+    {
+        $out = fopen('php://output', 'wb');
+        if ($out === false) {
+            throw new RuntimeException('file.encryption.output_failed');
+        }
+        try {
+            $this->streamDecryptStorageRangeToHandle($storagePath, $plainStart, $plainLength, $out);
+        } finally {
+            fclose($out);
+        }
+    }
+
+    /**
+     * @brief Copy a plaintext byte range from storage into a binary handle (v2 only).
+     * @param string $storagePath Encrypted file path.
+     * @param int $plainStart Inclusive plaintext start offset.
+     * @param int $plainLength Number of plaintext bytes to write.
+     * @param resource $target Writable binary stream.
+     * @return int Bytes written.
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function streamDecryptStorageRangeToHandle(string $storagePath, int $plainStart, int $plainLength, $target): int
+    {
+        if ($storagePath === '' || !is_readable($storagePath)) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+        if ($plainStart < 0 || $plainLength < 1) {
+            throw new RuntimeException('file.encryption.range_invalid');
+        }
+
+        if (!$this->isV2StorageFormat($storagePath)) {
+            throw new RuntimeException('file.encryption.range_v2_only');
+        }
+
+        $fh = fopen($storagePath, 'rb');
+        if ($fh === false) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+
+        try {
+            $magic = fread($fh, 4);
+            if ($magic !== self::STORAGE_MAGIC_V2) {
+                throw new RuntimeException('file.encryption.invalid_payload');
+            }
+
+            $plainTotal = $this->readV2PlainTotalFromHandleAfterMagic($fh);
+            if ($plainStart >= $plainTotal) {
+                throw new RuntimeException('file.encryption.range_invalid');
+            }
+
+            $maxLength = $plainTotal - $plainStart;
+            $plainLength = min($plainLength, $maxLength);
+            $plainEnd = $plainStart + $plainLength - 1;
+
+            return $this->decryptV2SegmentRange($fh, $target, $plainTotal, $plainStart, $plainEnd);
+        } finally {
+            fclose($fh);
+        }
+    }
+
+    /**
      * @brief Copy decrypted plaintext into a binary handle (bounded memory).
      * @param string $storagePath Encrypted file path.
      * @param resource $target Writable binary stream.
@@ -233,6 +304,20 @@ class FileEncryptionService
      */
     private function decryptV2BodyFromHandleAfterMagic($fh, $target): int
     {
+        $expectedTotal = $this->readV2PlainTotalFromHandleAfterMagic($fh);
+
+        return $this->decryptV2Segments($fh, $target, $expectedTotal);
+    }
+
+    /**
+     * @brief Read v2 plaintext total from handle positioned after magic bytes.
+     * @param resource $fh Open read handle positioned after magic bytes.
+     * @return int Expected plaintext byte length.
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    private function readV2PlainTotalFromHandleAfterMagic($fh): int
+    {
         $version = fread($fh, 1);
         if ($version === false || $version === '') {
             throw new RuntimeException('file.encryption.invalid_payload');
@@ -243,9 +328,112 @@ class FileEncryptionService
             throw new RuntimeException('file.encryption.invalid_payload');
         }
         $plainExpected = unpack('J', $lenBin);
-        $expectedTotal = is_array($plainExpected) ? (int) ($plainExpected[1] ?? 0) : 0;
 
-        return $this->decryptV2Segments($fh, $target, $expectedTotal);
+        return is_array($plainExpected) ? (int) ($plainExpected[1] ?? 0) : 0;
+    }
+
+    /**
+     * @brief Decrypt only v2 segments overlapping a plaintext byte range.
+     * @param resource $fh Cipher file handle positioned at first segment.
+     * @param resource $target Plain output handle.
+     * @param int $plainTotal Total plaintext size from header.
+     * @param int $plainStart Inclusive range start in plaintext space.
+     * @param int $plainEnd Inclusive range end in plaintext space.
+     * @return int Bytes written.
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    private function decryptV2SegmentRange($fh, $target, int $plainTotal, int $plainStart, int $plainEnd): int
+    {
+        if ($this->encryptionKey === '') {
+            throw new RuntimeException('file.encryption.key_missing');
+        }
+
+        $ivLength = openssl_cipher_iv_length(self::CIPHER);
+        if ($ivLength <= 0) {
+            throw new RuntimeException('file.encryption.cipher_invalid');
+        }
+
+        $written = 0;
+        $segmentPlainStart = 0;
+
+        while ($segmentPlainStart < $plainTotal && !feof($fh)) {
+            $segmentPlainLen = (int) min(self::PLAIN_CHUNK_BYTES, $plainTotal - $segmentPlainStart);
+            $segmentPlainEnd = $segmentPlainStart + $segmentPlainLen - 1;
+            $overlaps = $segmentPlainStart <= $plainEnd && $segmentPlainEnd >= $plainStart;
+
+            $segment = $this->readV2CipherSegment($fh);
+            if ($segment === null) {
+                break;
+            }
+
+            if ($overlaps) {
+                $plainChunk = openssl_decrypt(
+                    $segment['cipherText'],
+                    self::CIPHER,
+                    $this->encryptionKey,
+                    OPENSSL_RAW_DATA,
+                    $segment['iv'],
+                );
+                if (!is_string($plainChunk)) {
+                    throw new RuntimeException('file.encryption.failed');
+                }
+
+                $sliceStart = max(0, $plainStart - $segmentPlainStart);
+                $sliceEnd = min(strlen($plainChunk) - 1, $plainEnd - $segmentPlainStart);
+                if ($sliceEnd >= $sliceStart) {
+                    $slice = substr($plainChunk, $sliceStart, $sliceEnd - $sliceStart + 1);
+                    fwrite($target, $slice);
+                    $written += strlen($slice);
+                }
+            }
+
+            $segmentPlainStart += $segmentPlainLen;
+            if ($segmentPlainStart > $plainEnd) {
+                break;
+            }
+        }
+
+        return $written;
+    }
+
+    /**
+     * @brief Read one v2 ciphertext segment from an open storage handle.
+     * @param resource $fh Cipher file handle.
+     * @return array{iv: string, cipherText: string}|null Segment payload or null at EOF.
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    private function readV2CipherSegment($fh): ?array
+    {
+        $lenIvPack = fread($fh, 2);
+        if ($lenIvPack === false || $lenIvPack === '') {
+            return null;
+        }
+        if (strlen($lenIvPack) !== 2) {
+            throw new RuntimeException('file.encryption.invalid_payload');
+        }
+        $ivLenArr = unpack('n', $lenIvPack);
+        $ivLen = (int) ($ivLenArr[1] ?? 0);
+        if ($ivLen < 1) {
+            return null;
+        }
+        $iv = fread($fh, $ivLen);
+        if (!is_string($iv) || strlen($iv) !== $ivLen) {
+            throw new RuntimeException('file.encryption.invalid_payload');
+        }
+        $cipherLenBin = fread($fh, 4);
+        if ($cipherLenBin === false || strlen($cipherLenBin) !== 4) {
+            throw new RuntimeException('file.encryption.invalid_payload');
+        }
+        $cipherLenArr = unpack('N', $cipherLenBin);
+        $cipherLen = (int) ($cipherLenArr[1] ?? 0);
+        $cipherText = fread($fh, $cipherLen);
+        if (!is_string($cipherText) || strlen($cipherText) !== $cipherLen) {
+            throw new RuntimeException('file.encryption.invalid_payload');
+        }
+
+        return ['iv' => $iv, 'cipherText' => $cipherText];
     }
 
     /**
@@ -270,33 +458,11 @@ class FileEncryptionService
 
         $written = 0;
         while (!feof($fh)) {
-            $lenIvPack = fread($fh, 2);
-            if ($lenIvPack === false || $lenIvPack === '') {
+            $segment = $this->readV2CipherSegment($fh);
+            if ($segment === null) {
                 break;
             }
-            if (strlen($lenIvPack) !== 2) {
-                throw new RuntimeException('file.encryption.invalid_payload');
-            }
-            $ivLenArr = unpack('n', $lenIvPack);
-            $ivLen = (int) ($ivLenArr[1] ?? 0);
-            if ($ivLen < 1) {
-                break;
-            }
-            $iv = fread($fh, $ivLen);
-            if (!is_string($iv) || strlen($iv) !== $ivLen) {
-                throw new RuntimeException('file.encryption.invalid_payload');
-            }
-            $cipherLenBin = fread($fh, 4);
-            if ($cipherLenBin === false || strlen($cipherLenBin) !== 4) {
-                throw new RuntimeException('file.encryption.invalid_payload');
-            }
-            $cipherLenArr = unpack('N', $cipherLenBin);
-            $cipherLen = (int) ($cipherLenArr[1] ?? 0);
-            $cipherText = fread($fh, $cipherLen);
-            if (!is_string($cipherText) || strlen($cipherText) !== $cipherLen) {
-                throw new RuntimeException('file.encryption.invalid_payload');
-            }
-            $plainChunk = openssl_decrypt($cipherText, self::CIPHER, $this->encryptionKey, OPENSSL_RAW_DATA, $iv);
+            $plainChunk = openssl_decrypt($segment['cipherText'], self::CIPHER, $this->encryptionKey, OPENSSL_RAW_DATA, $segment['iv']);
             if (!is_string($plainChunk)) {
                 throw new RuntimeException('file.encryption.failed');
             }
