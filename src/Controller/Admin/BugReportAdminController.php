@@ -5,7 +5,9 @@ namespace App\Controller\Admin;
 use App\Entity\BugReport;
 use App\Entity\User;
 use App\Repository\BugReportRepository;
+use App\Service\BugReport\BugReportScreenshotStorage;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,6 +30,7 @@ class BugReportAdminController
     /**
      * @brief Build admin bug report controller.
      * @param BugReportRepository $bugReportRepository Bug report repository.
+     * @param BugReportScreenshotStorage $bugReportScreenshotStorage Screenshot storage service.
      * @param Security $security Security helper.
      * @param CsrfTokenManagerInterface $csrfTokenManager CSRF token manager.
      * @return void
@@ -36,6 +39,7 @@ class BugReportAdminController
      */
     public function __construct(
         private readonly BugReportRepository $bugReportRepository,
+        private readonly BugReportScreenshotStorage $bugReportScreenshotStorage,
         private readonly Security $security,
         private readonly CsrfTokenManagerInterface $csrfTokenManager
     ) {
@@ -97,6 +101,36 @@ class BugReportAdminController
             'csrfArchiveToken' => $this->csrfTokenManager->getToken(self::CSRF_ARCHIVE)->getValue(),
             'csrfUnarchiveToken' => $this->csrfTokenManager->getToken(self::CSRF_UNARCHIVE)->getValue(),
         ]));
+    }
+
+    /**
+     * @brief Stream bug report screenshot for admin review.
+     * @param int $id Bug report identifier.
+     * @return Response
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    #[Route('/admin/bug-reports/{id}/screenshot', name: 'admin_bug_reports_screenshot', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function screenshot(int $id): Response
+    {
+        $report = $this->bugReportRepository->find($id);
+        if (!$report instanceof BugReport) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
+
+        $absolutePath = $this->bugReportScreenshotStorage->getAbsolutePath($report);
+        if ($absolutePath === null) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
+
+        $response = new BinaryFileResponse($absolutePath);
+        $mime = $report->getScreenshotMime();
+        if (is_string($mime) && $mime !== '') {
+            $response->headers->set('Content-Type', $mime);
+        }
+        $response->setContentDisposition('inline', basename($absolutePath));
+
+        return $response;
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Service\Share;
 
 use App\Entity\Folder;
+use App\Repository\FolderShareGrantRepository;
 use App\Repository\SharedFileRepository;
 
 /**
@@ -13,6 +14,7 @@ class FolderPropertiesService
     public function __construct(
         private readonly FolderTreeService $folderTreeService,
         private readonly SharedFileRepository $sharedFileRepository,
+        private readonly FolderShareGrantRepository $folderShareGrantRepository,
     ) {
     }
 
@@ -51,8 +53,10 @@ class FolderPropertiesService
         $folders = $this->folderTreeService->collectSubtreeFolders($ownerUserId, $folder);
         $folderIds = [];
         $hasEffectiveFolderPublicPolicy = false;
-        $hasFolderFriendsPolicy = false;
         $folderShowsPublicExpirationClock = false;
+        $rootFolderId = (int) ($folder->getId() ?? 0);
+        $hasFolderFriendsPolicy = $rootFolderId > 0
+            && $this->folderShareGrantRepository->hasAnyActiveGrantOnFolderOrAncestor($rootFolderId);
         foreach ($folders as $subFolder) {
             $id = $subFolder->getId();
             if ($id !== null && $id > 0) {
@@ -67,9 +71,6 @@ class FolderPropertiesService
             ) {
                 $folderShowsPublicExpirationClock = true;
             }
-            if ($subFolder->getFriendsShareUserIds() !== []) {
-                $hasFolderFriendsPolicy = true;
-            }
         }
         $filesInSubtree = $this->sharedFileRepository->countByOwnerAndFolderIds($ownerUserId, $folderIds);
         $publicCount = $this->sharedFileRepository->countActivePublicByOwnerAndFolderIds($ownerUserId, $folderIds);
@@ -79,7 +80,7 @@ class FolderPropertiesService
         $publicActive = $publicCount > 0 || $hasEffectiveFolderPublicPolicy;
 
         // Friends "Oui" only when at least one active grant exists on a file, or folder subtree is empty but folder-level friend intents remain (no stale JSON while files exist).
-        $friendsActive = $friendsCount > 0 || ($filesInSubtree === 0 && $hasFolderFriendsPolicy);
+        $friendsActive = $friendsCount > 0 || $hasFolderFriendsPolicy;
 
         $hasPublicExpirationListingClock = $publicActive
             && ($filesFiniteActivePublic > 0 || $folderShowsPublicExpirationClock);

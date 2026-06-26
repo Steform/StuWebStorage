@@ -219,6 +219,10 @@ services:
       $siteTitle: '%app.site_title%'
       $siteAccessGateService: '@App\Service\Site\SiteAccessGateService'
 
+  App\Service\BugReport\BugReportScreenshotStorage:
+    arguments:
+      $projectDir: '%kernel.project_dir%'
+
   App\Monolog\RequestContextProcessor:
     tags:
       - { name: monolog.processor }

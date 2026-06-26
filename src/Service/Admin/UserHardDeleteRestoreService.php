@@ -42,6 +42,8 @@ class UserHardDeleteRestoreService
             $this->upsertRows($connection, 'shared_file', $snapshotPayload['sharedFilesOwned'] ?? []);
             $this->upsertRows($connection, 'share_grant', $snapshotPayload['shareGrantsForOwnedFiles'] ?? []);
             $this->upsertRows($connection, 'share_grant', $snapshotPayload['shareGrantsAsGrantee'] ?? []);
+            $this->upsertRows($connection, 'folder_share_grant', $snapshotPayload['folderShareGrantsForOwnedFolders'] ?? []);
+            $this->upsertRows($connection, 'folder_share_grant', $snapshotPayload['folderShareGrantsAsGrantee'] ?? []);
             $this->upsertRows($connection, 'public_download_challenge', $snapshotPayload['publicDownloadChallengesForOwnedTokens'] ?? []);
             $this->restoreFileBlobs($snapshotPayload['fileBlobs'] ?? []);
         });

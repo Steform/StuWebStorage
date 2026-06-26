@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service\Share;
 
 use App\Entity\Folder;
+use App\Entity\FolderShareGrant;
 use App\Entity\SharedFile;
+use App\Repository\FolderRepository;
+use App\Repository\FolderShareGrantRepository;
+use App\Service\Share\FolderTreeService;
 use App\Service\Share\SharedForMeTreeService;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
@@ -22,7 +26,16 @@ final class SharedForMeTreeServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new SharedForMeTreeService();
+        $folderShareGrantRepository = $this->createMock(FolderShareGrantRepository::class);
+        $folderShareGrantRepository->method('findActiveByGrantee')->willReturn([]);
+        $folderRepository = $this->createMock(FolderRepository::class);
+        $folderTreeService = $this->createMock(FolderTreeService::class);
+        $folderTreeService->method('collectSubtreeFolders')->willReturn([]);
+        $this->service = new SharedForMeTreeService(
+            $folderShareGrantRepository,
+            $folderRepository,
+            $folderTreeService,
+        );
     }
 
     /**
@@ -200,5 +213,39 @@ final class SharedForMeTreeServiceTest extends TestCase
 
         self::assertCount(1, $context->filesAtLevel);
         self::assertSame(1, $context->filesAtLevel[0]->getId());
+    }
+
+    /**
+     * @brief Empty shared folder roots appear from active folder grants.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function testEmptySharedFolderRootFromFolderGrant(): void
+    {
+        $sharedRoot = new Folder(10, 'Films');
+        $this->assignFolderId($sharedRoot, 300);
+        $child = new Folder(10, 'Saison 1', $sharedRoot);
+        $this->assignFolderId($child, 301);
+
+        $folderShareGrantRepository = $this->createMock(FolderShareGrantRepository::class);
+        $folderShareGrantRepository->method('findActiveByGrantee')->willReturn([
+            new FolderShareGrant(300, 20, null),
+        ]);
+        $folderRepository = $this->createMock(FolderRepository::class);
+        $folderRepository->method('find')->with(300)->willReturn($sharedRoot);
+        $folderTreeService = $this->createMock(FolderTreeService::class);
+        $folderTreeService->method('collectSubtreeFolders')->willReturn([$sharedRoot, $child]);
+
+        $service = new SharedForMeTreeService(
+            $folderShareGrantRepository,
+            $folderRepository,
+            $folderTreeService,
+        );
+
+        $context = $service->buildListingContext([], 0, 20);
+
+        self::assertSame([['id' => 300, 'name' => 'Films']], $context->foldersAtLevel);
+        self::assertArrayHasKey(301, $context->registry);
     }
 }

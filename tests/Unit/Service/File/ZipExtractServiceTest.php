@@ -55,12 +55,11 @@ final class ZipExtractServiceTest extends TestCase
             userStorageQuotaService: $quotaService,
             shareGrantRepository: $this->createMock(\App\Repository\ShareGrantRepository::class),
             publicDownloadChallengeRepository: $this->createMock(\App\Repository\PublicDownloadChallengeRepository::class),
-            publicShareService: $this->createMock(\App\Service\Share\PublicShareService::class),
-            friendsShareService: $this->createMock(\App\Service\Share\FriendsShareService::class),
             folderPathMaterializerService: new FolderPathMaterializerService(
                 $this->createMock(\Doctrine\ORM\EntityManagerInterface::class),
                 $sharedFileRepository,
                 $this->createMock(\App\Repository\FolderRepository::class),
+                $this->createMock(\App\Service\Share\FolderAncestorService::class),
             ),
             projectDir: sys_get_temp_dir(),
         );

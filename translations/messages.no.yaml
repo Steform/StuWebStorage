@@ -885,6 +885,11 @@ admin:
       correlation_id: 'Request ID'
       app_version: 'App-versjon'
       archive_reason: 'Arkiveringsarsak'
+      ticket: 'Ticket'
+      action_short: 'Handling'
+      observed_short: 'Observert'
+      expected_short: 'Forventet'
+      screenshot: 'Skjermbilde'
     archived:
       yes: 'Ja'
       no: 'Nei'
@@ -893,9 +898,12 @@ admin:
       back: 'Tilbake til listen'
       mark_in_progress: 'Sett under arbeid'
       mark_resolved: 'Marker som lost'
+      mark_in_progress_short: 'Pagar'
+      mark_resolved_short: 'Lost'
       reopen: 'Apne pa nytt'
       archive: 'Arkiver'
       unarchive: 'Fjern arkivering'
+      confirm_resolved: 'Markere dette ticketet som lost?'
 setup:
   meta:
     title: Administratoroppsett

@@ -78,6 +78,8 @@ class UserHardDeleteSnapshotService
             'sharedFilesOwned' => $ownedSharedFiles,
             'shareGrantsForOwnedFiles' => $grantsForOwnedFiles,
             'shareGrantsAsGrantee' => $connection->fetchAllAssociative('SELECT * FROM share_grant WHERE grantee_user_id = :uid ORDER BY id ASC', ['uid' => $userId]),
+            'folderShareGrantsAsGrantee' => $connection->fetchAllAssociative('SELECT * FROM folder_share_grant WHERE grantee_user_id = :uid ORDER BY id ASC', ['uid' => $userId]),
+            'folderShareGrantsForOwnedFolders' => $this->fetchFolderShareGrantsForOwnedFolders($connection, $userId),
             'publicDownloadChallengesForOwnedTokens' => $publicChallenges,
             'fileBlobs' => $this->collectFileBlobs($ownedSharedFiles),
         ];
@@ -106,5 +108,24 @@ class UserHardDeleteSnapshotService
         }
 
         return $blobs;
+    }
+
+    /**
+     * @brief List folder share grants attached to folders owned by the user.
+     * @param Connection $connection Database connection.
+     * @param int $userId Owner user identifier.
+     * @return array<int, array<string, mixed>>
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    private function fetchFolderShareGrantsForOwnedFolders(Connection $connection, int $userId): array
+    {
+        return $connection->fetchAllAssociative(
+            'SELECT fsg.* FROM folder_share_grant fsg
+             INNER JOIN folder f ON f.id = fsg.folder_id
+             WHERE f.owner_user_id = :uid
+             ORDER BY fsg.id ASC',
+            ['uid' => $userId]
+        );
     }
 }

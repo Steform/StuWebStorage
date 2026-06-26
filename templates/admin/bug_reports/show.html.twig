@@ -5,11 +5,15 @@
 
 {% block flash_messages %}{% endblock %}
 
+{% block stylesheets %}
+    <link href="{{ asset('css/admin-bug-reports.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block top_navigation %}
     {% include 'components/_storage_admin_nav.html.twig' %}
 {% endblock %}
 
-{% block main_container_class %}container py-4{% endblock %}
+{% block main_container_class %}container-fluid px-3 px-lg-4 py-4{% endblock %}
 
 {% block body %}
     <div class="card shadow-sm mb-3">
@@ -41,19 +45,39 @@
             </div>
 
             <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">{{ 'bug_report.modal.action_description_label'|trans({}, 'messages', currentLocale) }}</label>
-                    <pre class="border rounded p-2 bg-body-tertiary">{{ report.actionDescription }}</pre>
+                <div class="col-md-4">
+                    <label class="form-label" for="bug-report-detail-action">{{ 'bug_report.modal.action_description_label'|trans({}, 'messages', currentLocale) }}</label>
+                    <textarea id="bug-report-detail-action" class="form-control bg-body-tertiary bug-report-readonly" rows="5" readonly aria-readonly="true">{{ report.actionDescription }}</textarea>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">{{ 'bug_report.modal.observed_result_label'|trans({}, 'messages', currentLocale) }}</label>
-                    <pre class="border rounded p-2 bg-body-tertiary">{{ report.observedResult }}</pre>
+                <div class="col-md-4">
+                    <label class="form-label" for="bug-report-detail-observed">{{ 'bug_report.modal.observed_result_label'|trans({}, 'messages', currentLocale) }}</label>
+                    <textarea id="bug-report-detail-observed" class="form-control bg-body-tertiary bug-report-readonly" rows="5" readonly aria-readonly="true">{{ report.observedResult }}</textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="bug-report-detail-expected">{{ 'bug_report.modal.expected_result_label'|trans({}, 'messages', currentLocale) }}</label>
+                    <textarea id="bug-report-detail-expected" class="form-control bg-body-tertiary bug-report-readonly" rows="5" readonly aria-readonly="true">{{ report.expectedResult ?? '' }}</textarea>
                 </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">{{ 'bug_report.modal.expected_result_label'|trans({}, 'messages', currentLocale) }}</label>
-                <pre class="border rounded p-2 bg-body-tertiary">{{ report.expectedResult ?: '-' }}</pre>
-            </div>
+
+            {% if report.screenshotPath %}
+                <div class="mb-3">
+                    <label class="form-label">{{ 'admin.bug_reports.fields.screenshot'|trans({}, 'messages', currentLocale) }}</label>
+                    <div>
+                        <img
+                            src="{{ path('admin_bug_reports_screenshot', { id: report.id }) }}"
+                            alt=""
+                            class="bug-report-screenshot-detail border rounded"
+                            loading="lazy"
+                            data-files-media-preview-trigger
+                            data-src="{{ path('admin_bug_reports_screenshot', { id: report.id }) }}"
+                            data-media-preview-type="image"
+                            data-title="{{ 'admin.bug_reports.detail.title'|trans({'%id%': report.id}, 'messages', currentLocale) }}"
+                            tabindex="0"
+                            role="button"
+                        >
+                    </div>
+                </div>
+            {% endif %}
 
             <h2 class="h6">{{ 'admin.bug_reports.detail.context_title'|trans({}, 'messages', currentLocale) }}</h2>
             <div class="table-responsive mb-3">

@@ -40,8 +40,8 @@ final class EmptySharedFolderVisibilityContractTest extends TestCase
 
         self::assertStringContainsString('SharedForMeTreeService', $paneBuilderSource);
         self::assertStringContainsString('buildListingContext', $paneBuilderSource);
-        self::assertStringContainsString('$folderCursor = $sharedForMeFile->getFolder();', $treeServiceSource);
-        self::assertStringContainsString('$folderCursor = $folderCursor->getParent();', $treeServiceSource);
+        self::assertStringContainsString('findActiveByGrantee', $treeServiceSource);
+        self::assertStringContainsString('collectSubtreeFolders', $treeServiceSource);
         self::assertStringNotContainsString('findFriendsSharedFoldersForGrantee', $paneBuilderSource);
         self::assertStringNotContainsString('$sharedForMeIntentFolders', $paneBuilderSource);
         self::assertStringContainsString("'hasSharedForMe' => \$allSharedForMeFiles !== [] || \$sharedListingContext->registry !== []", $paneBuilderSource);

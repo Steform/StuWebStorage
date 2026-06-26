@@ -63,6 +63,7 @@ class UserHardDeletePurgeService
                 'invitationTokensAsInvitee' => $connection->executeStatement('DELETE FROM user_invitation_token WHERE user_id = :uid', ['uid' => $userId]),
                 'invitationTokensAsInviter' => $connection->executeStatement('DELETE FROM user_invitation_token WHERE invited_by_user_id = :uid', ['uid' => $userId]),
                 'shareGrantsAsGrantee' => $connection->executeStatement('DELETE FROM share_grant WHERE grantee_user_id = :uid', ['uid' => $userId]),
+                'folderShareGrantsAsGrantee' => $connection->executeStatement('DELETE FROM folder_share_grant WHERE grantee_user_id = :uid', ['uid' => $userId]),
             ];
 
             $userEmail = is_array($snapshotPayload['user'] ?? null)
@@ -106,6 +107,10 @@ class UserHardDeletePurgeService
 
             $counts['foldersOwned'] = $connection->executeStatement(
                 'DELETE FROM folder WHERE owner_user_id = :uid',
+                ['uid' => $userId]
+            );
+            $counts['folderShareGrantsForOwnedFolders'] = $connection->executeStatement(
+                'DELETE fsg FROM folder_share_grant fsg INNER JOIN folder f ON f.id = fsg.folder_id WHERE f.owner_user_id = :uid',
                 ['uid' => $userId]
             );
 

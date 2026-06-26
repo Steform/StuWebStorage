@@ -28,6 +28,7 @@ final class FolderPathMaterializerServiceTest extends TestCase
             entityManager: $this->createMock(\Doctrine\ORM\EntityManagerInterface::class),
             sharedFileRepository: $sharedFileRepository ?? $this->createMock(\App\Repository\SharedFileRepository::class),
             folderRepository: $folderRepository ?? $this->createMock(\App\Repository\FolderRepository::class),
+            folderAncestorService: $this->createMock(\App\Service\Share\FolderAncestorService::class),
         );
     }
 

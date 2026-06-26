@@ -246,14 +246,40 @@ class SharedFileRepository extends ServiceEntityRepository
      */
     public function findSharedForGranteeAll(int $granteeUserId, ?SharedFileOwnerListCriteria $criteria = null): array
     {
+        if ($granteeUserId < 1) {
+            return [];
+        }
+
+        $sql = 'SELECT DISTINCT sf_id FROM (
+            SELECT sf.id AS sf_id
+            FROM shared_file sf
+            INNER JOIN share_grant sg ON sg.shared_file_id = sf.id
+            WHERE sg.grantee_user_id = :granteeUserId
+              AND (sg.expires_at IS NULL OR sg.expires_at > NOW())
+              AND (sf.expires_at IS NULL OR sf.expires_at > NOW())
+              AND sf.owner_user_id != :granteeUserId
+            UNION
+            SELECT sf.id AS sf_id
+            FROM shared_file sf
+            INNER JOIN folder_ancestor fa ON fa.folder_id = sf.folder_id
+            INNER JOIN folder_share_grant fsg ON fsg.folder_id = fa.ancestor_folder_id
+            WHERE fsg.grantee_user_id = :granteeUserId
+              AND (fsg.expires_at IS NULL OR fsg.expires_at > NOW())
+              AND (sf.expires_at IS NULL OR sf.expires_at > NOW())
+              AND sf.owner_user_id != :granteeUserId
+        ) shared_ids';
+
+        $ids = $this->getEntityManager()->getConnection()->fetchFirstColumn($sql, [
+            'granteeUserId' => $granteeUserId,
+        ]);
+        $sharedFileIds = array_values(array_unique(array_map(static fn (mixed $id): int => (int) $id, $ids)));
+        if ($sharedFileIds === []) {
+            return [];
+        }
+
         $qb = $this->createQueryBuilder('sf')
-            ->distinct()
-            ->innerJoin(ShareGrant::class, 'sg', 'WITH', 'sg.sharedFileId = sf.id')
-            ->andWhere('sg.granteeUserId = :granteeUserId')
-            ->andWhere('sg.expiresAt IS NULL OR sg.expiresAt > CURRENT_TIMESTAMP()')
-            ->andWhere('sf.expiresAt IS NULL OR sf.expiresAt > CURRENT_TIMESTAMP()')
-            ->andWhere('sf.ownerUserId != :granteeUserId')
-            ->setParameter('granteeUserId', $granteeUserId);
+            ->andWhere('sf.id IN (:ids)')
+            ->setParameter('ids', $sharedFileIds);
         if ($criteria instanceof SharedFileOwnerListCriteria) {
             $this->applyOwnerListOrderBy($qb, $criteria);
         } else {

@@ -900,6 +900,11 @@ admin:
       correlation_id: 'Request ID'
       app_version: 'App version'
       archive_reason: 'Archive reason'
+      ticket: Ticket
+      action_short: 'Action taken'
+      observed_short: Observed
+      expected_short: Expected
+      screenshot: Screenshot
     archived:
       yes: 'Yes'
       no: 'No'
@@ -908,9 +913,12 @@ admin:
       back: 'Back to list'
       mark_in_progress: 'Mark in progress'
       mark_resolved: 'Mark resolved'
+      mark_in_progress_short: 'In progress'
+      mark_resolved_short: Resolved
       reopen: Reopen
       archive: Archive
       unarchive: Unarchive
+      confirm_resolved: 'Mark this ticket as resolved?'
 setup:
   meta:
     title: 'Administrator bootstrap'

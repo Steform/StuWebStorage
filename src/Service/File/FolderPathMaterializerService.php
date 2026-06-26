@@ -8,6 +8,7 @@ use App\Entity\Folder;
 use App\Entity\SharedFile;
 use App\Repository\FolderRepository;
 use App\Repository\SharedFileRepository;
+use App\Service\Share\FolderAncestorService;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -27,6 +28,7 @@ final class FolderPathMaterializerService
         private readonly EntityManagerInterface $entityManager,
         private readonly SharedFileRepository $sharedFileRepository,
         private readonly FolderRepository $folderRepository,
+        private readonly FolderAncestorService $folderAncestorService,
     ) {
     }
 
@@ -98,6 +100,7 @@ final class FolderPathMaterializerService
                 $folder = new Folder($ownerUserId, $resolved['name'], $cursor);
                 $this->entityManager->persist($folder);
                 $this->entityManager->flush();
+                $this->folderAncestorService->rebuildForFolder($folder);
                 $fid = (int) ($folder->getId() ?? 0);
                 if ($fid > 0 && $meta !== null) {
                     /** @var list<int> $createdFolderIds */

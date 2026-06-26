@@ -1,0 +1,76 @@
+/**
+ * Admin bug report list and detail layout.
+ */
+table.bug-reports-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+table.bug-reports-table th.col-date {
+    width: 6.5rem;
+}
+
+table.bug-reports-table th.col-ticket {
+    width: 7.5rem;
+}
+
+table.bug-reports-table th.col-screenshot {
+    width: 3.75rem;
+}
+
+table.bug-reports-table th.col-action,
+table.bug-reports-table th.col-observed,
+table.bug-reports-table th.col-expected {
+    width: 15%;
+}
+
+table.bug-reports-table th.col-actions {
+    width: 9.5rem;
+}
+
+.bug-report-excerpt {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bug-report-tooltip .tooltip-inner {
+    max-width: 24rem;
+    text-align: left;
+    white-space: pre-wrap;
+}
+
+textarea.bug-report-readonly {
+    cursor: text;
+    resize: vertical;
+}
+
+.bug-report-screenshot-thumb {
+    display: block;
+    max-height: 2.25rem;
+    max-width: 3.5rem;
+    object-fit: cover;
+    border-radius: 0.25rem;
+}
+
+.bug-report-screenshot-detail {
+    display: block;
+    max-height: min(70vh, 48rem);
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    cursor: pointer;
+}
+
+.bug-reports-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    justify-content: flex-end;
+}
+
+.bug-reports-actions form {
+    display: inline;
+}

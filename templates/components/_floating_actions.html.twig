@@ -68,6 +68,7 @@
             <button
                 class="btn floating-actions__icon-btn"
                 type="button"
+                data-bug-report-trigger
                 data-bs-toggle="modal"
                 data-bs-target="#bugReportModal"
                 aria-label="{{ 'floating.actions.bug.aria'|trans({}, 'messages', currentLocale) }}"
@@ -125,6 +126,7 @@
                         <input type="hidden" name="viewport_width" value="" data-bug-report-viewport-width>
                         <input type="hidden" name="viewport_height" value="" data-bug-report-viewport-height>
                         <input type="hidden" name="action_timeline" value="" data-bug-report-action-timeline>
+                        <input type="hidden" name="screenshot_data" value="" data-bug-report-screenshot>
 
                         <div class="mb-3">
                             <label class="form-label" for="bug-report-action-description">{{ 'bug_report.modal.action_description_label'|trans({}, 'messages', currentLocale) }}</label>

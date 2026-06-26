@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\BugReport;
 use App\Entity\User;
 use App\Repository\BugReportRepository;
+use App\Service\BugReport\BugReportScreenshotStorage;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -26,6 +27,7 @@ class BugReportController
     /**
      * @brief Build bug report submit controller.
      * @param BugReportRepository $bugReportRepository Bug report repository.
+     * @param BugReportScreenshotStorage $bugReportScreenshotStorage Screenshot storage service.
      * @param Security $security Security helper.
      * @param CsrfTokenManagerInterface $csrfTokenManager CSRF token manager.
      * @param LoggerInterface $bugReportLogger Bug report logger.
@@ -36,6 +38,7 @@ class BugReportController
      */
     public function __construct(
         private readonly BugReportRepository $bugReportRepository,
+        private readonly BugReportScreenshotStorage $bugReportScreenshotStorage,
         private readonly Security $security,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
         #[Autowire(service: 'monolog.logger.bug_report')]
@@ -116,6 +119,12 @@ class BugReportController
         );
         $bugReport->setSeverity($severity);
         $this->bugReportRepository->save($bugReport);
+
+        $screenshotData = trim((string) $request->request->get('screenshot_data', ''));
+        if ($screenshotData !== '' && $this->bugReportScreenshotStorage->saveFromBase64($bugReport, $screenshotData)) {
+            $this->bugReportRepository->save($bugReport);
+        }
+
         $this->bugReportLogger->info('Bug report created from floating actions modal.', [
             'bug_report_id' => $bugReport->getId(),
             'source_route' => $routeName,

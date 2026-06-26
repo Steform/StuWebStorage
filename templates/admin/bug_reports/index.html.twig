@@ -5,11 +5,15 @@
 
 {% block flash_messages %}{% endblock %}
 
+{% block stylesheets %}
+    <link href="{{ asset('css/admin-bug-reports.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block top_navigation %}
     {% include 'components/_storage_admin_nav.html.twig' %}
 {% endblock %}
 
-{% block main_container_class %}container py-4{% endblock %}
+{% block main_container_class %}container-fluid px-3 px-lg-4 py-4{% endblock %}
 
 {% block body %}
     <div class="card shadow-sm mb-3">
@@ -56,51 +60,140 @@
                 </div>
             </form>
 
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
+            <table class="table table-sm align-middle bug-reports-table">
+                <thead>
+                <tr>
+                    <th class="col-date">{{ 'admin.bug_reports.fields.created_at'|trans({}, 'messages', currentLocale) }}</th>
+                    <th class="col-ticket">{{ 'admin.bug_reports.fields.ticket'|trans({}, 'messages', currentLocale) }}</th>
+                    <th class="col-screenshot d-none d-lg-table-cell">{{ 'admin.bug_reports.fields.screenshot'|trans({}, 'messages', currentLocale) }}</th>
+                    <th class="col-action d-none d-lg-table-cell">{{ 'admin.bug_reports.fields.action_short'|trans({}, 'messages', currentLocale) }}</th>
+                    <th class="col-observed d-none d-lg-table-cell">{{ 'admin.bug_reports.fields.observed_short'|trans({}, 'messages', currentLocale) }}</th>
+                    <th class="col-expected d-none d-lg-table-cell">{{ 'admin.bug_reports.fields.expected_short'|trans({}, 'messages', currentLocale) }}</th>
+                    <th class="col-actions text-end">{{ 'admin.bug_reports.fields.actions'|trans({}, 'messages', currentLocale) }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for report in reports %}
                     <tr>
-                        <th>{{ 'admin.bug_reports.fields.created_at'|trans({}, 'messages', currentLocale) }}</th>
-                        <th>{{ 'admin.bug_reports.fields.reporter'|trans({}, 'messages', currentLocale) }}</th>
-                        <th>{{ 'admin.bug_reports.fields.path'|trans({}, 'messages', currentLocale) }}</th>
-                        <th>{{ 'admin.bug_reports.fields.severity'|trans({}, 'messages', currentLocale) }}</th>
-                        <th>{{ 'admin.bug_reports.fields.status'|trans({}, 'messages', currentLocale) }}</th>
-                        <th>{{ 'admin.bug_reports.fields.archived'|trans({}, 'messages', currentLocale) }}</th>
-                        <th class="text-end">{{ 'admin.bug_reports.fields.actions'|trans({}, 'messages', currentLocale) }}</th>
+                        <td>
+                            <span class="d-block">{{ report.createdAt|date('d/m H:i') }}</span>
+                            <small class="text-muted text-truncate d-block" title="{{ report.path }}">{{ report.path|bug_report_excerpt(40) }}</small>
+                        </td>
+                        <td>
+                            {% set statusBadge = report.status == 'resolved' ? 'success' : (report.status == 'in_progress' ? 'info' : (report.status == 'reopened' ? 'warning' : 'primary')) %}
+                            {% set severityBadge = report.severity == 'critical' ? 'danger' : (report.severity == 'major' ? 'warning' : 'secondary') %}
+                            <span class="badge text-bg-{{ statusBadge }} d-block mb-1">{{ ('bug_report.status.' ~ report.status)|trans({}, 'messages', currentLocale) }}</span>
+                            <span class="badge text-bg-{{ severityBadge }}">{{ ('bug_report.severity.' ~ report.severity)|trans({}, 'messages', currentLocale) }}</span>
+                            {% if report.archived %}
+                                <span class="badge text-bg-dark d-block mt-1">{{ 'admin.bug_reports.archived.yes'|trans({}, 'messages', currentLocale) }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-lg-table-cell">
+                            {% if report.screenshotPath %}
+                                <a href="{{ path('admin_bug_reports_show', { id: report.id }) }}" title="{{ 'admin.bug_reports.actions.open'|trans({}, 'messages', currentLocale) }}">
+                                    <img
+                                        src="{{ path('admin_bug_reports_screenshot', { id: report.id }) }}"
+                                        alt=""
+                                        class="bug-report-screenshot-thumb"
+                                        loading="lazy"
+                                    >
+                                </a>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-lg-table-cell">
+                            <span
+                                class="bug-report-excerpt"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                data-bs-html="true"
+                                data-bs-custom-class="bug-report-tooltip"
+                                data-bs-title="{{ report.actionDescription|bug_report_tooltip_html }}"
+                            >{{ report.actionDescription|bug_report_excerpt(80) }}</span>
+                        </td>
+                        <td class="d-none d-lg-table-cell">
+                            <span
+                                class="bug-report-excerpt"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                data-bs-html="true"
+                                data-bs-custom-class="bug-report-tooltip"
+                                data-bs-title="{{ report.observedResult|bug_report_tooltip_html }}"
+                            >{{ report.observedResult|bug_report_excerpt(80) }}</span>
+                        </td>
+                        <td class="d-none d-lg-table-cell">
+                            <span
+                                class="bug-report-excerpt"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                data-bs-html="true"
+                                data-bs-custom-class="bug-report-tooltip"
+                                data-bs-title="{{ report.expectedResult|bug_report_tooltip_html }}"
+                            >{{ report.expectedResult|bug_report_excerpt(80) }}</span>
+                        </td>
+                        <td class="text-end">
+                            <div class="bug-reports-actions">
+                                {% if report.status not in ['in_progress', 'resolved'] %}
+                                    <form method="post" action="{{ path('admin_bug_reports_status', { id: report.id }) }}">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrfStatusToken }}">
+                                        <input type="hidden" name="status" value="in_progress">
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="{{ 'admin.bug_reports.actions.mark_in_progress'|trans({}, 'messages', currentLocale) }}"
+                                            aria-label="{{ 'admin.bug_reports.actions.mark_in_progress'|trans({}, 'messages', currentLocale) }}"
+                                        >
+                                            <i class="bi bi-play-fill" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {% if report.status != 'resolved' %}
+                                    <form method="post" action="{{ path('admin_bug_reports_status', { id: report.id }) }}" data-bug-report-resolve-form>
+                                        <input type="hidden" name="_csrf_token" value="{{ csrfStatusToken }}">
+                                        <input type="hidden" name="status" value="resolved">
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-outline-success"
+                                            title="{{ 'admin.bug_reports.actions.mark_resolved'|trans({}, 'messages', currentLocale) }}"
+                                            aria-label="{{ 'admin.bug_reports.actions.mark_resolved'|trans({}, 'messages', currentLocale) }}"
+                                            data-bug-report-confirm-resolved="{{ 'admin.bug_reports.actions.confirm_resolved'|trans({}, 'messages', currentLocale) }}"
+                                        >
+                                            <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_bug_reports_show', { id: report.id }) }}" title="{{ 'admin.bug_reports.actions.open'|trans({}, 'messages', currentLocale) }}">
+                                    <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </td>
                     </tr>
-                    </thead>
-                    <tbody>
-                    {% for report in reports %}
-                        <tr>
-                            <td>{{ report.createdAt|date('Y-m-d H:i') }}</td>
-                            <td>{{ report.reporterUser.email }}</td>
-                            <td>
-                                <span class="d-block">{{ report.path }}</span>
-                                {% if report.routeName %}
-                                    <small class="text-muted">{{ report.routeName }}</small>
-                                {% endif %}
-                            </td>
-                            <td>{{ ('bug_report.severity.' ~ report.severity)|trans({}, 'messages', currentLocale) }}</td>
-                            <td>{{ ('bug_report.status.' ~ report.status)|trans({}, 'messages', currentLocale) }}</td>
-                            <td>
-                                {% if report.archived %}
-                                    <span class="badge text-bg-secondary">{{ 'admin.bug_reports.archived.yes'|trans({}, 'messages', currentLocale) }}</span>
-                                {% else %}
-                                    <span class="badge text-bg-light">{{ 'admin.bug_reports.archived.no'|trans({}, 'messages', currentLocale) }}</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end">
-                                <a class="btn btn-sm btn-outline-primary" href="{{ path('admin_bug_reports_show', { id: report.id }) }}">{{ 'admin.bug_reports.actions.open'|trans({}, 'messages', currentLocale) }}</a>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">{{ 'admin.bug_reports.list.empty'|trans({}, 'messages', currentLocale) }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">{{ 'admin.bug_reports.list.empty'|trans({}, 'messages', currentLocale) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => {
+            new bootstrap.Tooltip(element);
+        });
+
+        document.querySelectorAll('[data-bug-report-resolve-form]').forEach((form) => {
+            form.addEventListener('submit', (event) => {
+                const button = form.querySelector('[data-bug-report-confirm-resolved]');
+                const message = button?.getAttribute('data-bug-report-confirm-resolved') || '';
+                if (message !== '' && !window.confirm(message)) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
 {% endblock %}

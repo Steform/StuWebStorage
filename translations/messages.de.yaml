@@ -885,6 +885,11 @@ admin:
       correlation_id: 'Request ID'
       app_version: 'App-Version'
       archive_reason: Archivierungsgrund
+      ticket: Ticket
+      action_short: 'Aktion'
+      observed_short: 'Beobachtet'
+      expected_short: 'Erwartet'
+      screenshot: Screenshot
     archived:
       yes: Ja
       no: Nein
@@ -893,9 +898,12 @@ admin:
       back: 'Zurueck zur Liste'
       mark_in_progress: 'In Bearbeitung setzen'
       mark_resolved: 'Als geloest markieren'
+      mark_in_progress_short: 'Laufend'
+      mark_resolved_short: 'Geloest'
       reopen: 'Wieder oeffnen'
       archive: Archivieren
       unarchive: Dearchivieren
+      confirm_resolved: 'Dieses Ticket als geloest markieren?'
 setup:
   meta:
     title: Administrator-Initialisierung

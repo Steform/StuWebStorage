@@ -6,11 +6,12 @@ use App\Controller\Admin\BugReportAdminController;
 use App\Entity\BugReport;
 use App\Entity\User;
 use App\Repository\BugReportRepository;
+use App\Service\BugReport\BugReportScreenshotStorage;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
 
@@ -37,7 +38,8 @@ class BugReportAdminControllerTest extends TestCase
         $security = $this->createMock(Security::class);
         $csrfTokenManager = $this->createMock(CsrfTokenManagerInterface::class);
         $csrfTokenManager->method('getToken')->willReturn(new CsrfToken('id', 'token'));
-        $controller = new BugReportAdminController($repository, $security, $csrfTokenManager);
+        $screenshotStorage = $this->createMock(BugReportScreenshotStorage::class);
+        $controller = new BugReportAdminController($repository, $screenshotStorage, $security, $csrfTokenManager);
         $twig = new Environment(new ArrayLoader([
             'admin/bug_reports/index.html.twig' => '{{ reports|length }}',
         ]));
@@ -69,7 +71,8 @@ class BugReportAdminControllerTest extends TestCase
         $security->method('getUser')->willReturn($resolver);
         $csrfTokenManager = $this->createMock(CsrfTokenManagerInterface::class);
         $csrfTokenManager->method('isTokenValid')->willReturn(true);
-        $controller = new BugReportAdminController($repository, $security, $csrfTokenManager);
+        $screenshotStorage = $this->createMock(BugReportScreenshotStorage::class);
+        $controller = new BugReportAdminController($repository, $screenshotStorage, $security, $csrfTokenManager);
 
         $response = $controller->updateStatus(Request::create('/admin/bug-reports/10/status', 'POST', [
             '_csrf_token' => 'valid',
@@ -78,6 +81,66 @@ class BugReportAdminControllerTest extends TestCase
 
         self::assertSame(BugReport::STATUS_RESOLVED, $report->getStatus());
         self::assertSame(302, $response->getStatusCode());
+    }
+
+    /**
+     * @brief Ensure screenshot route returns 404 when file is missing.
+     * @param void No input parameter.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function testScreenshotReturnsNotFoundWhenFileIsMissing(): void
+    {
+        $reporter = (new User())->setEmail('reporter@example.com')->setPseudonym('reporter')->setRoles(['ROLE_USER']);
+        $report = new BugReport($reporter, 'Action', 'Observed', null, 'files_index', '/files', null, 'fr', 'dark', null, null, null, null, null, null, null);
+        $this->setBugReportId($report, 10);
+
+        $repository = $this->createMock(BugReportRepository::class);
+        $repository->method('find')->with(10)->willReturn($report);
+        $screenshotStorage = $this->createMock(BugReportScreenshotStorage::class);
+        $screenshotStorage->method('getAbsolutePath')->with($report)->willReturn(null);
+        $security = $this->createMock(Security::class);
+        $csrfTokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $controller = new BugReportAdminController($repository, $screenshotStorage, $security, $csrfTokenManager);
+
+        $response = $controller->screenshot(10);
+
+        self::assertSame(404, $response->getStatusCode());
+    }
+
+    /**
+     * @brief Ensure screenshot route streams file when available.
+     * @param void No input parameter.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function testScreenshotStreamsFileWhenAvailable(): void
+    {
+        $reporter = (new User())->setEmail('reporter@example.com')->setPseudonym('reporter')->setRoles(['ROLE_USER']);
+        $report = new BugReport($reporter, 'Action', 'Observed', null, 'files_index', '/files', null, 'fr', 'dark', null, null, null, null, null, null, null);
+        $this->setBugReportId($report, 10);
+        $report->attachScreenshot('var/bug-reports/10.jpg', 'image/jpeg', 4);
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'bug-report-screenshot-');
+        self::assertIsString($tempFile);
+        file_put_contents($tempFile, 'fake');
+
+        $repository = $this->createMock(BugReportRepository::class);
+        $repository->method('find')->with(10)->willReturn($report);
+        $screenshotStorage = $this->createMock(BugReportScreenshotStorage::class);
+        $screenshotStorage->method('getAbsolutePath')->with($report)->willReturn($tempFile);
+        $security = $this->createMock(Security::class);
+        $csrfTokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $controller = new BugReportAdminController($repository, $screenshotStorage, $security, $csrfTokenManager);
+
+        $response = $controller->screenshot(10);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('image/jpeg', $response->headers->get('Content-Type'));
+
+        @unlink($tempFile);
     }
 
     /**
@@ -94,5 +157,21 @@ class BugReportAdminControllerTest extends TestCase
         $property = $reflection->getProperty('id');
         $property->setAccessible(true);
         $property->setValue($user, $id);
+    }
+
+    /**
+     * @brief Set private bug report identifier for tests.
+     * @param BugReport $report Target bug report.
+     * @param int $id Identifier value.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    private function setBugReportId(BugReport $report, int $id): void
+    {
+        $reflection = new \ReflectionClass($report);
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($report, $id);
     }
 }

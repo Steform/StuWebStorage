@@ -87,6 +87,15 @@ class BugReport
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $actionTimelineJson = null;
 
+    #[ORM\Column(length: 512, nullable: true)]
+    private ?string $screenshotPath = null;
+
+    #[ORM\Column(length: 32, nullable: true)]
+    private ?string $screenshotMime = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $screenshotByteSize = null;
+
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $resolvedAt = null;
 
@@ -342,6 +351,59 @@ class BugReport
     public function getActionTimelineJson(): ?array
     {
         return $this->actionTimelineJson;
+    }
+
+    /**
+     * @brief Get relative screenshot storage path.
+     * @param void No input parameter.
+     * @return string|null
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function getScreenshotPath(): ?string
+    {
+        return $this->screenshotPath;
+    }
+
+    /**
+     * @brief Get screenshot MIME type.
+     * @param void No input parameter.
+     * @return string|null
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function getScreenshotMime(): ?string
+    {
+        return $this->screenshotMime;
+    }
+
+    /**
+     * @brief Get screenshot byte size.
+     * @param void No input parameter.
+     * @return int|null
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function getScreenshotByteSize(): ?int
+    {
+        return $this->screenshotByteSize;
+    }
+
+    /**
+     * @brief Attach screenshot metadata after file persistence.
+     * @param string $screenshotPath Relative screenshot path.
+     * @param string $screenshotMime Screenshot MIME type.
+     * @param int $screenshotByteSize Screenshot byte size.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function attachScreenshot(string $screenshotPath, string $screenshotMime, int $screenshotByteSize): void
+    {
+        $this->screenshotPath = $screenshotPath;
+        $this->screenshotMime = $screenshotMime;
+        $this->screenshotByteSize = $screenshotByteSize;
+        $this->touch();
     }
 
     /**

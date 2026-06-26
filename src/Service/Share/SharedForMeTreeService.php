@@ -7,26 +7,37 @@ namespace App\Service\Share;
 use App\Dto\Share\SharedForMeFolderNode;
 use App\Dto\Share\SharedForMeListingContext;
 use App\Entity\Folder;
+use App\Entity\FolderShareGrant;
 use App\Entity\SharedFile;
+use App\Repository\FolderRepository;
+use App\Repository\FolderShareGrantRepository;
 
 /**
- * @brief Build grantee-side shared folder tree navigation from active shared files.
+ * @brief Build grantee-side shared folder tree navigation from active shared files and folder grants.
  * @author Stephane H.
  * @date 2026-06-25
  */
 final class SharedForMeTreeService
 {
+    public function __construct(
+        private readonly FolderShareGrantRepository $folderShareGrantRepository,
+        private readonly FolderRepository $folderRepository,
+        private readonly FolderTreeService $folderTreeService,
+    ) {
+    }
+
     /**
      * @brief Build listing navigation context for the shared-for-me section.
      * @param list<SharedFile> $activeSharedFiles Active shared files visible to grantee.
      * @param int $currentFolderId Requested folder cursor (0 = shared root).
+     * @param int $granteeUserId Grantee user identifier for folder-level grants.
      * @return SharedForMeListingContext
      * @date 2026-06-25
      * @author Stephane H.
      */
-    public function buildListingContext(array $activeSharedFiles, int $currentFolderId): SharedForMeListingContext
+    public function buildListingContext(array $activeSharedFiles, int $currentFolderId, int $granteeUserId = 0): SharedForMeListingContext
     {
-        $registry = $this->buildRegistry($activeSharedFiles);
+        $registry = $this->buildRegistry($activeSharedFiles, $granteeUserId);
         if ($currentFolderId > 0 && !isset($registry[$currentFolderId])) {
             $currentFolderId = 0;
         }
@@ -47,34 +58,65 @@ final class SharedForMeTreeService
     }
 
     /**
-     * @brief Collect folder lineage from all active shared files.
+     * @brief Collect folder lineage from shared files and active folder grants.
      * @param list<SharedFile> $activeSharedFiles Active shared files.
+     * @param int $granteeUserId Grantee user identifier.
      * @return array<int, SharedForMeFolderNode>
      * @date 2026-06-25
      * @author Stephane H.
      */
-    private function buildRegistry(array $activeSharedFiles): array
+    private function buildRegistry(array $activeSharedFiles, int $granteeUserId): array
     {
         $registry = [];
         foreach ($activeSharedFiles as $sharedForMeFile) {
-            $folderCursor = $sharedForMeFile->getFolder();
-            while ($folderCursor instanceof Folder) {
-                $folderId = (int) ($folderCursor->getId() ?? 0);
-                if ($folderId > 0) {
-                    $parentFolder = $folderCursor->getParent();
-                    $parentId = $parentFolder?->getId();
-                    $registry[$folderId] = new SharedForMeFolderNode(
-                        $folderId,
-                        $folderCursor->getName(),
-                        $parentId !== null ? (int) $parentId : null,
-                        (int) $folderCursor->getOwnerUserId(),
-                    );
+            $this->registerFolderLineage($registry, $sharedForMeFile->getFolder());
+        }
+
+        if ($granteeUserId > 0) {
+            $folderGrants = $this->folderShareGrantRepository->findActiveByGrantee($granteeUserId);
+            foreach ($folderGrants as $folderGrant) {
+                if (!$folderGrant instanceof FolderShareGrant) {
+                    continue;
                 }
-                $folderCursor = $folderCursor->getParent();
+                $sharedRoot = $this->folderRepository->find($folderGrant->getFolderId());
+                if (!$sharedRoot instanceof Folder) {
+                    continue;
+                }
+                $subtree = $this->folderTreeService->collectSubtreeFolders($sharedRoot->getOwnerUserId(), $sharedRoot);
+                foreach ($subtree as $subFolder) {
+                    $this->registerFolderLineage($registry, $subFolder);
+                }
             }
         }
 
         return $registry;
+    }
+
+    /**
+     * @brief Register one folder and its ancestors in the shared registry.
+     * @param array<int, SharedForMeFolderNode> $registry Mutable registry.
+     * @param Folder|null $folder Folder cursor.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    private function registerFolderLineage(array &$registry, ?Folder $folder): void
+    {
+        $folderCursor = $folder;
+        while ($folderCursor instanceof Folder) {
+            $folderId = (int) ($folderCursor->getId() ?? 0);
+            if ($folderId > 0) {
+                $parentFolder = $folderCursor->getParent();
+                $parentId = $parentFolder?->getId();
+                $registry[$folderId] = new SharedForMeFolderNode(
+                    $folderId,
+                    $folderCursor->getName(),
+                    $parentId !== null ? (int) $parentId : null,
+                    (int) $folderCursor->getOwnerUserId(),
+                );
+            }
+            $folderCursor = $folderCursor->getParent();
+        }
     }
 
     /**

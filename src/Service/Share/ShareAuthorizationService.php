@@ -19,6 +19,7 @@ class ShareAuthorizationService
 {
     public function __construct(
         private readonly ShareGrantRepository $shareGrantRepository,
+        private readonly FolderShareAuthorizationService $folderShareAuthorizationService,
     ) {
     }
 
@@ -46,26 +47,7 @@ class ShareAuthorizationService
      */
     public function canAccessPrivateByUser(SharedFile $sharedFile, int $requesterUserId, bool $hasGrant): bool
     {
-        if ($sharedFile->getOwnerUserId() === $requesterUserId) {
-            return true;
-        }
-
-        if (!$hasGrant) {
-            return false;
-        }
-
-        $grant = $this->shareGrantRepository->findOneBy([
-            'sharedFileId' => (int) $sharedFile->getId(),
-            'granteeUserId' => $requesterUserId,
-        ]);
-        if (!$grant instanceof ShareGrant) {
-            return false;
-        }
-        if (!$this->shareGrantRepository->isFriendsGrantActiveAtDatabaseNow((int) $sharedFile->getId(), $requesterUserId)) {
-            return false;
-        }
-
-        return true;
+        return $this->folderShareAuthorizationService->canAccessFileViaFriends($sharedFile, $requesterUserId);
     }
 
     /**

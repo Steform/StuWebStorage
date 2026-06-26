@@ -885,6 +885,11 @@ admin:
       correlation_id: 'Request ID'
       app_version: 'App versija'
       archive_reason: 'Archyvavimo priezastis'
+      ticket: 'Ticket'
+      action_short: 'Veiksmas'
+      observed_short: 'Stebeta'
+      expected_short: 'Tiketa'
+      screenshot: 'Ekrano kopija'
     archived:
       yes: 'Taip'
       no: 'Ne'
@@ -893,9 +898,12 @@ admin:
       back: 'Atgal i sarasa'
       mark_in_progress: 'Pazymeti kaip vykdoma'
       mark_resolved: 'Pazymeti kaip isspręsta'
+      mark_in_progress_short: 'Vykdoma'
+      mark_resolved_short: 'Isspręsta'
       reopen: 'Atidaryti is naujo'
       archive: 'Archyvuoti'
       unarchive: 'Isarchyvuoti'
+      confirm_resolved: 'Pazymeti si ticket kaip isspręsta?'
 setup:
   meta:
     title: 'Administratoriaus paleidimas'

@@ -184,6 +184,7 @@ final class UserFilesPaneBuilderService
         $sharedListingContext = $this->sharedForMeTreeService->buildListingContext(
             $allSharedForMeFiles,
             $requestedSharedFolderId,
+            $subjectUserId,
         );
         $sharedForMeCurrentFolderId = $sharedListingContext->currentFolderId;
         $sharedBreadcrumbFolders = $sharedListingContext->breadcrumbFolders;

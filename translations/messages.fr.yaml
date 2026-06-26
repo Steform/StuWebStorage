@@ -900,6 +900,11 @@ admin:
       correlation_id: 'Request ID'
       app_version: 'Version app'
       archive_reason: 'Raison archivage'
+      ticket: 'Ticket'
+      action_short: 'Action faite'
+      observed_short: 'Observe'
+      expected_short: 'Attendu'
+      screenshot: 'Capture'
     archived:
       yes: 'Oui'
       no: 'Non'
@@ -908,9 +913,12 @@ admin:
       back: 'Retour liste'
       mark_in_progress: 'Passer en cours'
       mark_resolved: 'Marquer resolu'
+      mark_in_progress_short: 'En cours'
+      mark_resolved_short: 'Resolu'
       reopen: 'Reouvrir'
       archive: 'Archiver'
       unarchive: 'Desarchiver'
+      confirm_resolved: 'Marquer ce ticket comme resolu ?'
 setup:
   meta:
     title: 'Initialisation administrateur'

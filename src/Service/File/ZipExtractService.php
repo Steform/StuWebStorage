@@ -7,14 +7,11 @@ namespace App\Service\File;
 use App\Dto\File\ZipExtractLimits;
 use App\Entity\Folder;
 use App\Entity\SharedFile;
-use App\Entity\ShareGrant;
 use App\Repository\FolderRepository;
 use App\Repository\PublicDownloadChallengeRepository;
 use App\Repository\ShareGrantRepository;
 use App\Repository\SharedFileRepository;
 use App\Service\Share\FolderTreeService;
-use App\Service\Share\FriendsShareService;
-use App\Service\Share\PublicShareService;
 use App\Service\Share\ZipEntryNameSanitizer;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -50,8 +47,6 @@ final class ZipExtractService
         private readonly UserStorageQuotaService $userStorageQuotaService,
         private readonly ShareGrantRepository $shareGrantRepository,
         private readonly PublicDownloadChallengeRepository $publicDownloadChallengeRepository,
-        private readonly PublicShareService $publicShareService,
-        private readonly FriendsShareService $friendsShareService,
         private readonly FolderPathMaterializerService $folderPathMaterializerService,
         private readonly string $projectDir,
     ) {
@@ -722,10 +717,6 @@ final class ZipExtractService
             $meta['created_file_ids'] = $createdFileIds;
         }
 
-        if ($parentFolder instanceof Folder) {
-            $this->applyFolderPoliciesToUploadedFile($sharedFile, $parentFolder, $ownerUserId);
-        }
-
         return 'extracted';
     }
 
@@ -848,51 +839,6 @@ final class ZipExtractService
         $this->publicDownloadChallengeRepository->deleteByPublicToken($token);
         $this->entityManager->remove($sharedFile);
         $this->entityManager->flush();
-    }
-
-    /**
-     * @param SharedFile $sharedFile Newly extracted file.
-     * @param Folder $targetFolder Folder where the file was stored.
-     * @param int $ownerUserId Owner user identifier.
-     * @return void
-     * @date 2026-06-24
-     * @author Stephane H.
-     */
-    private function applyFolderPoliciesToUploadedFile(SharedFile $sharedFile, Folder $targetFolder, int $ownerUserId): void
-    {
-        if ($targetFolder->isPublicShareEnabled()) {
-            $this->publicShareService->enablePublic($sharedFile, $targetFolder->getPublicShareExpiresAt());
-        }
-
-        $subtreeFolders = $this->folderTreeService->collectSubtreeFolders($ownerUserId, $targetFolder);
-        $folderIds = [];
-        foreach ($subtreeFolders as $subFolder) {
-            $fid = $subFolder->getId();
-            if ($fid !== null && $fid > 0) {
-                $folderIds[] = $fid;
-            }
-        }
-        $newFileId = (int) $sharedFile->getId();
-
-        $granteeIntents = [];
-        foreach ($targetFolder->getFriendsShareUserIds() as $granteeUserId) {
-            if ($granteeUserId <= 0 || $granteeUserId === $ownerUserId) {
-                continue;
-            }
-            $hasPriorGrantInSubtree = $this->shareGrantRepository->hasAnyGrantForOwnerFolderSubtreeGrantee($ownerUserId, $folderIds, $granteeUserId, $newFileId);
-            $activeTemplateGrant = $this->shareGrantRepository->findOneActiveGrantForOwnerFolderSubtreeGrantee($ownerUserId, $folderIds, $granteeUserId, $newFileId);
-            if ($hasPriorGrantInSubtree && !$activeTemplateGrant instanceof ShareGrant) {
-                continue;
-            }
-            $expiresAt = $activeTemplateGrant instanceof ShareGrant ? $activeTemplateGrant->getExpiresAt() : null;
-            $granteeIntents[] = [
-                'user_id' => $granteeUserId,
-                'expires_at' => $expiresAt,
-            ];
-        }
-        if ($granteeIntents !== []) {
-            $this->friendsShareService->applyFriendsIntent($sharedFile, $granteeIntents, false);
-        }
     }
 
     /**

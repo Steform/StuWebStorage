@@ -22,6 +22,25 @@ class BugReportModalTemplateTest extends TestCase
         self::assertStringContainsString('name="action_description"', $source);
         self::assertStringContainsString('name="observed_result"', $source);
         self::assertStringContainsString('name="expected_result"', $source);
+        self::assertStringContainsString('name="screenshot_data"', $source);
+        self::assertStringContainsString('data-bug-report-screenshot', $source);
+        self::assertStringContainsString('data-bug-report-trigger', $source);
         self::assertStringContainsString("path('bug_report_submit')", $source);
+    }
+
+    /**
+     * @brief Ensure base layout loads screenshot capture scripts.
+     * @param void No input parameter.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function testBaseLayoutLoadsScreenshotScripts(): void
+    {
+        $path = dirname(__DIR__, 3).'/templates/base.html.twig';
+        $source = is_readable($path) ? (string) file_get_contents($path) : '';
+
+        self::assertStringContainsString('bug-report-screenshot.js', $source);
+        self::assertStringContainsString('html2canvas', $source);
     }
 }

@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\File\SharedFileOwnerListCriteria;
 use App\Repository\PublicDownloadChallengeRepository;
 use App\Repository\FolderRepository;
+use App\Repository\FolderShareGrantRepository;
 use App\Repository\ShareGrantRepository;
 use App\Repository\SharedFileRepository;
 use App\Repository\UserRepository;
@@ -25,7 +26,9 @@ use App\Service\File\ZipExtractLimitsResolver;
 use App\Service\File\ZipExtractService;
 use App\Service\Format\BinaryByteFormatter;
 use App\Service\File\FileEncryptionService;
+use App\Service\Share\FolderAncestorService;
 use App\Service\Share\FolderPublicTokenService;
+use App\Service\Share\FolderShareAuthorizationService;
 use App\Service\Share\FolderShareService;
 use App\Service\Share\FolderTreeService;
 use App\Service\Share\FolderPropertiesService;
@@ -140,6 +143,9 @@ class FilesController extends AbstractController
         private readonly FriendsShareService $friendsShareService,
         private readonly FolderTreeService $folderTreeService,
         private readonly FolderShareService $folderShareService,
+        private readonly FolderAncestorService $folderAncestorService,
+        private readonly FolderShareGrantRepository $folderShareGrantRepository,
+        private readonly FolderShareAuthorizationService $folderShareAuthorizationService,
         private readonly FolderPublicTokenService $folderPublicTokenService,
         private readonly FolderPropertiesService $folderPropertiesService,
         private readonly FolderZipService $folderZipService,
@@ -741,13 +747,24 @@ class FilesController extends AbstractController
             ['uid' => $currentUserId]
         );
         $activeGrantedFilesNow = $adminContext ? 0 : (int) $connection->fetchOne(
-            'SELECT COUNT(DISTINCT sg.shared_file_id)
-             FROM share_grant sg
-             INNER JOIN shared_file sf ON sf.id = sg.shared_file_id
-             WHERE sg.grantee_user_id = :uid
-               AND (sg.expires_at IS NULL OR sg.expires_at > NOW())
-               AND (sf.expires_at IS NULL OR sf.expires_at > NOW())
-               AND sf.owner_user_id <> :uid',
+            'SELECT COUNT(DISTINCT sf_id) FROM (
+                SELECT sg.shared_file_id AS sf_id
+                FROM share_grant sg
+                INNER JOIN shared_file sf ON sf.id = sg.shared_file_id
+                WHERE sg.grantee_user_id = :uid
+                  AND (sg.expires_at IS NULL OR sg.expires_at > NOW())
+                  AND (sf.expires_at IS NULL OR sf.expires_at > NOW())
+                  AND sf.owner_user_id <> :uid
+                UNION
+                SELECT sf.id AS sf_id
+                FROM shared_file sf
+                INNER JOIN folder_ancestor fa ON fa.folder_id = sf.folder_id
+                INNER JOIN folder_share_grant fsg ON fsg.folder_id = fa.ancestor_folder_id
+                WHERE fsg.grantee_user_id = :uid
+                  AND (fsg.expires_at IS NULL OR fsg.expires_at > NOW())
+                  AND (sf.expires_at IS NULL OR sf.expires_at > NOW())
+                  AND sf.owner_user_id <> :uid
+            ) shared_count',
             [
                 'uid' => $currentUserId,
             ]
@@ -1396,9 +1413,6 @@ class FilesController extends AbstractController
 
         $this->entityManager->persist($sharedFile);
         $this->entityManager->flush();
-        if ($targetFolder instanceof Folder) {
-            $this->applyFolderPoliciesToUploadedFile($sharedFile, $targetFolder, $ownerId);
-        }
 
         return $this->uploadSuccessJsonOrRedirect($request, $translator);
     }
@@ -1544,11 +1558,6 @@ class FilesController extends AbstractController
             $sharedFile = $this->chunkedUploadService->finalizeAndPersist($ownerId, $uploadId, $maxUploadBytes);
         } catch (\RuntimeException $e) {
             return $this->chunkUploadJsonOrRedirect($request, $translator, $this->mapChunkExceptionToFlashKey($e), 400);
-        }
-
-        $folder = $sharedFile->getFolder();
-        if ($folder instanceof Folder) {
-            $this->applyFolderPoliciesToUploadedFile($sharedFile, $folder, $ownerId);
         }
 
         return $this->uploadSuccessJsonOrRedirect($request, $translator);
@@ -2022,8 +2031,7 @@ class FilesController extends AbstractController
         } elseif ($sharedFile->getOwnerUserId() === $requesterId && $this->isGranted('ROLE_SHARE_SEND')) {
             $allowed = true;
         } else {
-            $hasGrant = $this->shareGrantRepository->hasGrantForUser((int) $sharedFile->getId(), $requesterId);
-            $allowed = $this->shareAuthorizationService->canAccessPrivateByUser($sharedFile, $requesterId, $hasGrant);
+            $allowed = $this->folderShareAuthorizationService->canAccessFileViaFriends($sharedFile, $requesterId);
         }
         if (!$allowed) {
             return new JsonResponse(['status' => 'error', 'message' => 'files.flash.not_found'], 404);
@@ -2593,6 +2601,7 @@ class FilesController extends AbstractController
                 continue;
             }
             $folder->setParent($targetFolder);
+            $this->folderAncestorService->rebuildForFolder($folder);
             $okFolderIds[] = $folderId;
         }
 
@@ -2950,6 +2959,16 @@ class FilesController extends AbstractController
     private function deleteOwnedFolderSubtree(int $ownerUserId, Folder $rootFolder): void
     {
         $folders = $this->folderTreeService->collectSubtreeFolders($ownerUserId, $rootFolder);
+        foreach ($folders as $subFolder) {
+            $subFolderId = (int) ($subFolder->getId() ?? 0);
+            if ($subFolderId > 0) {
+                $this->folderShareGrantRepository->deleteAllByFolder($subFolderId);
+            }
+        }
+        $rootFolderId = (int) ($rootFolder->getId() ?? 0);
+        if ($rootFolderId > 0) {
+            $this->folderAncestorService->deleteForFolderSubtree($rootFolderId);
+        }
         foreach ($folders as $subFolder) {
             $files = $this->sharedFileRepository->findBy(['ownerUserId' => $ownerUserId, 'folder' => $subFolder]);
             foreach ($files as $file) {
@@ -3616,9 +3635,7 @@ class FilesController extends AbstractController
         if ($sharedFile->getOwnerUserId() === $requesterId && $this->isGranted('ROLE_SHARE_SEND')) {
             return true;
         }
-        $hasGrant = $this->shareGrantRepository->hasGrantForUser((int) $sharedFile->getId(), $requesterId);
-
-        return $this->shareAuthorizationService->canAccessPrivateByUser($sharedFile, $requesterId, $hasGrant);
+        return $this->folderShareAuthorizationService->canAccessFileViaFriends($sharedFile, $requesterId);
     }
 
     /**
@@ -3680,6 +3697,7 @@ class FilesController extends AbstractController
 
             return $this->redirectToFilesIndex($request);
         }
+        $this->folderAncestorService->rebuildForFolder($folder);
         $this->addFlash('success', 'files.folder.flash.created');
 
         return $this->redirectToFilesIndexMerged($request, [
@@ -3902,18 +3920,10 @@ class FilesController extends AbstractController
             return $this->shareJsonOrRedirect($request, 'files.flash.not_found', 404);
         }
         $payload = $this->extractFriendsSharePayload($request);
-        $folderUserIds = [];
-        foreach ($payload['grantees'] as $grantee) {
-            $candidate = (int) ($grantee['user_id'] ?? 0);
-            if ($candidate > 0 && $candidate !== $ownerId) {
-                $folderUserIds[$candidate] = $candidate;
-            }
-        }
-        $folder->setFriendsShareUserIds(array_values($folderUserIds));
-        $this->entityManager->flush();
-        $count = $this->folderShareService->applyFriendsRecursive($ownerId, $folder, $payload['grantees'], $payload['replace_existing']);
+        $report = $this->friendsShareService->applyFolderFriendsIntent($folder, $payload['grantees'], $payload['replace_existing']);
+        $count = $report['grants_added'] + $report['grants_updated'] + $report['grants_removed'];
         if ($this->expectsJson($request)) {
-            return new JsonResponse(['status' => 'ok', 'count' => $count]);
+            return new JsonResponse(['status' => 'ok', 'count' => $count, 'report' => $report]);
         }
         $this->addFlash('success', 'files.flash.share_applied');
 
@@ -3983,34 +3993,21 @@ class FilesController extends AbstractController
      */
     private function buildFolderSubtreeFriendsRows(Folder $folder, int $ownerId, TranslatorInterface $translator): array
     {
-        $subFolders = $this->folderTreeService->collectSubtreeFolders($ownerId, $folder);
-        $fileIds = [];
-        foreach ($subFolders as $subFolder) {
-            $files = $this->sharedFileRepository->findBy(['ownerUserId' => $ownerId, 'folder' => $subFolder]);
-            foreach ($files as $sf) {
-                if ($sf instanceof SharedFile && $sf->getId() !== null) {
-                    $fileIds[] = (int) $sf->getId();
-                }
-            }
+        $folderId = (int) ($folder->getId() ?? 0);
+        if ($folderId < 1) {
+            return [];
         }
-        $fileIds = array_values(array_unique($fileIds));
 
-        if ($fileIds === []) {
+        $allGrants = $this->folderShareGrantRepository->findAllByFolder($folderId);
+        if ($allGrants === []) {
             return $this->buildFolderFriendsRowsFromEntityIntentOnly($folder, $ownerId, $translator);
         }
 
-        $allGrants = $this->shareGrantRepository->findAllBySharedFileIds($fileIds);
         $byGrantee = [];
         foreach ($allGrants as $grant) {
-            if (!$grant instanceof ShareGrant) {
-                continue;
-            }
             $uid = $grant->getGranteeUserId();
             if ($uid <= 0 || $uid === $ownerId) {
                 continue;
-            }
-            if (!isset($byGrantee[$uid])) {
-                $byGrantee[$uid] = [];
             }
             $byGrantee[$uid][] = $grant;
         }
@@ -4021,10 +4018,7 @@ class FilesController extends AbstractController
         foreach ($byGrantee as $uid => $grants) {
             $activeGrants = array_values(array_filter(
                 $grants,
-                fn (ShareGrant $g): bool => $this->shareGrantRepository->isFriendsGrantActiveAtDatabaseNow(
-                    (int) $g->getSharedFileId(),
-                    (int) $g->getGranteeUserId()
-                )
+                static fn ($g): bool => $g->getExpiresAt() === null || $g->getExpiresAt() > new \DateTimeImmutable()
             ));
             $expired = $activeGrants === [] && $grants !== [];
             $expiresAtStr = null;
@@ -5096,53 +5090,6 @@ class FilesController extends AbstractController
     }
 
     /**
-     * @brief Apply persisted folder-level share policies to one newly uploaded file; friends grants copy active sibling expiry or skip when all prior grants expired.
-     * @param SharedFile $sharedFile Newly created shared file.
-     * @param Folder $targetFolder Folder where the file was uploaded.
-     * @param int $ownerUserId Owner user identifier.
-     * @return void
-     * @date 2026-05-02
-     * @author Stephane H.
-     */
-    private function applyFolderPoliciesToUploadedFile(SharedFile $sharedFile, Folder $targetFolder, int $ownerUserId): void
-    {
-        if ($targetFolder->isPublicShareEnabled()) {
-            $this->publicShareService->enablePublic($sharedFile, $targetFolder->getPublicShareExpiresAt());
-        }
-
-        $subtreeFolders = $this->folderTreeService->collectSubtreeFolders($ownerUserId, $targetFolder);
-        $folderIds = [];
-        foreach ($subtreeFolders as $subFolder) {
-            $fid = $subFolder->getId();
-            if ($fid !== null && $fid > 0) {
-                $folderIds[] = $fid;
-            }
-        }
-        $newFileId = (int) $sharedFile->getId();
-
-        $granteeIntents = [];
-        foreach ($targetFolder->getFriendsShareUserIds() as $granteeUserId) {
-            if ($granteeUserId <= 0 || $granteeUserId === $ownerUserId) {
-                continue;
-            }
-            $hasPriorGrantInSubtree = $this->shareGrantRepository->hasAnyGrantForOwnerFolderSubtreeGrantee($ownerUserId, $folderIds, $granteeUserId, $newFileId);
-            $activeTemplateGrant = $this->shareGrantRepository->findOneActiveGrantForOwnerFolderSubtreeGrantee($ownerUserId, $folderIds, $granteeUserId, $newFileId);
-            if ($hasPriorGrantInSubtree && !$activeTemplateGrant instanceof ShareGrant) {
-                continue;
-            }
-            $expiresAt = $activeTemplateGrant instanceof ShareGrant ? $activeTemplateGrant->getExpiresAt() : null;
-            $granteeIntents[] = [
-                'user_id' => $granteeUserId,
-                'expires_at' => $expiresAt,
-            ];
-        }
-        if ($granteeIntents !== []) {
-            $this->friendsShareService->applyFriendsIntent($sharedFile, $granteeIntents, false);
-        }
-
-    }
-
-    /**
      * @brief Resolve effective grantee user id for shared-folder endpoints in admin contexts.
      * @param Request $request HTTP request.
      * @param bool $fromQuery When true read context from query string (GET); else from request body.
@@ -5208,7 +5155,8 @@ class FilesController extends AbstractController
                 return $sharedFolderId !== null && in_array($sharedFolderId, $folderIds, true);
             }
         ));
-        if ($files === []) {
+        $hasFolderAccess = $this->folderShareGrantRepository->hasActiveGrantForFileFolder($granteeUserId, $folderId);
+        if ($files === [] && !$hasFolderAccess) {
             return null;
         }
 
