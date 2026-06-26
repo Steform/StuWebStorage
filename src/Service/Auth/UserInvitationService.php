@@ -47,11 +47,11 @@ class UserInvitationService
      * @param string $pseudonym Invited pseudonym.
      * @param int $inviterUserId Inviter identifier.
      * @param string|null $requestedLocale Requested invitation locale.
-     * @return string Activation URL.
+     * @return array{userId: int, activationUrl: string}
      * @date 2026-06-17
      * @author Stephane H.
      */
-    public function inviteUser(string $email, string $pseudonym, int $inviterUserId, ?string $requestedLocale = null): string
+    public function inviteUser(string $email, string $pseudonym, int $inviterUserId, ?string $requestedLocale = null): array
     {
         $normalizedEmail = strtolower(trim($email));
         $normalizedPseudonym = trim($pseudonym);
@@ -101,7 +101,10 @@ class UserInvitationService
             throw new \RuntimeException('invitation.email_send_failed');
         }
 
-        return $activationUrl;
+        return [
+            'userId' => (int) $user->getId(),
+            'activationUrl' => $activationUrl,
+        ];
     }
 
     /**

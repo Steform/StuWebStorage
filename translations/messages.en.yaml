@@ -763,6 +763,14 @@ admin:
       ROLE_SHARE_SEND: 'Share sending'
       ROLE_SHARE_PUBLIC: 'Public sharing'
       ROLE_SHARE_FRIENDS: 'Friends sharing'
+    roles_help:
+      title: 'Role reference'
+      ROLE_USER: 'Signed-in access to the application. Base role on every active account.'
+      ROLE_ADMIN: 'User management, platform settings, and admin godview over other users'' file spaces.'
+      ROLE_SHARE: 'Access the files area and receive content shared with the user (no outbound sharing).'
+      ROLE_SHARE_SEND: 'Upload, folders, properties, and outbound shares on owned files. Required for public or friends sharing.'
+      ROLE_SHARE_PUBLIC: 'Create public links (URL, optional password, expiry) on files and folders.'
+      ROLE_SHARE_FRIENDS: 'Targeted sharing to other users (grantees, per-grant expiry) on files and folders.'
     sections:
       profile: Profile
       roles: Roles

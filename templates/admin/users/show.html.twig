@@ -79,6 +79,40 @@
                 </div>
                 <button class="btn btn-primary btn-sm mt-3" type="submit">{{ 'admin.users.actions.save_roles'|trans({}, 'messages', currentLocale) }}</button>
             </form>
+
+            <div class="accordion mt-3" id="adminRolesHelpAccordion">
+                <div class="accordion-item">
+                    <h3 class="accordion-header" id="adminRolesHelpHeading">
+                        <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#adminRolesHelpCollapse" aria-expanded="false" aria-controls="adminRolesHelpCollapse">
+                            {{ 'admin.users.roles_help.title'|trans({}, 'messages', currentLocale) }}
+                        </button>
+                    </h3>
+                    <div id="adminRolesHelpCollapse" class="accordion-collapse collapse" aria-labelledby="adminRolesHelpHeading" data-bs-parent="#adminRolesHelpAccordion">
+                        <div class="accordion-body p-0">
+                            <div class="accordion accordion-flush" id="adminRolesHelpItems">
+                                {% for role in allowedRoles %}
+                                    {% set roleHelpKey = 'admin.users.roles_help.' ~ role %}
+                                    {% if roleHelpKey|trans({}, 'messages', currentLocale) != roleHelpKey %}
+                                        <div class="accordion-item">
+                                            <h4 class="accordion-header" id="adminRoleHelpHeading{{ role|lower }}">
+                                                <button class="accordion-button collapsed py-2 small fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#adminRoleHelpCollapse{{ role|lower }}" aria-expanded="false" aria-controls="adminRoleHelpCollapse{{ role|lower }}">
+                                                    {{ ('admin.users.roles_labels.' ~ role)|trans({}, 'messages', currentLocale) }}
+                                                    <span class="ms-2 text-muted fw-normal"><code>{{ role }}</code></span>
+                                                </button>
+                                            </h4>
+                                            <div id="adminRoleHelpCollapse{{ role|lower }}" class="accordion-collapse collapse" aria-labelledby="adminRoleHelpHeading{{ role|lower }}" data-bs-parent="#adminRolesHelpItems">
+                                                <div class="accordion-body small text-body-secondary">
+                                                    {{ roleHelpKey|trans({}, 'messages', currentLocale) }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

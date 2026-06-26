@@ -762,6 +762,14 @@ admin:
       ROLE_SHARE_SEND: 'Sende delinger'
       ROLE_SHARE_PUBLIC: 'Offentlig deling'
       ROLE_SHARE_FRIENDS: 'Deling med venner'
+    roles_help:
+      title: Rolleoversikt
+      ROLE_USER: 'Innlogget tilgang til applikasjonen. Grunnrolle for alle aktive kontoer.'
+      ROLE_ADMIN: 'Brukeradministrasjon, plattforminnstillinger og admin-godview over andres filomrader.'
+      ROLE_SHARE: 'Tilgang til filomradet og mottak av delt innhold (uten utgaende deling).'
+      ROLE_SHARE_SEND: 'Opplasting, mapper, egenskaper og utgaende deling av egne filer. Pakrevd for offentlig eller venne-deling.'
+      ROLE_SHARE_PUBLIC: 'Offentlige lenker (URL, valgfritt passord, utlop) for filer og mapper.'
+      ROLE_SHARE_FRIENDS: 'Malrettet deling til andre brukere (mottakere, utlop per grant) for filer og mapper.'
     sections:
       profile: Profil
       roles: Roller

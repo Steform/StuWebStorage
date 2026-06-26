@@ -118,7 +118,7 @@ class UserInvitationController extends AbstractController
         }
 
         try {
-            $activationUrl = $this->userInvitationService->inviteUser(
+            $inviteResult = $this->userInvitationService->inviteUser(
                 $email,
                 $pseudonym,
                 (int) $user->getId(),
@@ -138,13 +138,15 @@ class UserInvitationController extends AbstractController
             return new JsonResponse([
                 'status' => 'ok',
                 'message' => 'invite.created',
-                'activationUrl' => $activationUrl,
+                'userId' => $inviteResult['userId'],
+                'profileUrl' => $this->generateUrl('admin_users_show', ['id' => $inviteResult['userId']]),
+                'activationUrl' => $inviteResult['activationUrl'],
             ], 201);
         }
 
         $this->addFlash('success', 'admin.invite.flash.sent');
 
-        return $this->redirectToRoute('admin_users_invite');
+        return $this->redirectToRoute('admin_users_show', ['id' => $inviteResult['userId']]);
     }
 
     /**

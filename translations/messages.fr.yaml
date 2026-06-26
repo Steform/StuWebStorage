@@ -763,6 +763,14 @@ admin:
       ROLE_SHARE_SEND: 'Envoi de partages'
       ROLE_SHARE_PUBLIC: 'Partage public'
       ROLE_SHARE_FRIENDS: 'Partage entre amis'
+    roles_help:
+      title: 'Aide sur les roles'
+      ROLE_USER: 'Acces connecte a l''application. Role de base present sur tout compte actif.'
+      ROLE_ADMIN: 'Gestion des utilisateurs, parametres plateforme et vue administrateur (godview) sur les espaces fichiers.'
+      ROLE_SHARE: 'Acces a l''espace fichiers et reception des contenus partages avec l''utilisateur (sans envoi de partages).'
+      ROLE_SHARE_SEND: 'Upload, dossiers, proprietes et envoi de partages sur ses propres fichiers. Requis pour activer le partage public ou entre amis.'
+      ROLE_SHARE_PUBLIC: 'Creation de liens publics (URL, mot de passe optionnel, expiration) sur fichiers et dossiers.'
+      ROLE_SHARE_FRIENDS: 'Partage cible vers d''autres utilisateurs (destinataires, expiration par beneficiaire) sur fichiers et dossiers.'
     sections:
       profile: Profil
       roles: Roles

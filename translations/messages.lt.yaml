@@ -762,6 +762,14 @@ admin:
       ROLE_SHARE_SEND: 'Bendrinimo siuntimas'
       ROLE_SHARE_PUBLIC: 'Viesas bendrinimas'
       ROLE_SHARE_FRIENDS: 'Bendrinimas su draugais'
+    roles_help:
+      title: 'Vaidmenu aprasymai'
+      ROLE_USER: 'Prisijungimo prie programos prieiga. Bazinis vaidmuo kiekvienai aktyviai paskyrai.'
+      ROLE_ADMIN: 'Naudotoju valdymas, platformos nustatymai ir admin godview kitu failu erdvems.'
+      ROLE_SHARE: 'Prieiga prie failu erdves ir bendrinamu turiniu gavimas (be siuntimo).'
+      ROLE_SHARE_SEND: 'Ikėlimas, aplankai, savybes ir siuntimas savo failams. Reikalinga viešam ar draugu bendrinimui.'
+      ROLE_SHARE_PUBLIC: 'Viešos nuorodos (URL, slaptazodis, galiojimas) failams ir aplankams.'
+      ROLE_SHARE_FRIENDS: 'Tikslinis bendrinimas su kitais naudotojais (gavejai, galiojimas) failams ir aplankams.'
     sections:
       profile: Profilis
       roles: Roles

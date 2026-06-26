@@ -762,6 +762,14 @@ admin:
       ROLE_SHARE_SEND: 'Freigaben senden'
       ROLE_SHARE_PUBLIC: 'Oeffentliche Freigabe'
       ROLE_SHARE_FRIENDS: Freundesfreigabe
+    roles_help:
+      title: Rollenuebersicht
+      ROLE_USER: 'Angemeldeter Zugang zur Anwendung. Basisrolle fuer jedes aktive Konto.'
+      ROLE_ADMIN: 'Benutzerverwaltung, Plattformeinstellungen und Admin-Godview auf fremde Dateibereiche.'
+      ROLE_SHARE: 'Zugang zum Dateibereich und Empfang geteilter Inhalte (ohne eigenes Teilen).'
+      ROLE_SHARE_SEND: 'Upload, Ordner, Eigenschaften und ausgehende Freigaben fuer eigene Dateien. Voraussetzung fuer oeffentliches oder Freunde-Teilen.'
+      ROLE_SHARE_PUBLIC: 'Oeffentliche Links (URL, optionales Passwort, Ablauf) fuer Dateien und Ordner.'
+      ROLE_SHARE_FRIENDS: 'Gezieltes Teilen mit anderen Nutzern (Empfaenger, Ablauf pro Grant) fuer Dateien und Ordner.'
     sections:
       profile: Profil
       roles: Rollen
