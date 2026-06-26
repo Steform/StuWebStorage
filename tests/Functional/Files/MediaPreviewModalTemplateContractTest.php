@@ -36,6 +36,9 @@ final class MediaPreviewModalTemplateContractTest extends TestCase
         self::assertStringContainsString('data-media-preview-role="text"', $s);
         self::assertStringContainsString('id="mediaPreviewText"', $s);
         self::assertStringContainsString('id="mediaPreviewTextLoadError"', $s);
+        self::assertStringContainsString('id="mediaPreviewTextEditBtn"', $s);
+        self::assertStringContainsString('data-media-preview-text-edit', $s);
+        self::assertStringContainsString('files.action.edit_text', $s);
         self::assertStringContainsString('data-media-preview-text-label', $s);
         self::assertStringContainsString('media.preview.text_label', $s);
         self::assertStringContainsString('media.preview.text_load_failed', $s);

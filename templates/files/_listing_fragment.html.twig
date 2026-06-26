@@ -189,6 +189,9 @@
                                         data-src="{{ path('files_preview', { id: file.id }) }}"
                                         data-media-preview-type="{{ isPdf ? 'pdf' : (isVideo ? 'video' : (isAudio ? 'audio' : 'text')) }}"
                                         data-title="{{ file.originalFileName }}"
+                                        {% if isText %}
+                                        {% include 'files/_media_preview_owned_text_attrs.html.twig' with { file: file, fileExt: ext } %}
+                                        {% endif %}
                                         tabindex="0"
                                         role="button"
                                         aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}"
@@ -460,6 +463,7 @@
                         data-src="{{ path('files_preview', { id: file.id }) }}"
                         data-media-preview-type="text"
                         data-title="{{ file.originalFileName }}"
+                        {% include 'files/_media_preview_owned_text_attrs.html.twig' with { file: file, fileExt: ext } %}
                         {% endif %}
                         {% endif %}
                     >
@@ -492,6 +496,7 @@
                         data-src="{{ path('files_preview', { id: file.id }) }}"
                         data-media-preview-type="text"
                         data-title="{{ file.originalFileName }}"
+                        {% include 'files/_media_preview_owned_text_attrs.html.twig' with { file: file, fileExt: ext } %}
                         {% endif %}
                         tabindex="0"
                         role="button"

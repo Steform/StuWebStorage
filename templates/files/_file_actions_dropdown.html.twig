@@ -27,6 +27,9 @@
                 data-media-preview-type="{% if fileIsPreviewPdf %}pdf{% elseif fileIsPreviewVideo %}video{% elseif fileIsPreviewAudio %}audio{% elseif fileIsPreviewText %}text{% else %}audio{% endif %}"
                 {% endif %}
                 data-title="{{ file.originalFileName }}"
+                {% if fileIsPreviewText %}
+                {% include 'files/_media_preview_owned_text_attrs.html.twig' with { file: file, fileExt: fileExtPreview } %}
+                {% endif %}
             >{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}</button>
         </li>
         {% endif %}

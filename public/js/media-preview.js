@@ -16,9 +16,13 @@
     var PLAYBACK_ERR_ID = 'mediaPreviewPlaybackError';
     var TEXT_LOAD_ERR_ID = 'mediaPreviewTextLoadError';
     var FULLSCREEN_BTN_ID = 'mediaPreviewVideoFullscreen';
+    var TEXT_EDIT_BTN_ID = 'mediaPreviewTextEditBtn';
 
     /** @type {AbortController|null} */
     var textPreviewAbortController = null;
+
+    /** @type {{ fileId: number, fileName: string, extension: string }|null} */
+    var textEditContext = null;
 
     /**
      * @brief Query slot element by data-media-preview-role.
@@ -121,6 +125,51 @@
     }
 
     /**
+     * @brief Extract lowercase extension from a file name.
+     * @param {string} fileName Original file name.
+     * @return {string}
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    function extensionFromFileName(fileName) {
+        var name = String(fileName || '');
+        var dot = name.lastIndexOf('.');
+        return dot >= 0 ? name.slice(dot + 1).toLowerCase() : '';
+    }
+
+    /**
+     * @brief Show or hide the text edit button in the preview modal header.
+     * @param {string} type Normalized preview type.
+     * @param {{ textEditable?: boolean, fileId?: number, fileName?: string, extension?: string }|null} context Edit context when type is text.
+     * @return {void}
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    function updateTextEditButton(type, context) {
+        var btn = document.getElementById(TEXT_EDIT_BTN_ID);
+        if (!btn) {
+            return;
+        }
+        var canEdit = type === 'text'
+            && context
+            && context.textEditable === true
+            && Number(context.fileId) > 0
+            && window.TextFileEditor
+            && typeof window.TextFileEditor.open === 'function';
+        if (canEdit) {
+            textEditContext = {
+                fileId: Number(context.fileId),
+                fileName: String(context.fileName || ''),
+                extension: String(context.extension || ''),
+            };
+            btn.classList.remove('d-none');
+        } else {
+            textEditContext = null;
+            btn.classList.add('d-none');
+        }
+    }
+
+    /**
      * @brief Pause, clear src, and reload a media element.
      * @param {HTMLMediaElement|null} el Media element or null.
      * @return {void}
@@ -218,6 +267,8 @@
         if (type === 'text' && !preEl) {
             return;
         }
+
+        updateTextEditButton(type, type === 'text' ? payload : null);
 
         if (type !== 'text' && textPreviewAbortController) {
             textPreviewAbortController.abort();
@@ -352,6 +403,7 @@
         exitFullscreenIfNeeded();
         hidePlaybackError();
         hideTextLoadError();
+        updateTextEditButton('', null);
 
         if (textPreviewAbortController) {
             textPreviewAbortController.abort();
@@ -470,13 +522,20 @@
         var type = normalizePreviewTypeAttribute(typeAttr);
         var title = trigger.getAttribute('data-title') || '';
         var alt = trigger.getAttribute('data-alt') || '';
-        /** @type {{ type: string, src: string, title?: string, alt?: string }} */
+        /** @type {{ type: string, src: string, title?: string, alt?: string, textEditable?: boolean, fileId?: number, fileName?: string, extension?: string }} */
         var out = { type: type, src: src };
         if (title !== '') {
             out.title = title;
         }
         if (type === 'image' && alt !== '') {
             out.alt = alt;
+        }
+        if (type === 'text' && trigger.getAttribute('data-media-preview-text-editable') === '1') {
+            var fileName = trigger.getAttribute('data-files-row-name') || title;
+            out.textEditable = true;
+            out.fileId = Number(trigger.getAttribute('data-files-row-id') || '0');
+            out.fileName = fileName;
+            out.extension = trigger.getAttribute('data-files-row-ext') || extensionFromFileName(fileName);
         }
         return out;
     }
@@ -571,6 +630,54 @@
     }
 
     /**
+     * @brief Close text preview and open the text file editor modal.
+     * @return {void}
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    function onTextEditClick() {
+        if (!textEditContext || textEditContext.fileId < 1) {
+            return;
+        }
+        if (!window.TextFileEditor || typeof window.TextFileEditor.open !== 'function') {
+            return;
+        }
+        var ctx = textEditContext;
+        textEditContext = null;
+        var modalEl = document.getElementById(MODAL_ID);
+        if (!modalEl || !window.bootstrap || !window.bootstrap.Modal) {
+            window.TextFileEditor.open({
+                fileId: ctx.fileId,
+                fileName: ctx.fileName,
+                extension: ctx.extension,
+            });
+            return;
+        }
+        var bsModal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalEl.addEventListener('hidden.bs.modal', function openEditorAfterPreviewHide() {
+            window.TextFileEditor.open({
+                fileId: ctx.fileId,
+                fileName: ctx.fileName,
+                extension: ctx.extension,
+            });
+        }, { once: true });
+        bsModal.hide();
+    }
+
+    /**
+     * @brief Attach text edit button handler once.
+     * @return {void}
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    function attachTextEditButtonListener() {
+        var btn = document.getElementById(TEXT_EDIT_BTN_ID);
+        if (btn) {
+            btn.addEventListener('click', onTextEditClick);
+        }
+    }
+
+    /**
      * @brief Attach modal hidden listener and media helpers once the DOM is ready.
      * @return {void}
      * @date 2026-05-02
@@ -583,6 +690,7 @@
         }
         attachStreamDecodeErrorListeners();
         attachFullscreenButtonListener();
+        attachTextEditButtonListener();
     }
 
     document.addEventListener('click', onDelegatedPreviewClick, true);

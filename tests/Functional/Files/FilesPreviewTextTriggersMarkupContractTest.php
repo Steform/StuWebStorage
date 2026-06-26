@@ -44,11 +44,17 @@ final class FilesPreviewTextTriggersMarkupContractTest extends TestCase
         self::assertStringContainsString('{% elseif fileIsPreviewText %}text', $dropdown);
         self::assertStringContainsString('data-files-row-action="edit-text-open"', $dropdown);
         self::assertStringContainsString('files.action.edit_text', $dropdown);
+        self::assertStringContainsString('_media_preview_owned_text_attrs.html.twig', $dropdown);
+
+        $ownedTextAttrs = $this->readSource('templates/files/_media_preview_owned_text_attrs.html.twig');
+        self::assertStringContainsString('data-media-preview-text-editable="1"', $ownedTextAttrs);
+        self::assertStringContainsString('data-files-row-id', $ownedTextAttrs);
 
         $dropdownShared = $this->readSource('templates/files/_file_actions_dropdown_shared_for_me.html.twig');
         self::assertStringContainsString('fileIsPreviewTextShared', $dropdownShared);
         self::assertStringContainsString('{% elseif fileIsPreviewTextShared %}text', $dropdownShared);
         self::assertStringNotContainsString('edit-text-open', $dropdownShared);
+        self::assertStringNotContainsString('data-media-preview-text-editable', $dropdownShared);
 
         $paneOwned = $this->readSource('templates/files/components/_user_files_pane_owned_table.html.twig');
         self::assertStringContainsString("data-media-preview-type=\"text\"", $paneOwned);
@@ -79,5 +85,8 @@ final class FilesPreviewTextTriggersMarkupContractTest extends TestCase
         self::assertStringContainsString('credentials: \'same-origin\'', $js);
         self::assertStringContainsString('preEl.textContent', $js);
         self::assertStringNotContainsString('innerHTML', $js);
+        self::assertStringContainsString('data-media-preview-text-editable', $js);
+        self::assertStringContainsString('TextFileEditor.open', $js);
+        self::assertStringContainsString('mediaPreviewTextEditBtn', $js);
     }
 }
