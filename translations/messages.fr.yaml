@@ -417,6 +417,7 @@ files:
     revoke_grant: Retirer
     properties: Proprietes
     preview: Apercu
+    edit_text: Editer
     rename: Renommer
     copy_public_link: 'Copier le lien'
     copy_public_link_with_password: 'Copier le lien avec mot de passe'
@@ -636,6 +637,16 @@ files:
     submit: Renommer
     cancel: Annuler
     modal_error: 'Impossible de renommer le fichier.'
+  text_editor:
+    title: 'Editer le fichier'
+    save: Enregistrer
+    cancel: Annuler
+    unsaved: 'Modifications non enregistrees'
+    tab_edit: Edition
+    tab_preview: Apercu
+    load_error: 'Impossible de charger le contenu du fichier.'
+    save_error: 'Impossible d''enregistrer le fichier.'
+    close_confirm: 'Des modifications non enregistrees seront perdues. Continuer ?'
   list:
     empty: 'Aucun fichier pour le moment.'
     filtered_empty: 'Aucun fichier ne correspond a ces criteres.'
@@ -688,6 +699,11 @@ files:
     rename_name_too_long: 'Le nom du fichier est trop long.'
     rename_unchanged: 'Aucune modification detectee.'
     renamed: 'Fichier renomme avec succes.'
+    content_saved: 'Fichier enregistre avec succes.'
+    content_too_large: 'Le fichier depasse la taille maximale autorisee pour l''edition.'
+    content_invalid_utf8: 'Le contenu doit etre en UTF-8.'
+    content_extension_not_allowed: 'Ce type de fichier ne peut pas etre edite.'
+    content_save_failed: 'Impossible d''enregistrer le contenu du fichier.'
     upload_name_conflict: 'Un fichier ou un dossier avec ce nom existe deja a cet emplacement.'
     upload_path_invalid: 'Chemin relatif d''envoi invalide.'
     extract_done: 'Archive extraite avec succes.'
@@ -919,6 +935,12 @@ admin:
       archive: 'Archiver'
       unarchive: 'Desarchiver'
       confirm_resolved: 'Marquer ce ticket comme resolu ?'
+    archive_modal:
+      title: 'Archiver le ticket'
+      message: 'Indiquez la raison de l''archivage de ce ticket.'
+      cancel: 'Annuler'
+      confirm: 'Archiver'
+      close_aria: 'Fermer la fenetre d''archivage'
 setup:
   meta:
     title: 'Initialisation administrateur'

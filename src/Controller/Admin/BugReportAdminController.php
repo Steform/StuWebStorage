@@ -189,6 +189,10 @@ class BugReportAdminController
             return new Response('', Response::HTTP_NOT_FOUND);
         }
 
+        if ($report->getStatus() !== BugReport::STATUS_RESOLVED || $report->isArchived()) {
+            return $this->redirectBack($request, '/admin/bug-reports/'.$id);
+        }
+
         $report->archive($actor, trim((string) $request->request->get('archive_reason', '')));
         $this->bugReportRepository->save($report);
 

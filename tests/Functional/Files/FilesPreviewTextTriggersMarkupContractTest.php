@@ -42,10 +42,13 @@ final class FilesPreviewTextTriggersMarkupContractTest extends TestCase
         $dropdown = $this->readSource('templates/files/_file_actions_dropdown.html.twig');
         self::assertStringContainsString('fileIsPreviewText', $dropdown);
         self::assertStringContainsString('{% elseif fileIsPreviewText %}text', $dropdown);
+        self::assertStringContainsString('data-files-row-action="edit-text-open"', $dropdown);
+        self::assertStringContainsString('files.action.edit_text', $dropdown);
 
         $dropdownShared = $this->readSource('templates/files/_file_actions_dropdown_shared_for_me.html.twig');
         self::assertStringContainsString('fileIsPreviewTextShared', $dropdownShared);
         self::assertStringContainsString('{% elseif fileIsPreviewTextShared %}text', $dropdownShared);
+        self::assertStringNotContainsString('edit-text-open', $dropdownShared);
 
         $paneOwned = $this->readSource('templates/files/components/_user_files_pane_owned_table.html.twig');
         self::assertStringContainsString("data-media-preview-type=\"text\"", $paneOwned);
@@ -54,10 +57,10 @@ final class FilesPreviewTextTriggersMarkupContractTest extends TestCase
         self::assertStringContainsString('data-media-preview-type="text"', $paneShared);
 
         $paneOwnedGrid = $this->readSource('templates/files/components/_user_files_pane_owned_grid.html.twig');
-        self::assertStringContainsString('data-media-preview-type="text"', $paneOwnedGrid);
+        self::assertStringContainsString(": 'text'))", $paneOwnedGrid);
 
         $paneSharedGrid = $this->readSource('templates/files/components/_user_files_pane_shared_grid.html.twig');
-        self::assertStringContainsString('data-media-preview-type="text"', $paneSharedGrid);
+        self::assertStringContainsString(": 'text'))", $paneSharedGrid);
     }
 
     /**

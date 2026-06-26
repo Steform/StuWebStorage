@@ -3,6 +3,7 @@
 
 {% block stylesheets %}
     <link href="{{ asset('css/files-space.css') }}?v=20260504-pane-accordion" rel="stylesheet">
+    <link href="{{ asset('css/text-file-editor.css') }}?v=20260626" rel="stylesheet">
 {% endblock %}
 
 {% block title %}{{ 'files.meta.title'|trans({}, 'messages', currentLocale) }}{% endblock %}
@@ -515,6 +516,7 @@
     {% include 'files/_delete_confirm_modal.html.twig' %}
     {% include 'files/_move_bulk_modal.html.twig' %}
     {% include 'files/_rename_modal.html.twig' %}
+    {% include 'files/_text_file_editor_modal.html.twig' %}
     {% include 'files/_extract_zip_modal.html.twig' %}
     <div class="modal fade" id="filesCreateFolderModal" tabindex="-1" aria-labelledby="filesCreateFolderModalTitle" aria-hidden="true" data-require-target-owner="{{ requireAdminTargetOwner|default(false) ? '1' : '0' }}" data-files-admin-owner-suggest-url="{{ path('admin_files_owner_suggest') }}">
         <div class="modal-dialog">
@@ -610,6 +612,8 @@
 {% endblock %}
 
 {% block extra_scripts %}
+        <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js" defer></script>
+        <script src="{{ asset('js/text-file-editor.js') }}?v=20260626" defer></script>
         <script src="{{ asset('js/files-space.js') }}?v={{ 'now'|date('U') }}" defer></script>
         <script src="{{ asset('js/files-ui-preferences.js') }}?v=20260625-sort-prefs" defer></script>
 {% endblock %}

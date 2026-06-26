@@ -417,6 +417,7 @@ files:
     revoke_grant: Revoke
     properties: Properties
     preview: Preview
+    edit_text: Edit
     rename: Rename
     copy_public_link: 'Copy link'
     copy_public_link_with_password: 'Copy link with password'
@@ -636,6 +637,16 @@ files:
     submit: Rename
     cancel: Cancel
     modal_error: 'Could not rename file.'
+  text_editor:
+    title: 'Edit file'
+    save: Save
+    cancel: Cancel
+    unsaved: 'Unsaved changes'
+    tab_edit: Edit
+    tab_preview: Preview
+    load_error: 'Could not load file content.'
+    save_error: 'Could not save file.'
+    close_confirm: 'Unsaved changes will be lost. Continue?'
   list:
     empty: 'No files yet.'
     filtered_empty: 'No files match these criteria.'
@@ -688,6 +699,11 @@ files:
     rename_name_too_long: 'File name is too long.'
     rename_unchanged: 'No change detected.'
     renamed: 'File renamed successfully.'
+    content_saved: 'File saved successfully.'
+    content_too_large: 'File exceeds the maximum size allowed for editing.'
+    content_invalid_utf8: 'Content must be UTF-8.'
+    content_extension_not_allowed: 'This file type cannot be edited.'
+    content_save_failed: 'Could not save file content.'
     upload_name_conflict: 'A file or folder with this name already exists in this location.'
     upload_path_invalid: 'Invalid relative upload path.'
     extract_done: 'Archive extracted successfully.'
@@ -919,6 +935,12 @@ admin:
       archive: Archive
       unarchive: Unarchive
       confirm_resolved: 'Mark this ticket as resolved?'
+    archive_modal:
+      title: 'Archive ticket'
+      message: 'Enter the reason for archiving this ticket.'
+      cancel: Cancel
+      confirm: Archive
+      close_aria: 'Close archive dialog'
 setup:
   meta:
     title: 'Administrator bootstrap'

@@ -30,6 +30,18 @@
             >{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}</button>
         </li>
         {% endif %}
+        {% if fileIsPreviewText %}
+        <li>
+            <button
+                type="button"
+                class="dropdown-item"
+                data-files-row-action="edit-text-open"
+                data-files-row-id="{{ file.id }}"
+                data-files-row-name="{{ file.originalFileName }}"
+                data-files-row-ext="{{ fileExtPreview }}"
+            >{{ 'files.action.edit_text'|trans({}, 'messages', currentLocale) }}</button>
+        </li>
+        {% endif %}
         <li>
             <a class="dropdown-item" href="{{ path('files_download', { id: file.id }) }}">{{ 'files.action.download'|trans({}, 'messages', currentLocale) }}</a>
         </li>

@@ -52,6 +52,7 @@ textarea.bug-report-readonly {
     max-width: 3.5rem;
     object-fit: cover;
     border-radius: 0.25rem;
+    cursor: pointer;
 }
 
 .bug-report-screenshot-detail {

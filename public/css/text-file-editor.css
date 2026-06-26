@@ -1,0 +1,45 @@
+.text-file-editor-mount {
+    min-height: 60vh;
+    max-height: 60vh;
+    overflow: auto;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background-color: var(--bs-body-bg);
+}
+
+.text-file-editor-mount .cm-editor {
+    min-height: 58vh;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.875rem;
+}
+
+.text-file-editor-mount .cm-scroller {
+    min-height: 58vh;
+}
+
+.text-file-editor-markdown-preview {
+    min-height: 60vh;
+    max-height: 60vh;
+    overflow: auto;
+    padding: 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background-color: var(--bs-body-bg);
+}
+
+.text-file-editor-markdown-preview h1,
+.text-file-editor-markdown-preview h2,
+.text-file-editor-markdown-preview h3 {
+    margin-top: 1rem;
+}
+
+.text-file-editor-markdown-preview pre {
+    padding: 0.75rem;
+    border-radius: var(--bs-border-radius);
+    background-color: var(--bs-secondary-bg);
+    overflow-x: auto;
+}
+
+.text-file-editor-modal-body {
+    padding-top: 0.75rem;
+}

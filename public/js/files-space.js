@@ -5335,6 +5335,25 @@
             }, 0);
             return;
         }
+        var rowEditText = event.target && event.target.closest
+            ? event.target.closest('[data-files-row-action="edit-text-open"]')
+            : null;
+        if (rowEditText) {
+            event.preventDefault();
+            if (!window.TextFileEditor || typeof window.TextFileEditor.open !== 'function') {
+                return;
+            }
+            var editFileId = Number(rowEditText.getAttribute('data-files-row-id') || '0');
+            if (editFileId < 1) {
+                return;
+            }
+            window.TextFileEditor.open({
+                fileId: editFileId,
+                fileName: rowEditText.getAttribute('data-files-row-name') || '',
+                extension: rowEditText.getAttribute('data-files-row-ext') || '',
+            });
+            return;
+        }
         var rowExtractOpen = event.target && event.target.closest
             ? event.target.closest('[data-files-row-action="extract-zip-open"]')
             : null;
@@ -5765,6 +5784,14 @@
             }
             renderMoveBreadcrumbAndList(moveModal);
             loadMoveFolderChildren(moveModal);
+        }
+    });
+
+    document.addEventListener('files:text-content-saved', function () {
+        if (searchInput) {
+            runPartialFetch(searchInput.value.trim());
+        } else {
+            runPartialFetch('');
         }
     });
 

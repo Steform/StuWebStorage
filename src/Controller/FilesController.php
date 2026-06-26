@@ -21,6 +21,7 @@ use App\Service\File\ChunkedUploadService;
 use App\Service\File\FilesQueryScopeResolver;
 use App\Service\File\FilesUiPreferenceService;
 use App\Service\File\UserFilesPaneBuilderService;
+use App\Service\File\SharedFileContentUpdateService;
 use App\Service\File\UserStorageQuotaService;
 use App\Service\File\ZipExtractLimitsResolver;
 use App\Service\File\ZipExtractService;
@@ -89,6 +90,8 @@ class FilesController extends AbstractController
 
     private const CSRF_EXTRACT = 'files_extract';
 
+    private const CSRF_CONTENT_EDIT = 'files_content_edit';
+
     private const MAX_UPLOAD_BYTES = 107374182400;
     private const MAX_TEXT_PREVIEW_BYTES = 20971520;
 
@@ -155,6 +158,7 @@ class FilesController extends AbstractController
         private readonly ZipExtractService $zipExtractService,
         private readonly ZipExtractLimitsResolver $zipExtractLimitsResolver,
         private readonly UserStorageQuotaService $userStorageQuotaService,
+        private readonly SharedFileContentUpdateService $sharedFileContentUpdateService,
         private readonly FilesQueryScopeResolver $filesQueryScopeResolver,
         private readonly FilesUiPreferenceService $filesUiPreferenceService,
         private readonly UserFilesPaneBuilderService $userFilesPaneBuilderService,
@@ -1117,6 +1121,7 @@ class FilesController extends AbstractController
             'csrfFolderShareFriends' => self::CSRF_FOLDER_SHARE_FRIENDS,
             'csrfFolderRename' => self::CSRF_FOLDER_RENAME,
             'csrfExtract' => self::CSRF_EXTRACT,
+            'csrfContentEdit' => self::CSRF_CONTENT_EDIT,
             'maxUploadBytes' => $this->resolveAppMaxUploadBytes(),
         ];
     }
@@ -1808,6 +1813,42 @@ class FilesController extends AbstractController
             'chunk_upload.part_missing' => 'files.flash.upload_invalid',
             'chunk_upload.storage_failed', 'chunk_upload.append_failed', 'chunk_upload.part_init_failed', 'chunk_upload.meta_write_failed', 'chunk_upload.mkdir_failed' => 'files.flash.storage_failed',
             default => 'files.flash.upload_invalid',
+        };
+    }
+
+    /**
+     * @brief Map content-edit service exceptions to flash translation keys.
+     * @param \RuntimeException $exception Thrown service exception.
+     * @return string Message key in messages domain.
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    private function mapContentEditExceptionToFlashKey(\RuntimeException $exception): string
+    {
+        return match ($exception->getMessage()) {
+            SharedFileContentUpdateService::EXCEPTION_EXTENSION_NOT_ALLOWED => 'files.flash.content_extension_not_allowed',
+            SharedFileContentUpdateService::EXCEPTION_TOO_LARGE => 'files.flash.content_too_large',
+            SharedFileContentUpdateService::EXCEPTION_INVALID_UTF8 => 'files.flash.content_invalid_utf8',
+            UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED => 'files.flash.quota_exceeded',
+            default => 'files.flash.content_save_failed',
+        };
+    }
+
+    /**
+     * @brief Map content-edit service exceptions to HTTP status codes.
+     * @param \RuntimeException $exception Thrown service exception.
+     * @return int HTTP status code.
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    private function mapContentEditExceptionToStatusCode(\RuntimeException $exception): int
+    {
+        return match ($exception->getMessage()) {
+            SharedFileContentUpdateService::EXCEPTION_EXTENSION_NOT_ALLOWED,
+            SharedFileContentUpdateService::EXCEPTION_INVALID_UTF8 => 422,
+            SharedFileContentUpdateService::EXCEPTION_TOO_LARGE,
+            UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED => 413,
+            default => 500,
         };
     }
 
@@ -3093,6 +3134,72 @@ class FilesController extends AbstractController
         $this->entityManager->flush();
 
         return $this->renameJsonOrRedirect($request, $translator->trans('files.flash.renamed'), 200, 'success');
+    }
+
+    /**
+     * @brief Save plaintext content for an owned editable text shared file (re-encrypt at rest).
+     * @param Request $request HTTP request (raw UTF-8 body).
+     * @param TranslatorInterface $translator Translator for error messages.
+     * @param int $id Shared file identifier.
+     * @return JsonResponse
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    #[Route('/files/{id}/content', name: 'files_content_save', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function saveFileContent(Request $request, TranslatorInterface $translator, int $id): JsonResponse
+    {
+        $csrfToken = (string) $request->headers->get('X-CSRF-Token', '');
+        if ($csrfToken === '') {
+            $csrfToken = (string) $request->request->get('_csrf_token', '');
+        }
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_CONTENT_EDIT, $csrfToken))) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => $translator->trans('files.flash.csrf_invalid', [], 'messages'),
+            ], 400);
+        }
+
+        $sharedFile = $this->sharedFileRepository->find($id);
+        /** @var User $user */
+        $user = $this->getUser();
+        if (!$sharedFile instanceof SharedFile) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => $translator->trans('files.flash.not_owner', [], 'messages'),
+            ], 403);
+        }
+        if (!$this->canActorMutateOwnedSharedFile($user, $sharedFile)) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => $translator->trans('files.flash.not_owner', [], 'messages'),
+            ], 403);
+        }
+
+        $utf8Content = $request->getContent();
+        $ownerUserId = $sharedFile->getOwnerUserId();
+
+        try {
+            $newByteSize = $this->sharedFileContentUpdateService->saveContent($sharedFile, $utf8Content, $ownerUserId);
+        } catch (\RuntimeException $e) {
+            $flashKey = $this->mapContentEditExceptionToFlashKey($e);
+
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => $translator->trans($flashKey, [], 'messages'),
+            ], $this->mapContentEditExceptionToStatusCode($e));
+        }
+
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'status' => 'ok',
+            'id' => $id,
+            'byte_size' => $newByteSize,
+            'byte_size_formatted' => $this->binaryByteFormatter->format($newByteSize),
+            'updated_at' => $sharedFile->getUpdatedAt()->format(DATE_ATOM),
+            'message' => $translator->trans('files.flash.content_saved', [], 'messages'),
+        ]);
     }
 
     /**

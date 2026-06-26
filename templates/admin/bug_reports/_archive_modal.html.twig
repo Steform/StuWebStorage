@@ -1,0 +1,58 @@
+<div class="modal fade" id="bugReportArchiveModal" tabindex="-1" aria-labelledby="bugReportArchiveModalTitle" aria-describedby="bugReportArchiveModalMessage" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="bugReportArchiveModalTitle">{{ 'admin.bug_reports.archive_modal.title'|trans({}, 'messages', currentLocale) }}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'admin.bug_reports.archive_modal.close_aria'|trans({}, 'messages', currentLocale) }}"></button>
+            </div>
+            <form method="post" action="" data-bug-report-archive-form>
+                <div class="modal-body">
+                    <p id="bugReportArchiveModalMessage" class="mb-3">{{ 'admin.bug_reports.archive_modal.message'|trans({}, 'messages', currentLocale) }}</p>
+                    <label class="form-label" for="bug-report-archive-reason">{{ 'admin.bug_reports.fields.archive_reason'|trans({}, 'messages', currentLocale) }}</label>
+                    <input
+                        id="bug-report-archive-reason"
+                        class="form-control"
+                        type="text"
+                        name="archive_reason"
+                        maxlength="255"
+                        data-bug-report-archive-reason
+                        required
+                    >
+                    <input type="hidden" name="_csrf_token" value="{{ csrfArchiveToken }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'admin.bug_reports.archive_modal.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                    <button type="submit" class="btn btn-outline-dark">{{ 'admin.bug_reports.archive_modal.confirm'|trans({}, 'messages', currentLocale) }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const archiveModal = document.getElementById('bugReportArchiveModal');
+        if (!archiveModal || archiveModal.dataset.bugReportArchiveBound === '1') {
+            return;
+        }
+
+        archiveModal.dataset.bugReportArchiveBound = '1';
+        const archiveForm = archiveModal.querySelector('[data-bug-report-archive-form]');
+        const archiveReasonInput = archiveModal.querySelector('[data-bug-report-archive-reason]');
+
+        archiveModal.addEventListener('show.bs.modal', (event) => {
+            const trigger = event.relatedTarget;
+            const archiveUrl = trigger?.getAttribute('data-bug-report-archive-url') || '';
+            if (archiveForm && archiveUrl !== '') {
+                archiveForm.action = archiveUrl;
+            }
+            if (archiveReasonInput) {
+                archiveReasonInput.value = '';
+            }
+        });
+
+        archiveModal.addEventListener('shown.bs.modal', () => {
+            archiveReasonInput?.focus();
+        });
+    })();
+</script>

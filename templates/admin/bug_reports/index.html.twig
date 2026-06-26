@@ -90,14 +90,19 @@
                         </td>
                         <td class="d-none d-lg-table-cell">
                             {% if report.screenshotPath %}
-                                <a href="{{ path('admin_bug_reports_show', { id: report.id }) }}" title="{{ 'admin.bug_reports.actions.open'|trans({}, 'messages', currentLocale) }}">
-                                    <img
-                                        src="{{ path('admin_bug_reports_screenshot', { id: report.id }) }}"
-                                        alt=""
-                                        class="bug-report-screenshot-thumb"
-                                        loading="lazy"
-                                    >
-                                </a>
+                                <img
+                                    src="{{ path('admin_bug_reports_screenshot', { id: report.id }) }}"
+                                    alt=""
+                                    class="bug-report-screenshot-thumb"
+                                    loading="lazy"
+                                    data-files-media-preview-trigger
+                                    data-src="{{ path('admin_bug_reports_screenshot', { id: report.id }) }}"
+                                    data-media-preview-type="image"
+                                    data-title="{{ 'admin.bug_reports.detail.title'|trans({'%id%': report.id}, 'messages', currentLocale) }}"
+                                    tabindex="0"
+                                    role="button"
+                                    aria-label="{{ 'media.preview.title'|trans({}, 'messages', currentLocale) }}"
+                                >
                             {% else %}
                                 <span class="text-muted">—</span>
                             {% endif %}
@@ -163,6 +168,19 @@
                                         </button>
                                     </form>
                                 {% endif %}
+                                {% if report.status == 'resolved' and not report.archived %}
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-dark"
+                                        title="{{ 'admin.bug_reports.actions.archive'|trans({}, 'messages', currentLocale) }}"
+                                        aria-label="{{ 'admin.bug_reports.actions.archive'|trans({}, 'messages', currentLocale) }}"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#bugReportArchiveModal"
+                                        data-bug-report-archive-url="{{ path('admin_bug_reports_archive', { id: report.id }) }}"
+                                    >
+                                        <i class="bi bi-archive" aria-hidden="true"></i>
+                                    </button>
+                                {% endif %}
                                 <a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_bug_reports_show', { id: report.id }) }}" title="{{ 'admin.bug_reports.actions.open'|trans({}, 'messages', currentLocale) }}">
                                     <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
                                 </a>
@@ -178,6 +196,8 @@
             </table>
         </div>
     </div>
+
+    {% include 'admin/bug_reports/_archive_modal.html.twig' %}
 {% endblock %}
 
 {% block extra_scripts %}

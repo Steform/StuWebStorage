@@ -417,6 +417,7 @@ files:
     revoke_grant: Entziehen
     properties: Eigenschaften
     preview: Vorschau
+    edit_text: Bearbeiten
     rename: Umbenennen
     copy_public_link: 'Link kopieren'
     copy_public_link_with_password: 'Link mit Passwort kopieren'
@@ -636,6 +637,16 @@ files:
     submit: Umbenennen
     cancel: Abbrechen
     modal_error: 'Datei konnte nicht umbenannt werden.'
+  text_editor:
+    title: 'Datei bearbeiten'
+    save: Speichern
+    cancel: Abbrechen
+    unsaved: 'Ungespeicherte Aenderungen'
+    tab_edit: Bearbeiten
+    tab_preview: Vorschau
+    load_error: 'Dateiinhalt konnte nicht geladen werden.'
+    save_error: 'Datei konnte nicht gespeichert werden.'
+    close_confirm: 'Ungespeicherte Aenderungen gehen verloren. Fortfahren?'
   list:
     empty: 'Noch keine Dateien.'
     filtered_empty: 'Keine Dateien entsprechen diesen Kriterien.'
@@ -687,6 +698,11 @@ files:
     rename_name_too_long: 'Dateiname ist zu lang.'
     rename_unchanged: 'Keine Aenderung erkannt.'
     renamed: 'Datei erfolgreich umbenannt.'
+    content_saved: 'Datei erfolgreich gespeichert.'
+    content_too_large: 'Die Datei ueberschreitet die maximal zulaessige Groesse fuer die Bearbeitung.'
+    content_invalid_utf8: 'Der Inhalt muss UTF-8 sein.'
+    content_extension_not_allowed: 'Dieser Dateityp kann nicht bearbeitet werden.'
+    content_save_failed: 'Dateiinhalt konnte nicht gespeichert werden.'
     upload_name_conflict: 'Eine Datei oder ein Ordner mit diesem Namen existiert an diesem Ort bereits.'
     upload_path_invalid: 'Ungueltiger relativer Upload-Pfad.'
     extract_done: 'Archiv erfolgreich entpackt.'
@@ -904,6 +920,12 @@ admin:
       archive: Archivieren
       unarchive: Dearchivieren
       confirm_resolved: 'Dieses Ticket als geloest markieren?'
+    archive_modal:
+      title: 'Ticket archivieren'
+      message: 'Geben Sie den Grund fuer die Archivierung dieses Tickets an.'
+      cancel: Abbrechen
+      confirm: Archivieren
+      close_aria: 'Archivierungsdialog schliessen'
 setup:
   meta:
     title: Administrator-Initialisierung

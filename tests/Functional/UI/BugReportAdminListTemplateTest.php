@@ -27,5 +27,12 @@ class BugReportAdminListTemplateTest extends TestCase
         self::assertStringContainsString('admin_bug_reports_status', $source);
         self::assertStringContainsString('data-bug-report-resolve-form', $source);
         self::assertStringContainsString('admin_bug_reports_screenshot', $source);
+        self::assertStringContainsString('data-files-media-preview-trigger', $source);
+        self::assertStringContainsString('data-media-preview-type="image"', $source);
+        self::assertStringContainsString('admin_bug_reports_archive', $source);
+        self::assertStringContainsString("report.status == 'resolved' and not report.archived", $source);
+        self::assertStringContainsString('bugReportArchiveModal', $source);
+        self::assertStringContainsString('data-bug-report-archive-url', $source);
+        self::assertStringContainsString('_archive_modal.html.twig', $source);
     }
 }

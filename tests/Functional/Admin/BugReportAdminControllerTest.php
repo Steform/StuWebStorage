@@ -84,6 +84,75 @@ class BugReportAdminControllerTest extends TestCase
     }
 
     /**
+     * @brief Ensure archive is rejected when ticket is not resolved.
+     * @param void No input parameter.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function testArchiveIsRejectedWhenTicketIsNotResolved(): void
+    {
+        $reporter = (new User())->setEmail('reporter@example.com')->setPseudonym('reporter')->setRoles(['ROLE_USER']);
+        $admin = (new User())->setEmail('admin@example.com')->setPseudonym('admin')->setRoles(['ROLE_ADMIN']);
+        $this->setUserId($reporter, 3);
+        $this->setUserId($admin, 1);
+        $report = new BugReport($reporter, 'Action', 'Observed', null, 'files_index', '/files', null, 'fr', 'dark', null, null, null, null, null, null, null);
+
+        $repository = $this->createMock(BugReportRepository::class);
+        $repository->method('find')->with(10)->willReturn($report);
+        $repository->expects(self::never())->method('save');
+        $security = $this->createMock(Security::class);
+        $security->method('getUser')->willReturn($admin);
+        $csrfTokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $csrfTokenManager->method('isTokenValid')->willReturn(true);
+        $screenshotStorage = $this->createMock(BugReportScreenshotStorage::class);
+        $controller = new BugReportAdminController($repository, $screenshotStorage, $security, $csrfTokenManager);
+
+        $response = $controller->archive(Request::create('/admin/bug-reports/10/archive', 'POST', [
+            '_csrf_token' => 'valid',
+        ]), 10);
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertFalse($report->isArchived());
+    }
+
+    /**
+     * @brief Ensure archive persists when ticket is resolved.
+     * @param void No input parameter.
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    public function testArchivePersistsWhenTicketIsResolved(): void
+    {
+        $reporter = (new User())->setEmail('reporter@example.com')->setPseudonym('reporter')->setRoles(['ROLE_USER']);
+        $admin = (new User())->setEmail('admin@example.com')->setPseudonym('admin')->setRoles(['ROLE_ADMIN']);
+        $this->setUserId($reporter, 3);
+        $this->setUserId($admin, 1);
+        $report = new BugReport($reporter, 'Action', 'Observed', null, 'files_index', '/files', null, 'fr', 'dark', null, null, null, null, null, null, null);
+        $report->markResolved($admin);
+
+        $repository = $this->createMock(BugReportRepository::class);
+        $repository->method('find')->with(10)->willReturn($report);
+        $repository->expects(self::once())->method('save')->with($report);
+        $security = $this->createMock(Security::class);
+        $security->method('getUser')->willReturn($admin);
+        $csrfTokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $csrfTokenManager->method('isTokenValid')->willReturn(true);
+        $screenshotStorage = $this->createMock(BugReportScreenshotStorage::class);
+        $controller = new BugReportAdminController($repository, $screenshotStorage, $security, $csrfTokenManager);
+
+        $response = $controller->archive(Request::create('/admin/bug-reports/10/archive', 'POST', [
+            '_csrf_token' => 'valid',
+            'archive_reason' => 'Done',
+        ]), 10);
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertTrue($report->isArchived());
+        self::assertSame('Done', $report->getArchiveReason());
+    }
+
+    /**
      * @brief Ensure screenshot route returns 404 when file is missing.
      * @param void No input parameter.
      * @return void

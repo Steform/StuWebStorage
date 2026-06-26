@@ -25,5 +25,7 @@ class BugReportAdminShowTemplateTest extends TestCase
         self::assertStringNotContainsString('<pre class="border rounded p-2 bg-body-tertiary">{{ report.actionDescription }}', $source);
         self::assertStringContainsString('container-fluid px-3 px-lg-4 py-4', $source);
         self::assertStringContainsString('admin_bug_reports_screenshot', $source);
+        self::assertStringContainsString('bugReportArchiveModal', $source);
+        self::assertStringContainsString('data-bug-report-archive-url', $source);
     }
 }

@@ -68,6 +68,7 @@ This is not a demo CRUD. It is a **production-minded** application: 117 business
 - **Full folder tree** — create, rename, move, delete, properties
 - **Per-user quota** — real-time tracking of used and remaining space
 - **Advanced search** — text filter + glob patterns (`*.pdf`, `report*`)
+- **In-browser text editing** — edit `.txt`, `.md`, `.json`, `.yaml`, and other plain-text files (owner only) with CodeMirror and Markdown preview
 
 ### Controlled sharing
 

@@ -125,14 +125,20 @@
                         <input type="hidden" name="_csrf_token" value="{{ csrfUnarchiveToken }}">
                         <button type="submit" class="btn btn-outline-secondary btn-sm">{{ 'admin.bug_reports.actions.unarchive'|trans({}, 'messages', currentLocale) }}</button>
                     </form>
-                {% else %}
-                    <form method="post" action="{{ path('admin_bug_reports_archive', { id: report.id }) }}" class="d-flex flex-wrap gap-2">
-                        <input type="hidden" name="_csrf_token" value="{{ csrfArchiveToken }}">
-                        <input class="form-control form-control-sm" type="text" name="archive_reason" maxlength="255" placeholder="{{ 'admin.bug_reports.fields.archive_reason'|trans({}, 'messages', currentLocale) }}">
-                        <button type="submit" class="btn btn-outline-dark btn-sm">{{ 'admin.bug_reports.actions.archive'|trans({}, 'messages', currentLocale) }}</button>
-                    </form>
+                {% elseif report.status == 'resolved' %}
+                    <button
+                        type="button"
+                        class="btn btn-outline-dark btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#bugReportArchiveModal"
+                        data-bug-report-archive-url="{{ path('admin_bug_reports_archive', { id: report.id }) }}"
+                    >
+                        {{ 'admin.bug_reports.actions.archive'|trans({}, 'messages', currentLocale) }}
+                    </button>
                 {% endif %}
             </div>
         </div>
     </div>
+
+    {% include 'admin/bug_reports/_archive_modal.html.twig' %}
 {% endblock %}

@@ -417,6 +417,7 @@ files:
     revoke_grant: Atšaukti
     properties: Savybes
     preview: Peržiūra
+    edit_text: Redaguoti
     rename: Pervadinti
     copy_public_link: 'Kopijuoti nuorodą'
     copy_public_link_with_password: 'Kopijuoti nuorodą su slaptažodžiu'
@@ -636,6 +637,16 @@ files:
     submit: Pervadinti
     cancel: Atšaukti
     modal_error: 'Nepavyko pervadinti failo.'
+  text_editor:
+    title: 'Redaguoti failą'
+    save: Išsaugoti
+    cancel: Atšaukti
+    unsaved: 'Neišsaugoti pakeitimai'
+    tab_edit: Redagavimas
+    tab_preview: Peržiūra
+    load_error: 'Nepavyko įkelti failo turinio.'
+    save_error: 'Nepavyko išsaugoti failo.'
+    close_confirm: 'Neišsaugoti pakeitimai bus prarasti. Tęsti?'
   list:
     empty: 'Failų dar nėra.'
     filtered_empty: 'Nė vienas failas neatitinka šių kriterijų.'
@@ -687,6 +698,11 @@ files:
     rename_name_too_long: 'Failo pavadinimas per ilgas.'
     rename_unchanged: 'Pakeitimų neaptikta.'
     renamed: 'Failas sėkmingai pervadintas.'
+    content_saved: 'Failas sėkmingai išsaugotas.'
+    content_too_large: 'Failas viršija didžiausią leidžiamą redagavimo dydį.'
+    content_invalid_utf8: 'Turinys turi būti UTF-8.'
+    content_extension_not_allowed: 'Šio tipo failo redaguoti negalima.'
+    content_save_failed: 'Nepavyko išsaugoti failo turinio.'
     upload_name_conflict: 'Failas ar aplankas tokiu pavadinimu šioje vietoje jau yra.'
     upload_path_invalid: 'Netinkamas reliatyvus įkėlimo kelias.'
     extract_done: 'Archyvas sėkmingai išskleistas.'
@@ -904,6 +920,12 @@ admin:
       archive: 'Archyvuoti'
       unarchive: 'Isarchyvuoti'
       confirm_resolved: 'Pazymeti si ticket kaip isspręsta?'
+    archive_modal:
+      title: 'Archyvuoti ticket'
+      message: 'Nurodykite sio ticket archyvavimo priezasti.'
+      cancel: 'Atšaukti'
+      confirm: 'Archyvuoti'
+      close_aria: 'Uzdaryti archyvavimo langa'
 setup:
   meta:
     title: 'Administratoriaus paleidimas'

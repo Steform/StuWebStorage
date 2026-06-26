@@ -417,6 +417,7 @@ files:
     revoke_grant: Tilbakekall
     properties: Egenskaper
     preview: Forhandsvis
+    edit_text: Rediger
     rename: 'Gi nytt navn'
     copy_public_link: 'Kopier lenke'
     copy_public_link_with_password: 'Kopier lenke med passord'
@@ -636,6 +637,16 @@ files:
     submit: 'Lagre navn'
     cancel: Avbryt
     modal_error: 'Kunne ikke gi filen nytt navn.'
+  text_editor:
+    title: 'Rediger fil'
+    save: Lagre
+    cancel: Avbryt
+    unsaved: 'Ulagrede endringer'
+    tab_edit: Redigering
+    tab_preview: Forhandsvisning
+    load_error: 'Kunne ikke laste filinnhold.'
+    save_error: 'Kunne ikke lagre filen.'
+    close_confirm: 'Ulagrede endringer vil gå tapt. Fortsette?'
   list:
     empty: 'Ingen filer ennå.'
     filtered_empty: 'Ingen filer samsvarer med disse kriteriene.'
@@ -687,6 +698,11 @@ files:
     rename_name_too_long: 'Filnavnet er for langt.'
     rename_unchanged: 'Ingen endring oppdaget.'
     renamed: 'Filnavn oppdatert.'
+    content_saved: 'Filen ble lagret.'
+    content_too_large: 'Filen overskrider maksimal tillatt storrelse for redigering.'
+    content_invalid_utf8: 'Innholdet ma vaere UTF-8.'
+    content_extension_not_allowed: 'Denne filtypen kan ikke redigeres.'
+    content_save_failed: 'Kunne ikke lagre filinnhold.'
     upload_name_conflict: 'En fil eller mappe med dette navnet finnes allerede på dette stedet.'
     upload_path_invalid: 'Ugyldig relativ opplastingssti.'
     extract_done: 'Arkiv pakket ut.'
@@ -904,6 +920,12 @@ admin:
       archive: 'Arkiver'
       unarchive: 'Fjern arkivering'
       confirm_resolved: 'Markere dette ticketet som lost?'
+    archive_modal:
+      title: 'Arkiver ticket'
+      message: 'Oppgi arsaken til arkivering av dette ticketet.'
+      cancel: Avbryt
+      confirm: Arkiver
+      close_aria: 'Lukk arkiveringsdialog'
 setup:
   meta:
     title: Administratoroppsett
