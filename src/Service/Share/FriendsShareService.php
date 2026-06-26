@@ -58,11 +58,7 @@ class FriendsShareService
         $report = ['grants_added' => 0, 'grants_updated' => 0, 'grants_removed' => 0];
 
         if ($replaceExisting) {
-            foreach ($existingGrants as $existing) {
-                $this->entityManager->remove($existing);
-                ++$report['grants_removed'];
-            }
-            $existingByUserId = [];
+            $this->removeGrantsMissingFromReplaceIntent($existingGrants, $granteeIntents, $existingByUserId, $report);
         }
 
         foreach ($granteeIntents as $intent) {
@@ -248,11 +244,7 @@ class FriendsShareService
         $report = ['grants_added' => 0, 'grants_updated' => 0, 'grants_removed' => 0];
 
         if ($replaceExisting) {
-            foreach ($existingGrants as $existing) {
-                $this->entityManager->remove($existing);
-                ++$report['grants_removed'];
-            }
-            $existingByUserId = [];
+            $this->removeGrantsMissingFromReplaceIntent($existingGrants, $granteeIntents, $existingByUserId, $report);
         }
 
         foreach ($granteeIntents as $intent) {
@@ -355,5 +347,40 @@ class FriendsShareService
         }
 
         return $rows;
+    }
+
+    /**
+     * @brief Remove existing grants not present in a replace-mode intent set (keeps rows that will be upserted).
+     * @param array<int, ShareGrant|FolderShareGrant> $existingGrants Existing grant entities.
+     * @param array<int, array{user_id: int, expires_at: DateTimeImmutable|null}> $granteeIntents Normalized intent rows.
+     * @param array<int, ShareGrant|FolderShareGrant> $existingByUserId Existing grants keyed by grantee user id (updated in place).
+     * @param array{grants_added: int, grants_updated: int, grants_removed: int} $report Mutation counters (updated in place).
+     * @return void
+     * @date 2026-06-26
+     * @author Stephane H.
+     */
+    private function removeGrantsMissingFromReplaceIntent(
+        array $existingGrants,
+        array $granteeIntents,
+        array &$existingByUserId,
+        array &$report,
+    ): void {
+        $intentUserIds = [];
+        foreach ($granteeIntents as $intent) {
+            $userId = (int) ($intent['user_id'] ?? 0);
+            if ($userId > 0) {
+                $intentUserIds[$userId] = true;
+            }
+        }
+
+        foreach ($existingGrants as $existing) {
+            $granteeUserId = $existing->getGranteeUserId();
+            if (isset($intentUserIds[$granteeUserId])) {
+                continue;
+            }
+            $this->entityManager->remove($existing);
+            unset($existingByUserId[$granteeUserId]);
+            ++$report['grants_removed'];
+        }
     }
 }
