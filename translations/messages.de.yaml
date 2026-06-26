@@ -764,12 +764,121 @@ admin:
       ROLE_SHARE_FRIENDS: Freundesfreigabe
     roles_help:
       title: Rollenuebersicht
-      ROLE_USER: 'Angemeldeter Zugang zur Anwendung. Basisrolle fuer jedes aktive Konto.'
-      ROLE_ADMIN: 'Benutzerverwaltung, Plattformeinstellungen und Admin-Godview auf fremde Dateibereiche.'
-      ROLE_SHARE: 'Zugang zum Dateibereich und Empfang geteilter Inhalte (ohne eigenes Teilen).'
-      ROLE_SHARE_SEND: 'Upload, Ordner, Eigenschaften und ausgehende Freigaben fuer eigene Dateien. Voraussetzung fuer oeffentliches oder Freunde-Teilen.'
-      ROLE_SHARE_PUBLIC: 'Oeffentliche Links (URL, optionales Passwort, Ablauf) fuer Dateien und Ordner.'
-      ROLE_SHARE_FRIENDS: 'Gezieltes Teilen mit anderen Nutzern (Empfaenger, Ablauf pro Grant) fuer Dateien und Ordner.'
+      intro: |
+        Rollen sind kumulativ. Bei der Zuweisung erfordern Oeffentliche Freigabe und Freundesfreigabe die Checkbox Freigaben senden.
+        Zur Laufzeit schliesst Freigaben senden automatisch Dateifreigabe (Basis) ein. Administrator enthaelt den gesamten Freigabe-Zweig.
+
+        Abhaengigkeitsbaum:
+        Benutzer (Basis)
+          └─ Dateifreigabe (Basis)
+               └─ Freigaben senden
+                    ├─ Oeffentliche Freigabe
+                    └─ Freundesfreigabe
+        Administrator → schliesst Benutzer + gesamten Zweig oben ein
+      ROLE_USER: |
+        Standard authentifiziertes Konto (bei jedem aktiven Benutzer vorhanden).
+
+        Abhaengigkeiten:
+        - Erfordert: keine (Basisrolle)
+        - Automatisch enthalten durch: Administrator
+        - Voraussetzung fuer: Profil, Fehlermeldung, Anmeldung
+
+        Erlaubt:
+        - Anmeldung (E-Mail, Passwort, TOTP wenn aktiviert)
+        - Profilverwaltung: Anzeigename, E-Mail-Adresse, Passwortaenderung
+        - Fehlermeldung einreichen (/bug-report)
+        - Anzeigeeinstellungen der Dateioberflaeche speichern (wenn Dateifreigabe (Basis) ebenfalls zugewiesen)
+
+        Erlaubt nicht:
+        - Zugang zum Dateibereich (/files): Dateifreigabe (Basis) hinzufuegen
+        - Plattform oder andere Benutzer verwalten
+      ROLE_ADMIN: |
+        Vollstaendige StuWebStorage-Administration.
+
+        Abhaengigkeiten:
+        - Erfordert: Benutzer (implizit bei jedem aktiven Konto)
+        - Schliesst automatisch ein: Benutzer, Freigaben senden, Dateifreigabe (Basis), Oeffentliche Freigabe, Freundesfreigabe
+
+        Erlaubt:
+        - Zugriff auf alle /admin-Seiten (Benutzer, Einladung, Einstellungen, Fehlermeldungen)
+        - Benutzerkonten auflisten, suchen, bearbeiten und loeschen
+        - Rollen zuweisen, Speicherkontingente, Konten aktivieren/deaktivieren
+        - Einladungen erneut senden, Passwort-Reset erzwingen, Sitzungen invalidieren
+        - Fehlermeldungen pruefen und bearbeiten
+        - Datei-Godview: Dateibereich jedes Benutzers mit Dateifreigabe (Basis) durchsuchen und in dessen Namen handeln (Upload, Ordner, Freigaben)
+
+        Setzt nicht ausser Kraft:
+        - Rollen-Governance (z. B. letzter aktiver Admin geschuetzt, keine Selbst-Aenderung der eigenen Rollen)
+      ROLE_SHARE: |
+        Lese-/Empfaenger-Zugang zum Dateibereich.
+
+        Abhaengigkeiten:
+        - Erfordert: Benutzer (implizit bei jedem aktiven Konto)
+        - Automatisch enthalten durch: Administrator; Freigaben senden (zur Laufzeit, via Hierarchie)
+        - Empfohlene Voraussetzung fuer: Freigaben senden, Oeffentliche Freigabe, Freundesfreigabe
+
+        Erlaubt:
+        - /files oeffnen und eigene Dateien durchsuchen (wenn Freigaben senden ebenfalls zugewiesen) oder nur die Ansicht « Empfangene Freigaben » ohne Freigaben senden
+        - Mit dem Benutzer geteilte Dateien und Ordner anzeigen (empfangene Links, Freunde-Freigaben, Ordnerfreigaben)
+        - Geteilte Dateien herunterladen, geteilte Ordner durchsuchen
+        - Speicherstatistiken auf der Startseite anzeigen (genutzter Speicher, Kontingent)
+
+        Allein nicht erlaubt:
+        - Dateien hochladen oder Ordner erstellen
+        - Elemente umbenennen, verschieben oder loeschen
+        - Ausgehende Freigaben erstellen oder bearbeiten (oeffentlich oder Freunde)
+      ROLE_SHARE_SEND: |
+        Vollstaendige Verwaltung des eigenen Dateibereichs und ausgehender Freigaben (ohne oeffentliche/Freunde-Kanaele ohne deren Rollen).
+
+        Abhaengigkeiten:
+        - Erfordert: nichts bei der Zuweisung (Dateifreigabe (Basis) wird zur Laufzeit automatisch gewaehrt)
+        - Schliesst automatisch ein: Dateifreigabe (Basis)
+        - Erforderlich fuer: Oeffentliche Freigabe, Freundesfreigabe (Pflicht-Checkboxen bei der Zuweisung)
+
+        Erlaubt:
+        - Dateien hochladen (einschliesslich ZIP mit Extraktion)
+        - Eigene Ordner und Dateien erstellen, umbenennen, verschieben und loeschen
+        - Globale und Massenaktionen: Download, Verschieben, Loeschen
+        - Datei- oder Ordnereigenschaften oeffnen (Metadaten, globales Ablaufdatum)
+        - Eigene Freunde-Freigaben widerrufen (pro Empfaenger)
+
+        Ohne zusaetzliche Rollen nicht erlaubt:
+        - Oeffentliche Links aktivieren (Oeffentliche Freigabe)
+        - Gezielt an Benutzer teilen (Freundesfreigabe)
+      ROLE_SHARE_PUBLIC: |
+        Oeffentlicher Freigabe-Kanal (anonymer Link) fuer eigene Dateien und Ordner.
+
+        Abhaengigkeiten:
+        - Erfordert bei Zuweisung: Freigaben senden (Pflicht)
+        - Schliesst automatisch ein: Dateifreigabe (Basis) (via Freigaben senden)
+        - Unabhaengig von: Freundesfreigabe
+
+        Erlaubt:
+        - Oeffentliche Freigabe fuer Datei oder Ordner aktivieren oder deaktivieren
+        - Ablaufdatum des oeffentlichen Links setzen
+        - Link mit Passwort schuetzen (erzeugen, kopieren, widerrufen)
+        - Oeffentliche Ordner-Landing-URL abrufen (ZIP-Download des Unterbaums)
+        - Badges « oeffentliche Freigabe aktiv » in Listen anzeigen
+
+        Deckt nicht ab:
+        - Gezieltes Teilen mit registrierten Benutzern (Freundesfreigabe)
+      ROLE_SHARE_FRIENDS: |
+        Freigabe-Kanal zwischen registrierten StuWebStorage-Benutzern (Freundesfreigabe).
+
+        Abhaengigkeiten:
+        - Erfordert bei Zuweisung: Freigaben senden (Pflicht)
+        - Schliesst automatisch ein: Dateifreigabe (Basis) (via Freigaben senden)
+        - Unabhaengig von: Oeffentliche Freigabe
+
+        Erlaubt:
+        - Datei oder Ordner mit einem oder mehreren StuWebStorage-Benutzern teilen
+        - Berechtigte Empfaenger suchen (aktive Benutzer mit Dateifreigabe (Basis) oder Administrator)
+        - Optionales Ablaufdatum pro Empfaenger setzen
+        - Vollstaendige Empfaengerliste ersetzen (hinzufuegen, entfernen, ersetzen)
+        - Status der Freunde-Freigaben in Modals und Eigenschaften anzeigen
+
+        Deckt nicht ab:
+        - Anonyme oeffentliche Links (Oeffentliche Freigabe)
     sections:
       profile: Profil
       roles: Rollen

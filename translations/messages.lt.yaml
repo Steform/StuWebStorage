@@ -764,12 +764,121 @@ admin:
       ROLE_SHARE_FRIENDS: 'Bendrinimas su draugais'
     roles_help:
       title: 'Vaidmenu aprasymai'
-      ROLE_USER: 'Prisijungimo prie programos prieiga. Bazinis vaidmuo kiekvienai aktyviai paskyrai.'
-      ROLE_ADMIN: 'Naudotoju valdymas, platformos nustatymai ir admin godview kitu failu erdvems.'
-      ROLE_SHARE: 'Prieiga prie failu erdves ir bendrinamu turiniu gavimas (be siuntimo).'
-      ROLE_SHARE_SEND: 'Ikėlimas, aplankai, savybes ir siuntimas savo failams. Reikalinga viešam ar draugu bendrinimui.'
-      ROLE_SHARE_PUBLIC: 'Viešos nuorodos (URL, slaptazodis, galiojimas) failams ir aplankams.'
-      ROLE_SHARE_FRIENDS: 'Tikslinis bendrinimas su kitais naudotojais (gavejai, galiojimas) failams ir aplankams.'
+      intro: |
+        Vaidmenys kaupiasi. Priskiriant, Viesas bendrinimas ir Bendrinimas su draugais reikalauja varneles Bendrinimo siuntimas.
+        Vykdymo metu Bendrinimo siuntimas automatiškai apima Failu bendrinimas (baze). Administratorius apima visa bendrinimo saka.
+
+        Priklausomybiu medis:
+        Naudotojas (baze)
+          └─ Failu bendrinimas (baze)
+               └─ Bendrinimo siuntimas
+                    ├─ Viesas bendrinimas
+                    └─ Bendrinimas su draugais
+        Administratorius → apima Naudotojas + visa saka auksciau
+      ROLE_USER: |
+        Standartinis autentifikuotas paskyra (visiems aktyviems naudotojams).
+
+        Priklausomybes:
+        - Reikalauja: nieko (bazinis vaidmuo)
+        - Automatiškai suteikia: Administratorius
+        - Būtina: profilis, klaidos pranesimas, prisijungimas
+
+        Leidzia:
+        - Prisijungti (el. pastas, slaptazodis, TOTP jei ijungta)
+        - Valdyti profili: rodomas vardas, el. pastas, slaptazodzio keitimas
+        - Pateikti klaidos pranesima (/bug-report)
+        - Issaugoti failu sasiajos rodymo nustatymus (kai taip pat suteiktas Failu bendrinimas (baze))
+
+        Neleidzia:
+        - Patekti i failu erdve (/files): prideti Failu bendrinimas (baze)
+        - Administruoti platforma ar kitus naudotojus
+      ROLE_ADMIN: |
+        Pilna StuWebStorage administracija.
+
+        Priklausomybes:
+        - Reikalauja: Naudotojas (numanomas kiekvienai aktyviai paskyrai)
+        - Automatiškai apima: Naudotojas, Bendrinimo siuntimas, Failu bendrinimas (baze), Viesas bendrinimas, Bendrinimas su draugais
+
+        Leidzia:
+        - Pasiekti visus /admin puslapius (naudotojai, kvietimai, nustatymai, klaidu pranesimai)
+        - Rodyti, ieskoti, redaguoti ir salinti naudotoju paskyras
+        - Priskirti vaidmenis, saugojimo kvotas, ijungti/isjungti paskyras
+        - Siusti kvietimus is naujo, priverstinai atstatyti slaptazodi, anuliuoti sesijas
+        - Perziureti ir tvarkyti klaidu pranesimus
+        - Failu godview: naršyti kiekvieno naudotojo su Failu bendrinimas (baze) failu erdve ir veikti jo vardu (ikelimas, aplankai, bendrinimas)
+
+        Nepanaikina:
+        - Vaidmenu valdymo taisykliu (pvz. paskutinis aktyvus admin apsaugotas, negalima keisti savo vaidmenu)
+      ROLE_SHARE: |
+        Skaitytojo/gavejo prieiga prie failu erdves.
+
+        Priklausomybes:
+        - Reikalauja: Naudotojas (numanomas kiekvienai aktyviai paskyrai)
+        - Automatiškai suteikia: Administratorius; Bendrinimo siuntimas (vykdymo metu, per hierarchija)
+        - Rekomenduojama prieš: Bendrinimo siuntimas, Viesas bendrinimas, Bendrinimas su draugais
+
+        Leidzia:
+        - Atidaryti /files ir naršyti savo failus (kai taip pat suteiktas Bendrinimo siuntimas) arba tik « Gauti bendrinimai » be Bendrinimo siuntimas
+        - Matyti su naudotoju bendrinamus failus ir aplankus (gautos nuorodos, draugu bendrinimas, aplanku bendrinimas)
+        - Atsisiusti bendrinamus failus, naršyti bendrinamus aplankus
+        - Rodyti saugojimo statistika pradiniame puslapyje (naudojama vieta, kvota)
+
+        Vienas neleidzia:
+        - Ikelti failu ar kurti aplanku
+        - Pervadinti, perkelti ar salinti elementu
+        - Kurti ar redaguoti siunciamo bendrinimo (viesas ar draugu)
+      ROLE_SHARE_SEND: |
+        Pilnas savo failu erdves valdymas ir siunciamas bendrinimas (be viesu/draugu kanalu be ju vaidmenu).
+
+        Priklausomybes:
+        - Reikalauja: nieko priskiriant (Failu bendrinimas (baze) suteikiamas automatiškai vykdymo metu)
+        - Automatiškai apima: Failu bendrinimas (baze)
+        - Būtina: Viesas bendrinimas, Bendrinimas su draugais (privalomos varneles priskiriant)
+
+        Leidzia:
+        - Ikelti failus (iskaitant ZIP su isskaidymu)
+        - Kurti, pervadinti, perkelti ir salinti savo aplankus ir failus
+        - Globalius ir masinius veiksmus: atsisiuntimas, perkėlimas, salinimas
+        - Atidaryti failo ar aplanko savybes (metaduomenys, globalus galiojimas)
+        - Atšaukti savo draugu bendrinimus (pagal gaveja)
+
+        Be papildomu vaidmenu neleidzia:
+        - Aktyvuoti viesu nuorodu (Viesas bendrinimas)
+        - Bendrinti tiksliniams naudotojams (Bendrinimas su draugais)
+      ROLE_SHARE_PUBLIC: |
+        Vieso bendrinimo kanalas (anonimine nuoroda) savo failams ir aplankams.
+
+        Priklausomybes:
+        - Reikalauja priskiriant: Bendrinimo siuntimas (privaloma)
+        - Automatiškai apima: Failu bendrinimas (baze) (per Bendrinimo siuntimas)
+        - Nepriklauso nuo: Bendrinimas su draugais
+
+        Leidzia:
+        - Ijungti ar isjungti viesa bendrinima failui ar aplankui
+        - Nustatyti viesos nuorodos galiojimo data
+        - Apsaugoti nuoroda slaptazodziu (generuoti, kopijuoti, atšaukti)
+        - Gauti vieso aplanko landing URL (ZIP atsisiuntimas medzio)
+        - Matyti « aktyvus viesas bendrinimas » zenkliukus sarasuose
+
+        Neapima:
+        - Tikslinio bendrinimo registruotiems naudotojams (Bendrinimas su draugais)
+      ROLE_SHARE_FRIENDS: |
+        Bendrinimo kanalas tarp registruotu StuWebStorage naudotoju (Bendrinimas su draugais).
+
+        Priklausomybes:
+        - Reikalauja priskiriant: Bendrinimo siuntimas (privaloma)
+        - Automatiškai apima: Failu bendrinimas (baze) (per Bendrinimo siuntimas)
+        - Nepriklauso nuo: Viesas bendrinimas
+
+        Leidzia:
+        - Bendrinti faila ar aplanka su vienu ar keliais StuWebStorage naudotojais
+        - Ieškoti tinkamu gaveju (aktyvus naudotojai su Failu bendrinimas (baze) ar Administratorius)
+        - Nustatyti neprivaloma galiojima kiekvienam gavejui
+        - Pakeisti visa gaveju sarasa (prideti, pasalinti, pakeisti)
+        - Matyti draugu bendrinimo busena modaluose ir savybese
+
+        Neapima:
+        - Anoniminiu viesu nuorodu (Viesas bendrinimas)
     sections:
       profile: Profilis
       roles: Roles

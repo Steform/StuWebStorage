@@ -764,12 +764,121 @@ admin:
       ROLE_SHARE_FRIENDS: 'Deling med venner'
     roles_help:
       title: Rolleoversikt
-      ROLE_USER: 'Innlogget tilgang til applikasjonen. Grunnrolle for alle aktive kontoer.'
-      ROLE_ADMIN: 'Brukeradministrasjon, plattforminnstillinger og admin-godview over andres filomrader.'
-      ROLE_SHARE: 'Tilgang til filomradet og mottak av delt innhold (uten utgaende deling).'
-      ROLE_SHARE_SEND: 'Opplasting, mapper, egenskaper og utgaende deling av egne filer. Pakrevd for offentlig eller venne-deling.'
-      ROLE_SHARE_PUBLIC: 'Offentlige lenker (URL, valgfritt passord, utlop) for filer og mapper.'
-      ROLE_SHARE_FRIENDS: 'Malrettet deling til andre brukere (mottakere, utlop per grant) for filer og mapper.'
+      intro: |
+        Roller stables. Ved tildeling krever Offentlig deling og Deling med venner avkryssningen Sende delinger.
+        Ved kjoring inkluderer Sende delinger automatisk Fildeling (grunnlag). Administrator inkluderer hele delingsgrenen.
+
+        Avhengighetstre:
+        Bruker (grunnlag)
+          └─ Fildeling (grunnlag)
+               └─ Sende delinger
+                    ├─ Offentlig deling
+                    └─ Deling med venner
+        Administrator → inkluderer Bruker + hele grenen over
+      ROLE_USER: |
+        Standard autentisert konto (pa alle aktive brukere).
+
+        Avhengigheter:
+        - Krever: ingen (grunnrolle)
+        - Automatisk inkludert av: Administrator
+        - Forutsetning for: profil, feilrapport, innlogging
+
+        Tillater:
+        - Logge inn (e-post, passord, TOTP nar aktivert)
+        - Administrere profil: visningsnavn, e-postadresse, passordbytte
+        - Sende inn feilrapport (/bug-report)
+        - Lagre visningsinnstillinger for filgrensesnitt (nar Fildeling (grunnlag) ogsa er tildelt)
+
+        Tillater ikke:
+        - Tilgang til filomradet (/files): legg til Fildeling (grunnlag)
+        - Administrere plattformen eller andre brukere
+      ROLE_ADMIN: |
+        Full StuWebStorage-administrasjon.
+
+        Avhengigheter:
+        - Krever: Bruker (implisitt pa alle aktive kontoer)
+        - Inkluderer automatisk: Bruker, Sende delinger, Fildeling (grunnlag), Offentlig deling, Deling med venner
+
+        Tillater:
+        - Tilgang til alle /admin-sider (brukere, invitasjon, innstillinger, feilrapporter)
+        - Liste, soke, redigere og slette brukerkontoer
+        - Tildele roller, lagringskvoter, aktivere/deaktivere kontoer
+        - Sende invitasjon pa nytt, tvinge passordtilbakestilling, ugyldiggjore sesjoner
+        - Gjennomga og behandle feilrapporter
+        - Fil-godview: bla gjennom hver bruker med Fildeling (grunnlag) sitt filomrade og handle pa deres vegne (opplasting, mapper, deling)
+
+        Overstyrer ikke:
+        - Rollestyring (f.eks. siste aktive admin beskyttet, ingen endring av egne roller)
+      ROLE_SHARE: |
+        Leser-/mottaker-tilgang til filomradet.
+
+        Avhengigheter:
+        - Krever: Bruker (implisitt pa alle aktive kontoer)
+        - Automatisk inkludert av: Administrator; Sende delinger (ved kjoring, via hierarki)
+        - Anbefalt forutsetning for: Sende delinger, Offentlig deling, Deling med venner
+
+        Tillater:
+        - Apne /files og bla gjennom egne filer (nar Sende delinger ogsa er tildelt) eller kun « Mottatte delinger » uten Sende delinger
+        - Se filer og mapper delt med brukeren (mottatte lenker, vennedeling, mappedeling)
+        - Laste ned delte filer, bla gjennom delte mapper
+        - Vise lagringsstatistikk pa forsiden (brukt plass, kvote)
+
+        Alene tillater ikke:
+        - Laste opp filer eller opprette mapper
+        - Gi nytt navn, flytte eller slette elementer
+        - Opprette eller redigere utgaende deling (offentlig eller venner)
+      ROLE_SHARE_SEND: |
+        Full administrasjon av eget filomrade og utgaende deling (unntatt offentlige/venne-kanaler uten deres roller).
+
+        Avhengigheter:
+        - Krever: ingenting ved tildeling (Fildeling (grunnlag) gis automatisk ved kjoring)
+        - Inkluderer automatisk: Fildeling (grunnlag)
+        - Nodvendig for: Offentlig deling, Deling med venner (obligatoriske avkryssninger ved tildeling)
+
+        Tillater:
+        - Laste opp filer (inkludert ZIP med utpakking)
+        - Opprette, gi nytt navn til, flytte og slette egne mapper og filer
+        - Globale og massehandlinger: nedlasting, flytting, sletting
+        - Apne fil- eller mappeegenskaper (metadata, global utlop)
+        - Tilbakekalle egne vennedelinger (per mottaker)
+
+        Tillater ikke uten tilleggsroller:
+        - Aktivere offentlige lenker (Offentlig deling)
+        - Dele til malrettede brukere (Deling med venner)
+      ROLE_SHARE_PUBLIC: |
+        Offentlig delingskanal (anonym lenke) for egne filer og mapper.
+
+        Avhengigheter:
+        - Krever ved tildeling: Sende delinger (obligatorisk)
+        - Inkluderer automatisk: Fildeling (grunnlag) (via Sende delinger)
+        - Uavhengig av: Deling med venner
+
+        Tillater:
+        - Aktivere eller deaktivere offentlig deling for fil eller mappe
+        - Sette utlopsdato for offentlig lenke
+        - Beskytte lenken med passord (generere, kopiere, tilbakekalle)
+        - Hente offentlig mappe-landing-URL (ZIP-nedlasting av undertra)
+        - Se « offentlig deling aktiv »-merker i lister
+
+        Dekker ikke:
+        - Malrettet deling til registrerte brukere (Deling med venner)
+      ROLE_SHARE_FRIENDS: |
+        Delingskanal mellom registrerte StuWebStorage-brukere (Deling med venner).
+
+        Avhengigheter:
+        - Krever ved tildeling: Sende delinger (obligatorisk)
+        - Inkluderer automatisk: Fildeling (grunnlag) (via Sende delinger)
+        - Uavhengig av: Offentlig deling
+
+        Tillater:
+        - Dele fil eller mappe med en eller flere StuWebStorage-brukere
+        - Soke kvalifiserte mottakere (aktive brukere med Fildeling (grunnlag) eller Administrator)
+        - Sette valgfri utlop per mottaker
+        - Erstatte hele mottakerlisten (legge til, fjerne, erstatte)
+        - Se status for vennedeling i modaler og egenskaper
+
+        Dekker ikke:
+        - Anonyme offentlige lenker (Offentlig deling)
     sections:
       profile: Profil
       roles: Roller

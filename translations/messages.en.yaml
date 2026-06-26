@@ -765,12 +765,121 @@ admin:
       ROLE_SHARE_FRIENDS: 'Friends sharing'
     roles_help:
       title: 'Role reference'
-      ROLE_USER: 'Signed-in access to the application. Base role on every active account.'
-      ROLE_ADMIN: 'User management, platform settings, and admin godview over other users'' file spaces.'
-      ROLE_SHARE: 'Access the files area and receive content shared with the user (no outbound sharing).'
-      ROLE_SHARE_SEND: 'Upload, folders, properties, and outbound shares on owned files. Required for public or friends sharing.'
-      ROLE_SHARE_PUBLIC: 'Create public links (URL, optional password, expiry) on files and folders.'
-      ROLE_SHARE_FRIENDS: 'Targeted sharing to other users (grantees, per-grant expiry) on files and folders.'
+      intro: |
+        Roles stack. When assigning, Public sharing and Friends sharing require the Share sending checkbox.
+        At runtime, Share sending automatically includes File sharing (base). Administrator includes the full sharing branch.
+
+        Dependency tree:
+        User (base)
+          └─ File sharing (base)
+               └─ Share sending
+                    ├─ Public sharing
+                    └─ Friends sharing
+        Administrator → includes User + the full branch above
+      ROLE_USER: |
+        Standard authenticated account (present on every active user).
+
+        Dependencies:
+        - Requires: none (base role)
+        - Automatically included by: Administrator
+        - Prerequisite for: profile, bug report, sign-in
+
+        Allows:
+        - Sign in (email, password, TOTP when enabled)
+        - Manage profile: display name, email address, password change
+        - Submit a bug report (/bug-report)
+        - Save files UI display preferences (when File sharing (base) is also granted)
+
+        Does not allow:
+        - Access the files area (/files): add File sharing (base)
+        - Administer the platform or other users
+      ROLE_ADMIN: |
+        Full StuWebStorage administration.
+
+        Dependencies:
+        - Requires: User (implicit on every active account)
+        - Automatically includes: User, Share sending, File sharing (base), Public sharing, Friends sharing
+
+        Allows:
+        - Access all /admin pages (users, invitation, settings, bug reports)
+        - List, search, edit and delete user accounts
+        - Assign roles, storage quotas, enable/disable accounts
+        - Resend invitations, force password reset, invalidate sessions
+        - Review and process bug reports
+        - Files godview: browse each File sharing (base) user's file space and act on their behalf (upload, folders, shares)
+
+        Does not override:
+        - Role governance rules (e.g. last active admin protected, no self role changes)
+      ROLE_SHARE: |
+        Reader/receiver access to the files area.
+
+        Dependencies:
+        - Requires: User (implicit on every active account)
+        - Automatically included by: Administrator; Share sending (at runtime, via hierarchy)
+        - Recommended prerequisite for: Share sending, Public sharing, Friends sharing
+
+        Allows:
+        - Open /files and browse owned files (when Share sending is also granted) or only the "Received shares" view without Share sending
+        - View files and folders shared with the user (received links, friends shares, folder shares)
+        - Download shared files, browse shared folders
+        - Display storage stats on the home page (used space, quota)
+
+        Does not allow on its own:
+        - Upload files or create folders
+        - Rename, move or delete items
+        - Create or edit outbound shares (public or friends)
+      ROLE_SHARE_SEND: |
+        Full management of owned file space and outbound sharing (except public/friends channels without their roles).
+
+        Dependencies:
+        - Requires: none when assigning (File sharing (base) is granted automatically at runtime)
+        - Automatically includes: File sharing (base)
+        - Required for: Public sharing, Friends sharing (mandatory checkboxes when assigning)
+
+        Allows:
+        - Upload files (including ZIP with extraction)
+        - Create, rename, move and delete owned folders and files
+        - Bulk and global actions: download, move, delete
+        - Open file or folder properties (metadata, global expiry)
+        - Revoke own friends shares (per grantee)
+
+        Does not allow without additional roles:
+        - Enable public links (Public sharing)
+        - Share to targeted users (Friends sharing)
+      ROLE_SHARE_PUBLIC: |
+        Public sharing channel (anonymous link) on owned files and folders.
+
+        Dependencies:
+        - Requires when assigning: Share sending (mandatory)
+        - Automatically includes: File sharing (base) (via Share sending)
+        - Independent of: Friends sharing
+
+        Allows:
+        - Enable or disable public sharing on a file or folder
+        - Set a public link expiry date
+        - Protect the link with a password (generate, copy, revoke)
+        - Get the public folder landing URL (ZIP download of subtree)
+        - See "public share active" badges in lists
+
+        Does not cover:
+        - Targeted sharing to registered users (Friends sharing)
+      ROLE_SHARE_FRIENDS: |
+        Sharing channel between registered StuWebStorage users ("friends" sharing).
+
+        Dependencies:
+        - Requires when assigning: Share sending (mandatory)
+        - Automatically includes: File sharing (base) (via Share sending)
+        - Independent of: Public sharing
+
+        Allows:
+        - Share a file or folder with one or more StuWebStorage users
+        - Search eligible recipients (active users with File sharing (base) or Administrator)
+        - Set an optional expiry per recipient
+        - Replace the full recipient list (add, remove, replace)
+        - View friends share status in modals and properties
+
+        Does not cover:
+        - Anonymous public links (Public sharing)
     sections:
       profile: Profile
       roles: Roles

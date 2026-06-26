@@ -765,12 +765,121 @@ admin:
       ROLE_SHARE_FRIENDS: 'Partage entre amis'
     roles_help:
       title: 'Aide sur les roles'
-      ROLE_USER: 'Acces connecte a l''application. Role de base present sur tout compte actif.'
-      ROLE_ADMIN: 'Gestion des utilisateurs, parametres plateforme et vue administrateur (godview) sur les espaces fichiers.'
-      ROLE_SHARE: 'Acces a l''espace fichiers et reception des contenus partages avec l''utilisateur (sans envoi de partages).'
-      ROLE_SHARE_SEND: 'Upload, dossiers, proprietes et envoi de partages sur ses propres fichiers. Requis pour activer le partage public ou entre amis.'
-      ROLE_SHARE_PUBLIC: 'Creation de liens publics (URL, mot de passe optionnel, expiration) sur fichiers et dossiers.'
-      ROLE_SHARE_FRIENDS: 'Partage cible vers d''autres utilisateurs (destinataires, expiration par beneficiaire) sur fichiers et dossiers.'
+      intro: |
+        Les roles se cumulent. A l'assignation, Partage public et Partage entre amis exigent la case Envoi de partages.
+        A l'execution, Envoi de partages inclut automatiquement Partage fichiers (base). Administrateur inclut toute la branche partage.
+
+        Arbre des dependances :
+        Utilisateur (base)
+          └─ Partage fichiers (base)
+               └─ Envoi de partages
+                    ├─ Partage public
+                    └─ Partage entre amis
+        Administrateur → inclut Utilisateur + toute la branche ci-dessus
+      ROLE_USER: |
+        Compte authentifie standard (present sur tout utilisateur actif).
+
+        Dependances :
+        - Requiert : aucun (role de base)
+        - Inclus automatiquement par : Administrateur
+        - Prerequis pour : profil, signalement de bug, connexion
+
+        Permet :
+        - Se connecter a l'application (email, mot de passe, TOTP si active)
+        - Gerer son profil : pseudonyme, adresse email, changement de mot de passe
+        - Soumettre un signalement de bug (/bug-report)
+        - Enregistrer ses preferences d'affichage de l'interface fichiers (si Partage fichiers (base) est aussi accorde)
+
+        Ne permet pas :
+        - Acceder a l'espace fichiers (/files) : ajoutez Partage fichiers (base)
+        - Administrer la plateforme ou d'autres utilisateurs
+      ROLE_ADMIN: |
+        Administration complete de StuWebStorage.
+
+        Dependances :
+        - Requiert : Utilisateur (implicite sur tout compte actif)
+        - Inclut automatiquement : Utilisateur, Envoi de partages, Partage fichiers (base), Partage public, Partage entre amis
+
+        Permet :
+        - Acceder a toutes les pages /admin (utilisateurs, invitation, parametres, bug reports)
+        - Lister, rechercher, modifier et supprimer des comptes utilisateurs
+        - Assigner les roles, quotas de stockage, activer/desactiver un compte
+        - Renvoyer une invitation, forcer un reset mot de passe, invalider les sessions
+        - Consulter et traiter les signalements de bugs
+        - Godview fichiers : parcourir l'espace fichiers de chaque utilisateur Partage fichiers (base) et agir en son nom (upload, dossiers, partages)
+
+        Ne remplace pas :
+        - La gouvernance des roles (ex. dernier admin actif protege, pas d'auto-modification de ses propres roles)
+      ROLE_SHARE: |
+        Acces lecteur/recepteur a l'espace fichiers.
+
+        Dependances :
+        - Requiert : Utilisateur (implicite sur tout compte actif)
+        - Inclus automatiquement par : Administrateur ; Envoi de partages (a l'execution, via hierarchie)
+        - Prerequis recommande pour : Envoi de partages, Partage public, Partage entre amis
+
+        Permet :
+        - Ouvrir /files et consulter ses propres fichiers (si Envoi de partages est aussi accorde) ou uniquement la vue « Partages recus » sans Envoi de partages
+        - Voir les fichiers et dossiers partages avec l'utilisateur (liens recus, partages entre amis, partages de dossiers)
+        - Telecharger des fichiers partages, naviguer dans les dossiers partages
+        - Afficher les statistiques de stockage sur la page d'accueil (espace utilise, quota)
+
+        Ne permet pas, a lui seul :
+        - Envoyer / uploader des fichiers, creer des dossiers
+        - Renommer, deplacer ou supprimer des elements
+        - Creer ou modifier des partages sortants (public ou entre amis)
+      ROLE_SHARE_SEND: |
+        Gestion complete de son propre espace fichiers et actions de partage sortant (hors canaux public/amis sans leurs roles).
+
+        Dependances :
+        - Requiert : aucun a l'assignation (Partage fichiers (base) est accorde automatiquement a l'execution)
+        - Inclut automatiquement : Partage fichiers (base)
+        - Necessaire pour : Partage public, Partage entre amis (cases obligatoires a l'assignation)
+
+        Permet :
+        - Uploader des fichiers (y compris ZIP avec extraction)
+        - Creer, renommer, deplacer et supprimer dossiers et fichiers possedes
+        - Actions globales et par lot : telechargement, deplacement, suppression
+        - Ouvrir les proprietes d'un fichier ou dossier (metadonnees, expiration globale)
+        - Revoquer ses propres partages entre amis (grant par destinataire)
+
+        Ne permet pas, sans roles additionnels :
+        - Activer un lien public (Partage public)
+        - Partager a des utilisateurs cibles (Partage entre amis)
+      ROLE_SHARE_PUBLIC: |
+        Canal de partage public (lien anonyme) sur fichiers et dossiers possedes.
+
+        Dependances :
+        - Requiert a l'assignation : Envoi de partages (obligatoire)
+        - Inclus automatiquement : Partage fichiers (base) (via Envoi de partages)
+        - Independamment de : Partage entre amis
+
+        Permet :
+        - Activer ou desactiver le partage public sur un fichier ou un dossier
+        - Definir une date d'expiration du lien public
+        - Proteger le lien par mot de passe (generation, copie, revocation)
+        - Obtenir l'URL de landing publique d'un dossier (telechargement ZIP du sous-arbre)
+        - Voir les badges « partage public actif » dans les listes
+
+        Ne couvre pas :
+        - Le partage cible entre utilisateurs inscrits (Partage entre amis)
+      ROLE_SHARE_FRIENDS: |
+        Canal de partage entre utilisateurs inscrits (partage « entre amis »).
+
+        Dependances :
+        - Requiert a l'assignation : Envoi de partages (obligatoire)
+        - Inclus automatiquement : Partage fichiers (base) (via Envoi de partages)
+        - Independamment de : Partage public
+
+        Permet :
+        - Partager un fichier ou un dossier avec un ou plusieurs utilisateurs StuWebStorage
+        - Rechercher des destinataires eligibles (utilisateurs actifs avec Partage fichiers (base) ou Administrateur)
+        - Definir une expiration par destinataire (optionnelle)
+        - Modifier la liste complete des destinataires (ajout, retrait, remplacement)
+        - Consulter l'etat des partages amis dans les modales et proprietes
+
+        Ne couvre pas :
+        - Les liens publics anonymes (Partage public)
     sections:
       profile: Profil
       roles: Roles

@@ -89,6 +89,9 @@
                     </h3>
                     <div id="adminRolesHelpCollapse" class="accordion-collapse collapse" aria-labelledby="adminRolesHelpHeading" data-bs-parent="#adminRolesHelpAccordion">
                         <div class="accordion-body p-0">
+                            <p class="small text-body-secondary px-3 pt-3 mb-0" style="white-space: pre-line;">
+                                {{ 'admin.users.roles_help.intro'|trans({}, 'messages', currentLocale) }}
+                            </p>
                             <div class="accordion accordion-flush" id="adminRolesHelpItems">
                                 {% for role in allowedRoles %}
                                     {% set roleHelpKey = 'admin.users.roles_help.' ~ role %}
@@ -97,11 +100,10 @@
                                             <h4 class="accordion-header" id="adminRoleHelpHeading{{ role|lower }}">
                                                 <button class="accordion-button collapsed py-2 small fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#adminRoleHelpCollapse{{ role|lower }}" aria-expanded="false" aria-controls="adminRoleHelpCollapse{{ role|lower }}">
                                                     {{ ('admin.users.roles_labels.' ~ role)|trans({}, 'messages', currentLocale) }}
-                                                    <span class="ms-2 text-muted fw-normal"><code>{{ role }}</code></span>
                                                 </button>
                                             </h4>
                                             <div id="adminRoleHelpCollapse{{ role|lower }}" class="accordion-collapse collapse" aria-labelledby="adminRoleHelpHeading{{ role|lower }}" data-bs-parent="#adminRolesHelpItems">
-                                                <div class="accordion-body small text-body-secondary">
+                                                <div class="accordion-body small text-body-secondary" style="white-space: pre-line;">
                                                     {{ roleHelpKey|trans({}, 'messages', currentLocale) }}
                                                 </div>
                                             </div>
