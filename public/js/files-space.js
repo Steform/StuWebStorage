@@ -2091,7 +2091,143 @@
     var debounceTimer = null;
     var FILES_SECTION_MY_FILES_KEY = 'files.section.my_files.expanded';
     var FILES_SECTION_SHARED_FOR_ME_KEY = 'files.section.shared_for_me.expanded';
+    var MOBILE_GODVIEW_PANE_STORAGE_PREFIX = 'files.mobile.pane.';
     var sectionStateFallbackStore = {};
+
+    /**
+     * @brief Return true when viewport is below the files mobile breakpoint.
+     * @param void No input parameter.
+     * @return {boolean}
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    function isMobileViewportFiles() {
+        return !!(window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches);
+    }
+
+    /**
+     * @brief Collapse admin godview user panes on mobile (first pane expanded by default).
+     * @param {ParentNode|Document|null} root DOM subtree containing pane accordions.
+     * @return {void}
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    function initMobileGodviewPanes(root) {
+        if (!document.querySelector('.files-space-page--admin-files-route')) {
+            return;
+        }
+        if (!window.bootstrap || !window.bootstrap.Collapse) {
+            return;
+        }
+        var scope = root || document;
+        var panes = scope.querySelectorAll('.files-user-pane .accordion-collapse');
+        if (panes.length === 0) {
+            return;
+        }
+        var mobile = isMobileViewportFiles();
+        panes.forEach(function (collapseEl, index) {
+            var paneId = String(collapseEl.id || '').replace(/^collapse-/, '');
+            var storageKey = MOBILE_GODVIEW_PANE_STORAGE_PREFIX + paneId;
+            var shouldShow = true;
+            if (mobile) {
+                shouldShow = index === 0;
+                try {
+                    var stored = window.sessionStorage.getItem(storageKey);
+                    if (stored === '1') {
+                        shouldShow = true;
+                    } else if (stored === '0') {
+                        shouldShow = false;
+                    }
+                } catch (e) {
+                    shouldShow = index === 0;
+                }
+            }
+            var collapse = window.bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+            if (shouldShow) {
+                collapse.show();
+            } else {
+                collapse.hide();
+            }
+            if (collapseEl.getAttribute('data-files-mobile-pane-bound') === '1') {
+                return;
+            }
+            collapseEl.setAttribute('data-files-mobile-pane-bound', '1');
+            collapseEl.addEventListener('shown.bs.collapse', function () {
+                if (!isMobileViewportFiles() || paneId === '') {
+                    return;
+                }
+                try {
+                    window.sessionStorage.setItem(storageKey, '1');
+                } catch (e) {
+                    return;
+                }
+            });
+            collapseEl.addEventListener('hidden.bs.collapse', function () {
+                if (!isMobileViewportFiles() || paneId === '') {
+                    return;
+                }
+                try {
+                    window.sessionStorage.setItem(storageKey, '0');
+                } catch (e) {
+                    return;
+                }
+            });
+        });
+    }
+
+    /**
+     * @brief Sync admin owner offcanvas fields from the desktop filter form.
+     * @return {void}
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    function initAdminOwnerOffcanvasSync() {
+        var offcanvasEl = document.getElementById('filesAdminOwnerFilterOffcanvas');
+        if (!offcanvasEl) {
+            return;
+        }
+        offcanvasEl.addEventListener('show.bs.offcanvas', function () {
+            var desktopSearch = document.getElementById('files-admin-owner-search');
+            var offSearch = document.getElementById('files-admin-owner-search-offcanvas');
+            var desktopHidden = document.getElementById('files-admin-owner-hidden');
+            var offHidden = offcanvasEl.querySelector('[data-files-admin-owner-offcanvas-hidden]');
+            if (desktopSearch && offSearch) {
+                offSearch.value = desktopSearch.value;
+            }
+            if (desktopHidden && offHidden) {
+                offHidden.value = desktopHidden.value;
+            }
+        });
+        var offForm = offcanvasEl.querySelector('[data-files-admin-owner-offcanvas-form]');
+        if (offForm) {
+            offForm.addEventListener('submit', function () {
+                var offSearch = document.getElementById('files-admin-owner-search-offcanvas');
+                var offHidden = offcanvasEl.querySelector('[data-files-admin-owner-offcanvas-hidden]');
+                var desktopSearch = document.getElementById('files-admin-owner-search');
+                var desktopHidden = document.getElementById('files-admin-owner-hidden');
+                var ownerList = document.getElementById('files-admin-owner-suggest-list');
+                if (offSearch && offHidden && ownerList) {
+                    var target = String(offSearch.value || '').trim();
+                    var matched = '';
+                    ownerList.querySelectorAll('option').forEach(function (opt) {
+                        if (matched) {
+                            return;
+                        }
+                        if ((opt.value || '').trim() === target) {
+                            matched = opt.getAttribute('data-owner-id') || '';
+                        }
+                    });
+                    offHidden.value = matched;
+                }
+                if (offSearch && desktopSearch) {
+                    desktopSearch.value = offSearch.value;
+                }
+                if (offHidden && desktopHidden) {
+                    desktopHidden.value = offHidden.value;
+                }
+            });
+        }
+    }
 
     /**
      * @brief Initialize adaptive Popper behavior for row action dropdowns.
@@ -2222,6 +2358,14 @@
                     cell.classList.remove('d-none');
                 } else {
                     cell.classList.add('d-none');
+                }
+            });
+            var mobileMetaParts = root.querySelectorAll('[data-files-mobile-meta="' + col + '"]');
+            mobileMetaParts.forEach(function (part) {
+                if (prefs[col]) {
+                    part.classList.remove('d-none');
+                } else {
+                    part.classList.add('d-none');
                 }
             });
         });
@@ -2669,7 +2813,7 @@
                 a.classList.remove('active');
             }
         });
-        var colSlot = document.querySelector('.files-toolbar-slot--columns');
+        var colSlot = document.querySelector('[data-files-columns-dropdown]');
         if (colSlot) {
             if (viewVal === 'grid') {
                 colSlot.classList.add('d-none');
@@ -2865,6 +3009,7 @@
                 liveRegion.innerHTML = html;
                 initAdaptiveActionDropdowns(liveRegion);
                 initFilesSectionAccordions(liveRegion);
+                initMobileGodviewPanes(liveRegion);
                 applyColumnVisibility(liveRegion);
                 updateSelectionUi();
                 var next = Object.assign({}, base);
@@ -3193,6 +3338,8 @@
 
     initAdaptiveActionDropdowns(document);
     initFilesSectionAccordions(document);
+    initMobileGodviewPanes(document);
+    initAdminOwnerOffcanvasSync();
     ensureColumnPrefsCanonical();
     applyColumnVisibility(document);
     syncColumnToggleCheckboxes();

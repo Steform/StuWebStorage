@@ -38,7 +38,7 @@
                 class="accordion-button"
                 data-bs-toggle="collapse"
                 data-bs-target="#collapse-{{ pane.paneId }}"
-                aria-expanded="true"
+                aria-expanded="{{ isFirstPane|default(true) ? 'true' : 'false' }}"
                 aria-controls="collapse-{{ pane.paneId }}"
             >
                 {{ pane.subjectUserLabel }}
@@ -46,7 +46,7 @@
         </h2>
         <div
             id="collapse-{{ pane.paneId }}"
-            class="accordion-collapse collapse show"
+            class="accordion-collapse collapse{% if isFirstPane|default(true) %} show{% endif %}"
             aria-labelledby="heading-{{ pane.paneId }}"
         >
             <div class="accordion-body pb-3">

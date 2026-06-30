@@ -233,6 +233,24 @@ final class AdminGodviewScopeUxContractTest extends TestCase
         self::assertStringContainsString('class="d-flex flex-wrap align-items-center gap-2', $twig);
         self::assertStringContainsString('files-toolbar-second-row > *', $css);
         self::assertStringContainsString('.files-admin-scope-badge', $css);
+        self::assertStringContainsString('filesAdminOwnerFilterOffcanvas', $twig);
+        self::assertStringContainsString('files-admin-owner-filter-mobile', $twig);
+    }
+
+    /**
+     * @brief Admin godview JS must collapse user panes on mobile with session persistence.
+     * @return void
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    public function testAdminJsInitializesMobileGodviewPaneCollapse(): void
+    {
+        $js = $this->readSource('public/js/files-space.js');
+
+        self::assertStringContainsString('function initMobileGodviewPanes(root)', $js);
+        self::assertStringContainsString("MOBILE_GODVIEW_PANE_STORAGE_PREFIX = 'files.mobile.pane.'", $js);
+        self::assertStringContainsString('initMobileGodviewPanes(liveRegion)', $js);
+        self::assertStringContainsString('initMobileGodviewPanes(document)', $js);
     }
 
     /**

@@ -2,7 +2,7 @@
 {% set currentLocale = app.request.locale|default('fr') %}
 
 {% block stylesheets %}
-    <link href="{{ asset('css/files-space.css') }}?v=20260504-pane-accordion" rel="stylesheet">
+    <link href="{{ asset('css/files-space.css') }}?v=20260630-mobile-ux" rel="stylesheet">
     <link href="{{ asset('css/text-file-editor.css') }}?v=20260626" rel="stylesheet">
 {% endblock %}
 
@@ -122,10 +122,21 @@
                                     </li>
                                 </ul>
                             </li>
+                            {% if layoutView == 'list' %}
+                            <li class="dropend files-display-submenu files-display-submenu--columns" data-files-columns-dropdown>
+                                <button type="button" class="dropdown-toggle files-display-submenu-trigger d-flex align-items-center justify-content-between w-100 text-start" id="files-display-submenu-columns-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="{{ 'files.toolbar.columns_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.toolbar.columns_label'|trans({}, 'messages', currentLocale) }}</button>
+                                <ul class="dropdown-menu p-2" aria-labelledby="files-display-submenu-columns-toggle">
+                                    {% include 'files/components/_files_column_toggles.html.twig' %}
+                                </ul>
+                            </li>
+                            {% endif %}
                         </ul>
                     </div>
                     {% if adminContext|default(false) %}
-                    <form method="get" action="{{ path(filesIndexRoute|default('files_index')) }}" class="d-flex flex-wrap align-items-center gap-2{% if adminViewScope|default('owner') != 'owner' %} d-none{% endif %}" data-files-admin-owner-filter-block{% if adminViewScope|default('owner') != 'owner' %} aria-hidden="true"{% endif %}>
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-md-none files-toolbar-slot files-admin-owner-filter-mobile{% if adminViewScope|default('owner') != 'owner' %} d-none{% endif %}" data-bs-toggle="offcanvas" data-bs-target="#filesAdminOwnerFilterOffcanvas" aria-controls="filesAdminOwnerFilterOffcanvas"{% if adminViewScope|default('owner') != 'owner' %} aria-hidden="true" disabled{% endif %} data-files-admin-owner-filter-control>
+                        {{ 'files.mobile.owner_filter_button'|trans({}, 'messages', currentLocale) }}
+                    </button>
+                    <form method="get" action="{{ path(filesIndexRoute|default('files_index')) }}" class="d-flex flex-wrap align-items-center gap-2 files-admin-owner-filter-desktop{% if adminViewScope|default('owner') != 'owner' %} d-none{% endif %}" data-files-admin-owner-filter-block{% if adminViewScope|default('owner') != 'owner' %} aria-hidden="true"{% endif %}>
                         <input type="hidden" name="admin_context" value="1">
                         <input type="hidden" name="admin_view_scope" value="owner">
                         {% if listingScope is defined and listingScope != 'both' %}
@@ -137,81 +148,6 @@
                         <datalist id="files-admin-owner-suggest-list"></datalist>
                         <button type="submit" class="btn btn-outline-secondary btn-sm" data-files-admin-owner-filter-control{% if adminViewScope|default('owner') != 'owner' %} disabled{% endif %}>{{ 'files.admin.owner_filter_apply'|trans({}, 'messages', currentLocale) }}</button>
                     </form>
-                    {% endif %}
-                    {% if layoutView == 'list' %}
-                        <div class="dropdown files-toolbar-slot files-toolbar-slot--columns d-none d-md-block" data-files-columns-dropdown>
-                            <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle"
-                                    id="files-columns-toggle"
-                                    data-bs-toggle="dropdown"
-                                    data-bs-auto-close="outside"
-                                    aria-expanded="false"
-                                    aria-label="{{ 'files.toolbar.columns_aria'|trans({}, 'messages', currentLocale) }}">
-                                {{ 'files.toolbar.columns_label'|trans({}, 'messages', currentLocale) }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="files-columns-toggle">
-                                <li>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox"
-                                               id="files-col-toggle-type"
-                                               data-files-col-toggle="type">
-                                        <label class="form-check-label" for="files-col-toggle-type">
-                                            {{ 'files.table.extension'|trans({}, 'messages', currentLocale) }}
-                                        </label>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox"
-                                               id="files-col-toggle-size"
-                                               data-files-col-toggle="size">
-                                        <label class="form-check-label" for="files-col-toggle-size">
-                                            {{ 'files.table.size'|trans({}, 'messages', currentLocale) }}
-                                        </label>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox"
-                                               id="files-col-toggle-share-public"
-                                               data-files-col-toggle="share_public">
-                                        <label class="form-check-label" for="files-col-toggle-share-public">
-                                            {{ 'files.table.share_public'|trans({}, 'messages', currentLocale) }}
-                                        </label>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox"
-                                               id="files-col-toggle-share-friends"
-                                               data-files-col-toggle="share_friends">
-                                        <label class="form-check-label" for="files-col-toggle-share-friends">
-                                            {{ 'files.table.share_friends'|trans({}, 'messages', currentLocale) }}
-                                        </label>
-                                    </div>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox"
-                                               id="files-col-toggle-uploaded"
-                                               data-files-col-toggle="uploaded">
-                                        <label class="form-check-label" for="files-col-toggle-uploaded">
-                                            {{ 'files.table.uploaded'|trans({}, 'messages', currentLocale) }}
-                                        </label>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox"
-                                               id="files-col-toggle-modified"
-                                               data-files-col-toggle="modified">
-                                        <label class="form-check-label" for="files-col-toggle-modified">
-                                            {{ 'files.table.modified'|trans({}, 'messages', currentLocale) }}
-                                        </label>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
                     {% endif %}
                     {% if adminContext|default(false) %}
                     <div class="files-admin-scope-badge ms-md-auto" data-files-admin-scope-badge data-msg-scope-all="{{ 'files.admin.view_scope_all'|trans({}, 'messages', currentLocale)|e('html_attr') }}">
@@ -235,6 +171,29 @@
     {% if adminContext|default(false) and adminOwnerFallbackApplied|default(false) and adminOwnerFallbackNotice|default('') != '' %}
     <div class="alert alert-info mb-3 mx-3" role="status">
         {{ adminOwnerFallbackNotice }}
+    </div>
+    {% endif %}
+    {% if adminContext|default(false) %}
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="filesAdminOwnerFilterOffcanvas" aria-labelledby="filesAdminOwnerFilterOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h2 class="offcanvas-title h5" id="filesAdminOwnerFilterOffcanvasLabel">{{ 'files.mobile.owner_filter_offcanvas_title'|trans({}, 'messages', currentLocale) }}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ 'app.close'|trans({}, 'messages', currentLocale) }}"></button>
+        </div>
+        <div class="offcanvas-body">
+            <form method="get" action="{{ path(filesIndexRoute|default('files_index')) }}" class="d-flex flex-column gap-3" data-files-admin-owner-offcanvas-form>
+                <input type="hidden" name="admin_context" value="1">
+                <input type="hidden" name="admin_view_scope" value="owner">
+                {% if listingScope is defined and listingScope != 'both' %}
+                <input type="hidden" name="listing_scope" value="{{ listingScope }}">
+                {% endif %}
+                <input type="hidden" name="owner" value="{{ adminOwnerFilterValue|default('') }}" data-files-admin-owner-offcanvas-hidden>
+                <div>
+                    <label class="form-label" for="files-admin-owner-search-offcanvas">{{ 'files.admin.owner_filter_label'|trans({}, 'messages', currentLocale) }}</label>
+                    <input type="text" class="form-control" id="files-admin-owner-search-offcanvas" name="owner_query" value="{{ adminOwnerQueryValue|default('') }}" autocomplete="off" list="files-admin-owner-suggest-list" data-files-admin-owner-search data-files-admin-owner-filter-control>
+                </div>
+                <button type="submit" class="btn btn-primary">{{ 'files.admin.owner_filter_apply'|trans({}, 'messages', currentLocale) }}</button>
+            </form>
+        </div>
     </div>
     {% endif %}
     <div class="modal fade" id="filesAdvancedFiltersModal" tabindex="-1" aria-labelledby="filesAdvancedFiltersTitle" aria-hidden="true">
@@ -635,5 +594,5 @@
         <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js" defer></script>
         <script src="{{ asset('js/text-file-editor.js') }}?v=20260626" defer></script>
         <script src="{{ asset('js/files-space.js') }}?v={{ 'now'|date('U') }}" defer></script>
-        <script src="{{ asset('js/files-ui-preferences.js') }}?v=20260625-sort-prefs" defer></script>
+        <script src="{{ asset('js/files-ui-preferences.js') }}?v=20260630-mobile-prefs" defer></script>
 {% endblock %}

@@ -29,6 +29,9 @@ class UserDeviceUiPreference
     #[ORM\Column(name: 'files_view_mode', length: 8, options: ['default' => 'list'])]
     private string $filesViewMode = 'list';
 
+    #[ORM\Column(name: 'files_view_mode_mobile', length: 8, options: ['default' => 'grid'])]
+    private string $filesViewModeMobile = 'grid';
+
     #[ORM\Column(name: 'files_scope', length: 8, options: ['default' => 'both'])]
     private string $filesScope = 'both';
 
@@ -132,6 +135,30 @@ class UserDeviceUiPreference
     public function setFilesViewMode(string $filesViewMode): void
     {
         $this->filesViewMode = $filesViewMode;
+    }
+
+    /**
+     * @brief Get files layout mode preference for mobile viewports.
+     * @param void No input parameter.
+     * @return string
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    public function getFilesViewModeMobile(): string
+    {
+        return $this->filesViewModeMobile;
+    }
+
+    /**
+     * @brief Set files layout mode preference for mobile viewports.
+     * @param string $filesViewModeMobile Layout mode (`list` or `grid`).
+     * @return void
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    public function setFilesViewModeMobile(string $filesViewModeMobile): void
+    {
+        $this->filesViewModeMobile = $filesViewModeMobile;
     }
 
     /**

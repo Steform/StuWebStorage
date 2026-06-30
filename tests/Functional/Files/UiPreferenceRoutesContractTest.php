@@ -76,7 +76,9 @@ final class UiPreferenceRoutesContractTest extends TestCase
         self::assertStringContainsString('function saveBackendPreferences(deviceId, pref)', $source);
         self::assertStringContainsString('function applyViewAndScopeWithReload(pref)', $source);
         self::assertStringContainsString('filesSortField', $source);
-        self::assertStringContainsString('filesSortDirection', $source);
+        self::assertStringContainsString('filesViewModeMobile', $source);
+        self::assertStringContainsString('matchMedia', $source);
+        self::assertStringContainsString('function resolveEffectiveView(pref)', $source);
     }
 
     /**

@@ -1,0 +1,21 @@
+{# Compact share meta fragments for owned mobile list rows. #}
+<span class="files-mobile-list__meta-part" data-files-mobile-meta="size">{{ sizeLabel }}</span>
+<span class="files-mobile-list__meta-sep" aria-hidden="true">{{ 'files.mobile.meta_separator'|trans({}, 'messages', currentLocale) }}</span>
+<span class="files-mobile-list__meta-part" data-files-mobile-meta="share_public">
+    {% if publicActive %}
+        <i class="bi bi-globe files-mobile-list__meta-icon" title="{{ 'files.table.share_public'|trans({}, 'messages', currentLocale) }}" aria-hidden="true"></i>
+    {% else %}
+        <span class="text-body-secondary">{{ 'files.table.share_public'|trans({}, 'messages', currentLocale) }}: {{ 'files.boolean.no'|trans({}, 'messages', currentLocale) }}</span>
+    {% endif %}
+    {% if showPublicClock|default(false) %}
+        <i class="bi bi-clock-history files-share-status-icon ms-1" title="{{ expirationActiveAria }}" aria-label="{{ expirationActiveAria }}"></i>
+    {% endif %}
+</span>
+<span class="files-mobile-list__meta-sep" aria-hidden="true">{{ 'files.mobile.meta_separator'|trans({}, 'messages', currentLocale) }}</span>
+<span class="files-mobile-list__meta-part" data-files-mobile-meta="share_friends">
+    {% if friendsActive|default(false) %}
+        <i class="bi bi-people-fill files-mobile-list__meta-icon" title="{{ 'files.table.share_friends'|trans({}, 'messages', currentLocale) }}" aria-hidden="true"></i>
+    {% else %}
+        <span class="text-body-secondary">{{ 'files.table.share_friends'|trans({}, 'messages', currentLocale) }}: {{ 'files.boolean.no'|trans({}, 'messages', currentLocale) }}</span>
+    {% endif %}
+</span>

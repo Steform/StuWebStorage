@@ -292,6 +292,13 @@ files:
     list: Liste
     grid: Grille
     toggle_aria: 'Vue liste ou grille'
+  mobile:
+    meta_separator: ·
+    sort_label: Tri
+    list_aria_owned: 'Liste mobile de vos fichiers'
+    list_aria_shared: 'Liste mobile des partages recus'
+    owner_filter_button: Proprietaire
+    owner_filter_offcanvas_title: 'Filtrer par utilisateur'
   grid:
     open_actions_aria: 'Ouvrir les actions du fichier %name%'
     badge:

@@ -26,7 +26,7 @@
     </ol>
 </nav>
 {% endif %}
-<div class="table-responsive mb-0 files-listing-table-wrap">
+<div class="d-none d-md-block table-responsive mb-0 files-listing-table-wrap">
     <table class="table table-striped table-hover align-middle files-shared-list-table" data-files-selection-scope="shared" data-files-selection-group="shared" data-files-pane-scope="{{ pane.paneId }}">
         <thead class="files-table-head">
             <tr>
@@ -125,3 +125,20 @@
         </tbody>
     </table>
 </div>
+{% include 'files/components/mobile/_mobile_list_shared.html.twig' with {
+    sharedForMeFolders: sharedForMeFolders,
+    sharedForMeFiles: sharedForMeFiles,
+    sharedFolderSizeBytes: sharedFolderSizeBytes,
+    sharedOwnerLabelsByFolderId: sharedOwnerLabelsByFolderId,
+    sharedOwnerLabelsByFileId: sharedOwnerLabelsByFileId,
+    listingQuery: listingQuery,
+    filesIndexRoute: filesIndexRoute|default('files_index'),
+    folderCursorKey: sfKey,
+    selectAllId: 'files-select-all-mobile-shared-pane-' ~ pane.subjectUserId,
+    selectAllPaneId: pane.paneId,
+    paneId: pane.paneId,
+    currentSortField: currentSortField,
+    sortCycle: sortCycle,
+    listingScope: listingScope|default('both'),
+    currentLocale: currentLocale
+} %}

@@ -101,9 +101,13 @@ final class AdminGodviewRouteContractTest extends TestCase
     {
         $twig = $this->readSource('templates/files/index.html.twig');
         $css = $this->readSource('public/css/files-space.css');
+        $adminNav = $this->readSource('templates/components/_storage_admin_nav.html.twig');
 
         self::assertStringContainsString('files-space-page--admin-files-route', $twig);
         self::assertStringContainsString('admin_files_index', $twig);
         self::assertStringContainsString('.files-space-page.files-space-page--admin-files-route', $css);
+        self::assertStringContainsString('navbar-expand-lg', $adminNav);
+        self::assertStringContainsString('navbar-toggler', $adminNav);
+        self::assertStringContainsString('storage-admin-nav-collapse', $adminNav);
     }
 }

@@ -1,0 +1,38 @@
+{# Column visibility checkboxes (list layout); included in Affichage menu. #}
+<li>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="files-col-toggle-type" data-files-col-toggle="type">
+        <label class="form-check-label" for="files-col-toggle-type">{{ 'files.table.extension'|trans({}, 'messages', currentLocale) }}</label>
+    </div>
+</li>
+<li>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="files-col-toggle-size" data-files-col-toggle="size">
+        <label class="form-check-label" for="files-col-toggle-size">{{ 'files.table.size'|trans({}, 'messages', currentLocale) }}</label>
+    </div>
+</li>
+<li>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="files-col-toggle-share-public" data-files-col-toggle="share_public">
+        <label class="form-check-label" for="files-col-toggle-share-public">{{ 'files.table.share_public'|trans({}, 'messages', currentLocale) }}</label>
+    </div>
+</li>
+<li>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="files-col-toggle-share-friends" data-files-col-toggle="share_friends">
+        <label class="form-check-label" for="files-col-toggle-share-friends">{{ 'files.table.share_friends'|trans({}, 'messages', currentLocale) }}</label>
+    </div>
+</li>
+<li><hr class="dropdown-divider"></li>
+<li>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="files-col-toggle-uploaded" data-files-col-toggle="uploaded">
+        <label class="form-check-label" for="files-col-toggle-uploaded">{{ 'files.table.uploaded'|trans({}, 'messages', currentLocale) }}</label>
+    </div>
+</li>
+<li>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="files-col-toggle-modified" data-files-col-toggle="modified">
+        <label class="form-check-label" for="files-col-toggle-modified">{{ 'files.table.modified'|trans({}, 'messages', currentLocale) }}</label>
+    </div>
+</li>

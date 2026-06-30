@@ -73,6 +73,22 @@
         flex-wrap: wrap;
     }
 
+    .files-grid-card.files-grid-card-compact {
+        min-height: 7rem;
+    }
+
+    .files-grid-card-compact .files-grid-card-compact__preview {
+        min-height: 4rem;
+    }
+
+    .files-grid-card-compact .files-grid-card-compact__preview-image {
+        max-height: 4rem;
+    }
+
+    #files-listing-shell {
+        padding-bottom: 5rem;
+    }
+
 }
 
 .files-toolbar-second-row > * {
@@ -687,6 +703,78 @@ html[data-bs-theme="light"] .files-space-page .files-listing-shell.files-drop-zo
 @supports (background-color: color-mix(in srgb, red, blue)) {
     html[data-bs-theme="light"] .files-space-page .files-listing-shell.files-drop-zone.files-drop-zone--active {
         background-color: color-mix(in srgb, var(--bs-primary-bg-subtle) 45%, var(--bs-body-bg));
+    }
+}
+
+/* Mobile stacked list (list layout under md). */
+.files-mobile-list-wrap {
+    background-color: var(--bs-body-bg);
+}
+
+.files-mobile-list__toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background-color: var(--bs-body-bg);
+}
+
+.files-mobile-list__item {
+    border-bottom: 1px solid var(--bs-border-color);
+    padding: 0.65rem 0.75rem 0.55rem;
+}
+
+.files-mobile-list__item--empty {
+    border-bottom: 0;
+}
+
+.files-mobile-list__main {
+    min-height: 2.75rem;
+}
+
+.files-mobile-list__icon .files-type-icon--list {
+    width: 1.35rem;
+    height: 1.35rem;
+}
+
+.files-mobile-list__name {
+    font-size: 0.9375rem;
+    line-height: 1.25;
+}
+
+.files-mobile-list__meta {
+    margin-top: 0.2rem;
+    line-height: 1.3;
+}
+
+.files-mobile-list__meta-sep {
+    margin: 0 0.35rem;
+    opacity: 0.55;
+}
+
+.files-mobile-list__meta-icon {
+    font-size: 0.85rem;
+    vertical-align: -0.1em;
+}
+
+.files-mobile-list__actions {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+.files-space-page .breadcrumb {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+@media (max-width: 767.98px) {
+    .files-admin-owner-filter-desktop {
+        display: none !important;
     }
 }
 

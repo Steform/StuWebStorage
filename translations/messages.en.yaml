@@ -292,6 +292,13 @@ files:
     list: List
     grid: Grid
     toggle_aria: 'List or grid view'
+  mobile:
+    meta_separator: ·
+    sort_label: Sort
+    list_aria_owned: 'Mobile list of your files'
+    list_aria_shared: 'Mobile list of incoming shares'
+    owner_filter_button: Owner
+    owner_filter_offcanvas_title: 'Filter by user'
   grid:
     open_actions_aria: 'Open file actions for %name%'
     badge:

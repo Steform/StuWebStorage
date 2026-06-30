@@ -48,7 +48,7 @@
 </div>
     {% endif %}
 {% endif %}
-<div class="table-responsive mb-0 files-listing-table-wrap">
+<div class="d-none d-md-block table-responsive mb-0 files-listing-table-wrap">
     <table class="table table-striped table-hover align-middle w-100 files-owned-list-table" data-files-selection-scope="owned" data-files-selection-group="owned" data-files-pane-scope="{{ pane.paneId }}">
         <thead class="files-table-head">
             <tr>
@@ -292,3 +292,26 @@
         </tbody>
     </table>
 </div>
+{% include 'files/components/mobile/_mobile_list_owned.html.twig' with {
+    folders: folders,
+    files: files,
+    folderShareStates: folderShareStates,
+    folderSizeBytes: folderSizeBytes,
+    folderLandingMap: folderLandingMap,
+    grantMaps: grantMaps,
+    listingQuery: listingQuery,
+    filesIndexRoute: filesIndexRoute|default('files_index'),
+    csrfFolderDelete: csrfFolderDelete,
+    folderCursorKey: ufKey,
+    selectAllId: 'files-select-all-mobile-owned-pane-' ~ pane.subjectUserId,
+    selectAllPaneId: pane.paneId,
+    paneId: pane.paneId,
+    currentSortField: currentSortField,
+    sortCycle: sortCycle,
+    hasActiveCriteria: hasActiveCriteria,
+    isCurrentFolderCompletelyEmpty: isCurrentFolderCompletelyEmpty,
+    listingScope: listingScope|default('both'),
+    expirationActiveAria: expirationActiveAria|default(''),
+    adminContext: adminContext|default(false),
+    currentLocale: currentLocale
+} %}

@@ -134,6 +134,7 @@ class FilesUiPreferenceService
 
         $normalized = $this->normalizeIncomingPayload($payload);
         $row->setFilesViewMode((string) $normalized['filesViewMode']);
+        $row->setFilesViewModeMobile((string) $normalized['filesViewModeMobile']);
         $row->setFilesScope((string) $normalized['filesScope']);
         $row->setFilesSortField((string) $normalized['filesSortField']);
         $row->setFilesSortDirection((string) $normalized['filesSortDirection']);
@@ -156,7 +157,7 @@ class FilesUiPreferenceService
     /**
      * @brief Return default preference payload.
      * @param void No input parameter.
-     * @return array{filesViewMode: string, filesScope: string, filesSortField: string, filesSortDirection: string, cloudVisibilityState: array<string, mixed>}
+     * @return array{filesViewMode: string, filesViewModeMobile: string, filesScope: string, filesSortField: string, filesSortDirection: string, cloudVisibilityState: array<string, mixed>}
      * @date 2026-05-03
      * @author Stephane H.
      */
@@ -164,6 +165,7 @@ class FilesUiPreferenceService
     {
         return [
             'filesViewMode' => 'list',
+            'filesViewModeMobile' => 'grid',
             'filesScope' => 'both',
             'filesSortField' => self::DEFAULT_SORT_FIELD,
             'filesSortDirection' => self::DEFAULT_SORT_DIRECTION,
@@ -220,7 +222,7 @@ class FilesUiPreferenceService
     /**
      * @brief Normalize incoming payload and clamp unsupported values to defaults.
      * @param array<string, mixed> $payload Raw request payload.
-     * @return array{filesViewMode: string, filesScope: string, filesSortField: string, filesSortDirection: string, cloudVisibilityState: array<string, mixed>}
+     * @return array{filesViewMode: string, filesViewModeMobile: string, filesScope: string, filesSortField: string, filesSortDirection: string, cloudVisibilityState: array<string, mixed>}
      * @date 2026-05-03
      * @author Stephane H.
      */
@@ -230,6 +232,11 @@ class FilesUiPreferenceService
         $view = (string) ($payload['filesViewMode'] ?? $defaults['filesViewMode']);
         if (!in_array($view, self::ALLOWED_VIEW_MODES, true)) {
             $view = $defaults['filesViewMode'];
+        }
+
+        $viewMobile = (string) ($payload['filesViewModeMobile'] ?? $defaults['filesViewModeMobile']);
+        if (!in_array($viewMobile, self::ALLOWED_VIEW_MODES, true)) {
+            $viewMobile = $defaults['filesViewModeMobile'];
         }
 
         $scope = (string) ($payload['filesScope'] ?? $defaults['filesScope']);
@@ -247,6 +254,7 @@ class FilesUiPreferenceService
 
         return [
             'filesViewMode' => $view,
+            'filesViewModeMobile' => $viewMobile,
             'filesScope' => $scope,
             'filesSortField' => $sortField,
             'filesSortDirection' => $sortDirection,
@@ -260,7 +268,7 @@ class FilesUiPreferenceService
     /**
      * @brief Hydrate normalized payload from persisted entity.
      * @param UserDeviceUiPreference $row Persisted row.
-     * @return array{filesViewMode: string, filesScope: string, filesSortField: string, filesSortDirection: string, cloudVisibilityState: array<string, mixed>}
+     * @return array{filesViewMode: string, filesViewModeMobile: string, filesScope: string, filesSortField: string, filesSortDirection: string, cloudVisibilityState: array<string, mixed>}
      * @date 2026-05-03
      * @author Stephane H.
      */
@@ -268,6 +276,7 @@ class FilesUiPreferenceService
     {
         return $this->normalizeIncomingPayload([
             'filesViewMode' => $row->getFilesViewMode(),
+            'filesViewModeMobile' => $row->getFilesViewModeMobile(),
             'filesScope' => $row->getFilesScope(),
             'filesSortField' => $row->getFilesSortField(),
             'filesSortDirection' => $row->getFilesSortDirection(),

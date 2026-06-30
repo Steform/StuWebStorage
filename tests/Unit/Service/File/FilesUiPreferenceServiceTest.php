@@ -69,6 +69,7 @@ final class FilesUiPreferenceServiceTest extends TestCase
         ]);
 
         self::assertSame('list', $normalized['filesViewMode']);
+        self::assertSame('grid', $normalized['filesViewModeMobile']);
         self::assertSame('both', $normalized['filesScope']);
         self::assertSame('name', $normalized['filesSortField']);
         self::assertSame('asc', $normalized['filesSortDirection']);
@@ -100,5 +101,19 @@ final class FilesUiPreferenceServiceTest extends TestCase
 
         self::assertSame('name', $fallback['filesSortField']);
         self::assertSame('asc', $fallback['filesSortDirection']);
+    }
+
+    /**
+     * @return void
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    public function testNormalizeIncomingPayloadFallsBackMobileViewModeToGrid(): void
+    {
+        $normalized = $this->service->normalizeIncomingPayload([
+            'filesViewModeMobile' => 'invalid',
+        ]);
+
+        self::assertSame('grid', $normalized['filesViewModeMobile']);
     }
 }

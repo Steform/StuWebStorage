@@ -2,17 +2,22 @@
 {% if is_granted('ROLE_ADMIN') %}
     <nav class="navbar navbar-expand-lg {{ currentTheme == 'dark' ? 'navbar-dark bg-black' : 'navbar-dark bg-dark' }} w-100 mb-0">
         <div class="container-fluid px-3">
-            <div class="d-flex w-100 justify-content-between align-items-center gap-2 flex-wrap">
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <a class="btn btn-outline-light btn-sm" href="{{ path('files_index') }}">{{ 'app.nav.files_user'|trans({}, 'messages', currentLocale) }}</a>
-                    <a class="btn btn-outline-light btn-sm" href="{{ path('admin_files_index') }}">{{ 'app.nav.files_admin'|trans({}, 'messages', currentLocale) }}</a>
-                    <a class="btn btn-outline-light btn-sm" href="{{ path('admin_users_index') }}">{{ 'app.nav.security_users'|trans({}, 'messages', currentLocale) }}</a>
-                    <a class="btn btn-outline-light btn-sm" href="{{ path('admin_users_invite') }}">{{ 'app.nav.security_invite'|trans({}, 'messages', currentLocale) }}</a>
-                    <a class="btn btn-outline-light btn-sm" href="{{ path('admin_settings_index') }}">{{ 'app.nav.dashboard'|trans({}, 'messages', currentLocale) }}</a>
-                    <a class="btn btn-outline-light btn-sm" href="{{ path('admin_bug_reports_index') }}">{{ 'app.nav.bug_reports'|trans({}, 'messages', currentLocale) }}</a>
-                </div>
-                <div class="d-flex gap-2">
-                    <a class="btn btn-outline-light btn-sm" href="{{ path('app_home') }}">{{ 'app.nav.home'|trans({}, 'messages', currentLocale) }}</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#storage-admin-nav-collapse" aria-controls="storage-admin-nav-collapse" aria-expanded="false" aria-label="{{ 'app.nav.dashboard'|trans({}, 'messages', currentLocale) }}">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="storage-admin-nav-collapse">
+                <div class="d-flex w-100 justify-content-between align-items-center gap-2 flex-wrap py-2">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <a class="btn btn-outline-light btn-sm" href="{{ path('files_index') }}">{{ 'app.nav.files_user'|trans({}, 'messages', currentLocale) }}</a>
+                        <a class="btn btn-outline-light btn-sm" href="{{ path('admin_files_index') }}">{{ 'app.nav.files_admin'|trans({}, 'messages', currentLocale) }}</a>
+                        <a class="btn btn-outline-light btn-sm" href="{{ path('admin_users_index') }}">{{ 'app.nav.security_users'|trans({}, 'messages', currentLocale) }}</a>
+                        <a class="btn btn-outline-light btn-sm" href="{{ path('admin_users_invite') }}">{{ 'app.nav.security_invite'|trans({}, 'messages', currentLocale) }}</a>
+                        <a class="btn btn-outline-light btn-sm" href="{{ path('admin_settings_index') }}">{{ 'app.nav.dashboard'|trans({}, 'messages', currentLocale) }}</a>
+                        <a class="btn btn-outline-light btn-sm" href="{{ path('admin_bug_reports_index') }}">{{ 'app.nav.bug_reports'|trans({}, 'messages', currentLocale) }}</a>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-outline-light btn-sm" href="{{ path('app_home') }}">{{ 'app.nav.home'|trans({}, 'messages', currentLocale) }}</a>
+                    </div>
                 </div>
             </div>
         </div>

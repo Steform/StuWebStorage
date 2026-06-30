@@ -42,13 +42,13 @@ final class ColumnVisibilityToggleTest extends TestCase
         $source = $this->readFile('templates/files/index.html.twig');
 
         self::assertNotSame('', $source, 'index.html.twig must be readable');
-        self::assertStringContainsString('id="files-columns-toggle"', $source);
         self::assertStringContainsString('data-files-columns-dropdown', $source);
+        self::assertStringContainsString('files-display-submenu--columns', $source);
 
         self::assertMatchesRegularExpression(
-            '/\{%\s*if\s+layoutView\s*==\s*\'list\'\s*%\}[\s\S]*?id="files-columns-toggle"[\s\S]*?\{%\s*endif\s*%\}/',
+            '/\{%\s*if\s+layoutView\s*==\s*\'list\'\s*%\}[\s\S]*?data-files-columns-dropdown[\s\S]*?\{%\s*endif\s*%\}/',
             $source,
-            'Columns dropdown must be wrapped in {% if layoutView == \'list\' %} ... {% endif %}'
+            'Columns submenu must be wrapped in {% if layoutView == \'list\' %} ... {% endif %}'
         );
     }
 
@@ -60,23 +60,25 @@ final class ColumnVisibilityToggleTest extends TestCase
      */
     public function testIndexTemplateExposesColumnToggleCheckboxes(): void
     {
-        $source = $this->readFile('templates/files/index.html.twig');
+        $index = $this->readFile('templates/files/index.html.twig');
+        $toggles = $this->readFile('templates/files/components/_files_column_toggles.html.twig');
 
-        self::assertStringContainsString('data-files-col-toggle="type"', $source);
-        self::assertStringContainsString('data-files-col-toggle="size"', $source);
-        self::assertStringContainsString('data-files-col-toggle="share_public"', $source);
-        self::assertStringContainsString('data-files-col-toggle="share_friends"', $source);
-        self::assertStringContainsString('data-files-col-toggle="uploaded"', $source);
-        self::assertStringContainsString('data-files-col-toggle="modified"', $source);
-        self::assertStringContainsString('id="files-col-toggle-type"', $source);
-        self::assertStringContainsString('id="files-col-toggle-size"', $source);
-        self::assertStringContainsString('id="files-col-toggle-share-public"', $source);
-        self::assertStringContainsString('id="files-col-toggle-share-friends"', $source);
-        self::assertStringContainsString('id="files-col-toggle-uploaded"', $source);
-        self::assertStringContainsString('id="files-col-toggle-modified"', $source);
-        self::assertStringContainsString('data-bs-auto-close="outside"', $source);
-        self::assertStringContainsString("'files.toolbar.columns_label'|trans", $source);
-        self::assertStringContainsString("'files.toolbar.columns_aria'|trans", $source);
+        self::assertStringContainsString('_files_column_toggles.html.twig', $index);
+        self::assertStringContainsString('data-files-col-toggle="type"', $toggles);
+        self::assertStringContainsString('data-files-col-toggle="size"', $toggles);
+        self::assertStringContainsString('data-files-col-toggle="share_public"', $toggles);
+        self::assertStringContainsString('data-files-col-toggle="share_friends"', $toggles);
+        self::assertStringContainsString('data-files-col-toggle="uploaded"', $toggles);
+        self::assertStringContainsString('data-files-col-toggle="modified"', $toggles);
+        self::assertStringContainsString('id="files-col-toggle-type"', $toggles);
+        self::assertStringContainsString('id="files-col-toggle-size"', $toggles);
+        self::assertStringContainsString('id="files-col-toggle-share-public"', $toggles);
+        self::assertStringContainsString('id="files-col-toggle-share-friends"', $toggles);
+        self::assertStringContainsString('id="files-col-toggle-uploaded"', $toggles);
+        self::assertStringContainsString('id="files-col-toggle-modified"', $toggles);
+        self::assertStringContainsString('files-display-submenu-columns-toggle', $index);
+        self::assertStringContainsString("'files.toolbar.columns_label'|trans", $index);
+        self::assertStringContainsString("'files.toolbar.columns_aria'|trans", $index);
     }
 
     /**
@@ -161,6 +163,7 @@ final class ColumnVisibilityToggleTest extends TestCase
         self::assertStringContainsString('function syncColumnToggleCheckboxes', $source);
         self::assertStringContainsString('[data-files-col-toggle]', $source);
         self::assertStringContainsString('applyColumnVisibility(liveRegion)', $source);
+        self::assertStringContainsString('[data-files-mobile-meta="', $source);
         self::assertStringContainsString('ensureColumnPrefsCanonical();', $source);
     }
 

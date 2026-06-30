@@ -1,0 +1,131 @@
+{# Mobile stacked list for owned folders and files (replaces table under md). #}
+{% set metaSep = 'files.mobile.meta_separator'|trans({}, 'messages', currentLocale) %}
+{% set nameState = currentSortField|default('') == 'name' ? currentSortDirection|default('') : '' %}
+{% set nameCycle = sortCycle[nameState] %}
+<div class="files-mobile-list-wrap d-md-none mb-0" data-files-mobile-list-scope="owned">
+    <div class="files-mobile-list__toolbar d-flex align-items-center justify-content-between gap-2 px-2 py-2 border-bottom">
+        <div class="form-check m-0">
+            <input class="form-check-input" type="checkbox" id="{{ selectAllId|default('files-select-all-mobile-owned') }}" data-files-select-all data-files-select-all-scope="owned"{% if selectAllPaneId|default('') != '' %} data-files-select-all-pane="{{ selectAllPaneId }}"{% endif %} aria-label="{{ 'files.selection.aria_select_all'|trans({}, 'messages', currentLocale) }}">
+        </div>
+        <a class="btn btn-link btn-sm p-0 text-decoration-none text-nowrap" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': nameCycle.dir == '' ? null : 'name', 'dir': nameCycle.dir == '' ? null : nameCycle.dir})) }}">
+            {{ 'files.mobile.sort_label'|trans({}, 'messages', currentLocale) }}: {{ 'files.table.name'|trans({}, 'messages', currentLocale) }}
+            <i class="bi {{ nameCycle.icon }} ms-1" aria-hidden="true"></i>
+        </a>
+    </div>
+    <ul class="files-mobile-list list-unstyled mb-0" role="list" aria-label="{{ 'files.mobile.list_aria_owned'|trans({}, 'messages', currentLocale) }}" data-files-selection-scope="owned" data-files-selection-group="owned"{% if paneId|default('') != '' %} data-files-pane-scope="{{ paneId }}"{% endif %}>
+        {% for folder in folders %}
+            {% set folderState = folderShareStates[folder.id]|default({'publicActive': false, 'friendsActive': false, 'hasPublicExpiration': false}) %}
+            {% set folderOpenUrl = path(filesIndexRoute|default('files_index'), listingQuery|merge({ (folderCursorKey): folder.id })) %}
+            <li class="files-mobile-list__item position-relative" data-files-pane-row="{{ paneId|default('') }}"{% if paneId|default('') != '' %} data-files-owner-group-row="1"{% endif %}>
+                <div class="files-mobile-list__main d-flex align-items-center gap-2">
+                    <div class="form-check m-0 flex-shrink-0">
+                        <input class="form-check-input" type="checkbox" data-files-select-scope="owned" data-files-select-folder-id="{{ folder.id }}"{% if paneId|default('') != '' %} data-files-pane-id="{{ paneId }}"{% endif %} aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': folder.name}, 'messages', currentLocale) }}">
+                    </div>
+                    <div class="files-mobile-list__icon files-row-clickable flex-shrink-0" data-files-col="type" data-files-folder-open-url="{{ folderOpenUrl }}">
+                        <i class="bi bi-folder2-open text-warning"></i>
+                    </div>
+                    <div class="files-mobile-list__name files-row-clickable text-truncate min-w-0" data-files-folder-open-url="{{ folderOpenUrl }}" title="{{ folder.name }}">{{ folder.name }}</div>
+                </div>
+                <div class="files-mobile-list__meta small text-muted text-truncate ps-5 ms-2">
+                    {% set sizeLabel = (folderSizeBytes[folder.id]|default(0))|files_size_format %}
+                    {% include 'files/components/mobile/_mobile_meta_share_owned.html.twig' with {
+                        sizeLabel: sizeLabel,
+                        publicActive: folderState.publicActive,
+                        friendsActive: folderState.friendsActive,
+                        showPublicClock: folderState.hasPublicExpiration|default(false),
+                        expirationActiveAria: expirationActiveAria|default(''),
+                        currentLocale: currentLocale
+                    } %}
+                </div>
+                <div class="files-actions-anchor-cell files-mobile-list__actions">
+                    <div class="dropdown files-actions-dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="files-folder-actions-mobile-{{ paneId|default('main') }}-{{ folder.id }}" data-bs-toggle="dropdown" aria-expanded="false">{{ 'files.action.label'|trans({}, 'messages', currentLocale) }}</button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="files-folder-actions-mobile-{{ paneId|default('main') }}-{{ folder.id }}">
+                            {% include 'files/_files_actions_dropdown_scroll_open.html.twig' %}
+                            <li><a class="dropdown-item" href="{{ folderOpenUrl }}">{{ 'files.folder.action.open'|trans({}, 'messages', currentLocale) }}</a></li>
+                            <li><button type="button" class="dropdown-item" data-files-folder-action="properties" data-files-folder-id="{{ folder.id }}">{{ 'files.folder.action.properties'|trans({}, 'messages', currentLocale) }}</button></li>
+                            <li><button type="button" class="dropdown-item" data-files-folder-action="share-public" data-files-folder-id="{{ folder.id }}">{{ 'files.folder.action.share_public'|trans({}, 'messages', currentLocale) }}</button></li>
+                            <li><button type="button" class="dropdown-item" data-files-folder-action="share-friends" data-files-folder-id="{{ folder.id }}">{{ 'files.folder.action.share_friends'|trans({}, 'messages', currentLocale) }}</button></li>
+                            <li><button type="button" class="dropdown-item" data-files-folder-action="rename-open" data-files-folder-id="{{ folder.id }}" data-files-folder-name="{{ folder.name }}">{{ 'files.folder.action.rename'|trans({}, 'messages', currentLocale) }}</button></li>
+                            {% if folderLandingMap[folder.id] is defined and folderLandingMap[folder.id] != '' %}
+                            <li><button type="button" class="dropdown-item" data-files-row-action="copy-public-link" data-files-public-url="{{ folderLandingMap[folder.id] }}" aria-label="{{ 'files.action.copy_public_link_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}</button></li>
+                            {% if folder.publicPasswordGateActive %}
+                            <li><button type="button" class="dropdown-item" data-files-folder-action="copy-public-link-with-password" data-files-folder-id="{{ folder.id }}" data-files-public-url="{{ folderLandingMap[folder.id] }}" aria-label="{{ 'files.action.copy_public_link_with_password_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link_with_password'|trans({}, 'messages', currentLocale) }}</button></li>
+                            {% endif %}
+                            {% elseif folderState.publicActive and is_granted('ROLE_SHARE_PUBLIC') %}
+                            <li><button type="button" class="dropdown-item" data-files-folder-action="resolve-copy-public-link" data-files-folder-id="{{ folder.id }}" aria-label="{{ 'files.action.copy_public_link_aria'|trans({}, 'messages', currentLocale) }}">{{ 'files.action.copy_public_link'|trans({}, 'messages', currentLocale) }}</button></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{{ path('files_folder_download_zip', {id: folder.id}) }}">{{ 'files.folder.action.download_zip'|trans({}, 'messages', currentLocale) }}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button type="button" class="dropdown-item text-danger" data-files-folder-delete-open data-files-folder-id="{{ folder.id }}" data-files-folder-name="{{ folder.name }}" data-files-folder-delete-action="{{ path('files_folder_delete', {id: folder.id}) }}" data-files-folder-delete-csrf="{{ csrf_token(csrfFolderDelete) }}">{{ 'files.folder.action.delete'|trans({}, 'messages', currentLocale) }}</button></li>
+                            {% include 'files/_files_actions_dropdown_scroll_close.html.twig' %}
+                        </ul>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+        {% for file in files %}
+            {% set publicActive = file.isPublicShareActive %}
+            {% set showPublicClock = file.shouldShowPublicExpirationClockInListing %}
+            {% set hasFriends = (grantMaps[file.id] ?? [])|length > 0 %}
+            {% set ext = file.fileExtension|default('')|lower %}
+            {% set isListImage = ext in ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] %}
+            {% set isListPdf = ext in ['pdf'] %}
+            {% set isListVideo = ext in ['mp4', 'webm', 'ogv', 'mov'] %}
+            {% set isListAudio = ext in ['mp3', 'mpeg', 'wav', 'ogg', 'm4a', 'aac'] %}
+            {% set isListText = ext in ['txt', 'log', 'md', 'markdown', 'json', 'csv', 'tsv', 'xml', 'yml', 'yaml', 'ini', 'conf'] %}
+            {% set isListStream = isListPdf or isListVideo or isListAudio or isListText %}
+            {% set isListPreviewable = isListImage or isListStream %}
+            <li class="files-mobile-list__item position-relative" data-files-row-target="{{ file.id }}" data-files-pane-row="{{ paneId|default('') }}"{% if paneId|default('') != '' %} data-files-owner-group-row="1"{% endif %}>
+                <div class="files-mobile-list__main d-flex align-items-center gap-2">
+                    <div class="form-check m-0 flex-shrink-0">
+                        <input class="form-check-input" type="checkbox" id="files-select-mobile-{{ paneId|default('main') }}-{{ file.id }}" data-files-select-id="{{ file.id }}" data-files-select-scope="owned"{% if paneId|default('') != '' %} data-files-pane-id="{{ paneId }}"{% endif %} aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': file.originalFileName}, 'messages', currentLocale) }}">
+                    </div>
+                    <div
+                        class="files-mobile-list__icon files-row-clickable flex-shrink-0{% if isListPreviewable %} files-col-icon--previewable{% endif %}"
+                        data-files-col="type"
+                        data-files-row-target="{{ file.id }}"
+                        {% include 'files/_listing_preview_attrs.html.twig' with { file: file, ext: ext, isListPreviewable: isListPreviewable, isListImage: isListImage, isListPdf: isListPdf, isListVideo: isListVideo, isListAudio: isListAudio, isListText: isListText } %}
+                    >
+                        {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'list' } %}
+                    </div>
+                    <div
+                        class="files-mobile-list__name files-row-clickable text-truncate min-w-0{% if isListPreviewable %} files-col-name--previewable{% endif %}"
+                        data-files-row-target="{{ file.id }}"
+                        title="{{ file.originalFileName }}"
+                        {% if isListPreviewable %}
+                        {% include 'files/_listing_preview_attrs.html.twig' with { file: file, ext: ext, isListPreviewable: isListPreviewable, isListImage: isListImage, isListPdf: isListPdf, isListVideo: isListVideo, isListAudio: isListAudio, isListText: isListText } %}
+                        tabindex="0"
+                        role="button"
+                        aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}"
+                        {% endif %}
+                    >
+                        {{ file.originalFileName }}
+                    </div>
+                </div>
+                <div class="files-mobile-list__meta small text-muted text-truncate ps-5 ms-2">
+                    {% if adminContext|default(false) and ownerLabelsByFileId[file.id] is defined %}
+                        <span class="files-mobile-list__meta-part">{{ ownerLabelsByFileId[file.id] }}</span>
+                        <span class="files-mobile-list__meta-sep" aria-hidden="true">{{ metaSep }}</span>
+                    {% endif %}
+                    {% include 'files/components/mobile/_mobile_meta_share_owned.html.twig' with {
+                        sizeLabel: file.byteSize|files_size_format,
+                        publicActive: publicActive,
+                        friendsActive: hasFriends,
+                        showPublicClock: showPublicClock,
+                        expirationActiveAria: expirationActiveAria|default(''),
+                        currentLocale: currentLocale
+                    } %}
+                </div>
+                <div class="files-actions-anchor-cell files-mobile-list__actions">{% include 'files/_file_actions_dropdown.html.twig' with { file: file } %}</div>
+            </li>
+        {% else %}
+            {% if folders is empty %}
+                <li class="files-mobile-list__item files-mobile-list__item--empty text-muted px-3 py-3">
+                    {% set emptyMessageKey = hasActiveCriteria|default(false) ? 'files.list.filtered_empty' : (isCurrentFolderCompletelyEmpty|default(true) ? 'files.list.folder_empty' : (listingScope|default('both') == 'owned' ? 'files.listing_scope.empty_owned' : 'files.list.empty')) %}
+                    {{ emptyMessageKey|trans({}, 'messages', currentLocale) }}
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>

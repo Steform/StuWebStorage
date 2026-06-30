@@ -1,0 +1,146 @@
+{# Mobile stacked list for shared-for-me folders and files (replaces table under md). #}
+{% set metaSep = 'files.mobile.meta_separator'|trans({}, 'messages', currentLocale) %}
+{% set nameState = currentSortField|default('') == 'name' ? currentSortDirection|default('') : '' %}
+{% set nameCycle = sortCycle[nameState] %}
+<div class="files-mobile-list-wrap d-md-none mb-0" data-files-mobile-list-scope="shared">
+    <div class="files-mobile-list__toolbar d-flex align-items-center justify-content-between gap-2 px-2 py-2 border-bottom">
+        <div class="form-check m-0">
+            <input class="form-check-input" type="checkbox" id="{{ selectAllId|default('files-select-all-mobile-shared') }}" data-files-select-all data-files-select-all-scope="shared"{% if selectAllPaneId|default('') != '' %} data-files-select-all-pane="{{ selectAllPaneId }}"{% endif %} aria-label="{{ 'files.selection.aria_select_all'|trans({}, 'messages', currentLocale) }}">
+        </div>
+        <a class="btn btn-link btn-sm p-0 text-decoration-none text-nowrap" href="{{ path(filesIndexRoute|default('files_index'), listingQuery|merge({'sort': nameCycle.dir == '' ? null : 'name', 'dir': nameCycle.dir == '' ? null : nameCycle.dir})) }}">
+            {{ 'files.mobile.sort_label'|trans({}, 'messages', currentLocale) }}: {{ 'files.table.name'|trans({}, 'messages', currentLocale) }}
+            <i class="bi {{ nameCycle.icon }} ms-1" aria-hidden="true"></i>
+        </a>
+    </div>
+    <ul class="files-mobile-list list-unstyled mb-0" role="list" aria-label="{{ 'files.mobile.list_aria_shared'|trans({}, 'messages', currentLocale) }}" data-files-selection-scope="shared" data-files-selection-group="shared"{% if paneId|default('') != '' %} data-files-pane-scope="{{ paneId }}"{% endif %}>
+        {% for sharedFolder in sharedForMeFolders %}
+            {% set folderOpenUrl = path(filesIndexRoute|default('files_index'), listingQuery|merge({ (folderCursorKey): sharedFolder.id })) %}
+            {% set ownerLabel = ownerLabelsByFolderId[sharedFolder.id]|default(sharedOwnerLabelsByFolderId[sharedFolder.id]|default('-')) %}
+            <li class="files-mobile-list__item position-relative" data-files-shared-folder-id="{{ sharedFolder.id }}" data-files-pane-row="{{ paneId|default('') }}">
+                <div class="files-mobile-list__main d-flex align-items-center gap-2">
+                    <div class="form-check m-0 flex-shrink-0">
+                        <input class="form-check-input" type="checkbox" data-files-select-scope="shared" data-files-select-folder-id="{{ sharedFolder.id }}"{% if paneId|default('') != '' %} data-files-pane-id="{{ paneId }}"{% endif %} aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': sharedFolder.name}, 'messages', currentLocale) }}">
+                    </div>
+                    <div class="files-mobile-list__icon files-row-clickable flex-shrink-0" data-files-col="type" data-files-folder-open-url="{{ folderOpenUrl }}">
+                        <i class="bi bi-folder2-open text-warning"></i>
+                    </div>
+                    <div class="files-mobile-list__name files-row-clickable text-truncate min-w-0" data-files-folder-open-url="{{ folderOpenUrl }}" title="{{ sharedFolder.name }}">{{ sharedFolder.name }}</div>
+                </div>
+                <div class="files-mobile-list__meta small text-muted text-truncate ps-5 ms-2">
+                    <span class="files-mobile-list__meta-part" data-files-mobile-meta="owner-pseudo">{{ ownerLabel }}</span>
+                    <span class="files-mobile-list__meta-sep" aria-hidden="true">{{ metaSep }}</span>
+                    <span class="files-mobile-list__meta-part" data-files-mobile-meta="size">{{ (sharedFolderSizeBytes[sharedFolder.id]|default(0))|files_size_format }}</span>
+                </div>
+                <div class="files-actions-anchor-cell files-mobile-list__actions">
+                    <div class="dropdown files-actions-dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="files-shared-folder-actions-mobile-{{ paneId|default('main') }}-{{ sharedFolder.id }}" data-bs-toggle="dropdown" aria-expanded="false">{{ 'files.action.label'|trans({}, 'messages', currentLocale) }}</button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="files-shared-folder-actions-mobile-{{ paneId|default('main') }}-{{ sharedFolder.id }}">
+                            {% include 'files/_files_actions_dropdown_scroll_open.html.twig' %}
+                            <li><a class="dropdown-item" href="{{ folderOpenUrl }}">{{ 'files.folder.action.open'|trans({}, 'messages', currentLocale) }}</a></li>
+                            <li><button type="button" class="dropdown-item" data-files-folder-action="properties" data-files-folder-action-scope="shared" data-files-folder-id="{{ sharedFolder.id }}">{{ 'files.folder.action.properties'|trans({}, 'messages', currentLocale) }}</button></li>
+                            <li><a class="dropdown-item" href="{{ path('files_shared_folder_download_zip', {id: sharedFolder.id}) }}">{{ 'files.folder.action.download_zip'|trans({}, 'messages', currentLocale) }}</a></li>
+                            {% include 'files/_files_actions_dropdown_scroll_close.html.twig' %}
+                        </ul>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+        {% for file in sharedForMeFiles %}
+            {% set ext = file.fileExtension|default('')|lower %}
+            {% set isListImage = ext in ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] %}
+            {% set isListPdf = ext in ['pdf'] %}
+            {% set isListVideo = ext in ['mp4', 'webm', 'ogv', 'mov'] %}
+            {% set isListAudio = ext in ['mp3', 'mpeg', 'wav', 'ogg', 'm4a', 'aac'] %}
+            {% set isListText = ext in ['txt', 'log', 'md', 'markdown', 'json', 'csv', 'tsv', 'xml', 'yml', 'yaml', 'ini', 'conf'] %}
+            {% set isListStream = isListPdf or isListVideo or isListAudio or isListText %}
+            {% set isListPreviewable = isListImage or isListStream %}
+            {% set ownerLabel = ownerLabelsByFileId[file.id]|default(sharedOwnerLabelsByFileId[file.id]|default('-')) %}
+            <li class="files-mobile-list__item position-relative" data-files-row-target="{{ file.id }}" data-files-pane-row="{{ paneId|default('') }}">
+                <div class="files-mobile-list__main d-flex align-items-center gap-2">
+                    <div class="form-check m-0 flex-shrink-0">
+                        <input class="form-check-input" type="checkbox" id="files-select-shared-mobile-{{ paneId|default('main') }}-{{ file.id }}" data-files-select-id="{{ file.id }}" data-files-select-scope="shared"{% if paneId|default('') != '' %} data-files-pane-id="{{ paneId }}"{% endif %} aria-label="{{ 'files.selection.aria_select_row'|trans({'%name%': file.originalFileName}, 'messages', currentLocale) }}">
+                    </div>
+                    <div
+                        class="files-mobile-list__icon files-row-clickable flex-shrink-0{% if isListPreviewable %} files-col-icon--previewable{% endif %}"
+                        data-files-col="type"
+                        data-files-row-target="{{ file.id }}"
+                        {% if isListPreviewable %}
+                        data-files-media-preview-trigger
+                        {% if isListImage %}
+                        data-src="{{ path('files_download', { id: file.id }) }}"
+                        data-media-preview-type="image"
+                        data-title="{{ file.originalFileName }}"
+                        data-alt="{{ file.originalFileName }}"
+                        {% elseif isListPdf %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="pdf"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListVideo %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="video"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListAudio %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="audio"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListText %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="text"
+                        data-title="{{ file.originalFileName }}"
+                        {% endif %}
+                        {% endif %}
+                    >
+                        {% include 'components/_file_type_icon.html.twig' with { extension: ext, filename: file.originalFileName, size: 'list' } %}
+                    </div>
+                    <div
+                        class="files-mobile-list__name files-row-clickable text-truncate min-w-0{% if isListPreviewable %} files-col-name--previewable{% endif %}"
+                        data-files-row-target="{{ file.id }}"
+                        title="{{ file.originalFileName }}"
+                        {% if isListPreviewable %}
+                        data-files-media-preview-trigger
+                        {% if isListImage %}
+                        data-src="{{ path('files_download', { id: file.id }) }}"
+                        data-media-preview-type="image"
+                        data-title="{{ file.originalFileName }}"
+                        data-alt="{{ file.originalFileName }}"
+                        {% elseif isListPdf %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="pdf"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListVideo %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="video"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListAudio %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="audio"
+                        data-title="{{ file.originalFileName }}"
+                        {% elseif isListText %}
+                        data-src="{{ path('files_preview', { id: file.id }) }}"
+                        data-media-preview-type="text"
+                        data-title="{{ file.originalFileName }}"
+                        {% endif %}
+                        tabindex="0"
+                        role="button"
+                        aria-label="{{ 'files.action.preview'|trans({}, 'messages', currentLocale) }}: {{ file.originalFileName }}"
+                        {% endif %}
+                    >
+                        {{ file.originalFileName }}
+                    </div>
+                </div>
+                <div class="files-mobile-list__meta small text-muted text-truncate ps-5 ms-2">
+                    <span class="files-mobile-list__meta-part" data-files-mobile-meta="owner-pseudo">{{ ownerLabel }}</span>
+                    <span class="files-mobile-list__meta-sep" aria-hidden="true">{{ metaSep }}</span>
+                    <span class="files-mobile-list__meta-part" data-files-mobile-meta="size">{{ file.byteSize|files_size_format }}</span>
+                </div>
+                <div class="files-actions-anchor-cell files-mobile-list__actions">{% include 'files/_file_actions_dropdown_shared_for_me.html.twig' with { file: file } %}</div>
+            </li>
+        {% else %}
+            {% if sharedForMeFolders is empty %}
+                <li class="files-mobile-list__item files-mobile-list__item--empty text-muted px-3 py-3">
+                    {{ (listingScope|default('both') == 'shared' ? 'files.listing_scope.empty_shared' : 'files.section.shared_for_me_empty')|trans({}, 'messages', currentLocale) }}
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>

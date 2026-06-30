@@ -1,0 +1,29 @@
+{# Inline preview data attributes for list/mobile rows (owned files with optional text attrs). #}
+{% if isListPreviewable|default(false) %}
+data-files-media-preview-trigger
+{% if isListImage|default(false) %}
+data-src="{{ path('files_download', { id: file.id }) }}"
+data-media-preview-type="image"
+data-title="{{ file.originalFileName }}"
+data-alt="{{ file.originalFileName }}"
+{% elseif isListPdf|default(false) %}
+data-src="{{ path('files_preview', { id: file.id }) }}"
+data-media-preview-type="pdf"
+data-title="{{ file.originalFileName }}"
+{% elseif isListVideo|default(false) %}
+data-src="{{ path('files_preview', { id: file.id }) }}"
+data-media-preview-type="video"
+data-title="{{ file.originalFileName }}"
+{% elseif isListAudio|default(false) %}
+data-src="{{ path('files_preview', { id: file.id }) }}"
+data-media-preview-type="audio"
+data-title="{{ file.originalFileName }}"
+{% elseif isListText|default(false) %}
+data-src="{{ path('files_preview', { id: file.id }) }}"
+data-media-preview-type="text"
+data-title="{{ file.originalFileName }}"
+{% if includeOwnedTextAttrs|default(true) %}
+{% include 'files/_media_preview_owned_text_attrs.html.twig' with { file: file, fileExt: ext } %}
+{% endif %}
+{% endif %}
+{% endif %}

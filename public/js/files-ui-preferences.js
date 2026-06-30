@@ -9,6 +9,8 @@
     var LEGACY_SECTION_SHARED_FOR_ME_KEY = 'files.section.shared_for_me.expanded';
     var SAVE_DEBOUNCE_MS = 400;
     var DEVICE_ID_REGEX = /^[A-Za-z0-9._:-]{8,128}$/;
+    var MOBILE_VIEWPORT_MQ = '(max-width: 767.98px)';
+    var RESIZE_DEBOUNCE_MS = 250;
 
     var liveRegion = document.getElementById('files-live-region');
     if (!liveRegion) {
@@ -101,6 +103,7 @@
     function getDefaultPreferences() {
         return {
             filesViewMode: 'list',
+            filesViewModeMobile: 'grid',
             filesScope: 'both',
             filesSortField: 'name',
             filesSortDirection: 'asc',
@@ -119,6 +122,43 @@
                 }
             }
         };
+    }
+
+    /**
+     * @brief Return true when viewport matches mobile breakpoint.
+     * @param void No input parameter.
+     * @return {boolean}
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    function isMobileViewport() {
+        return !!(window.matchMedia && window.matchMedia(MOBILE_VIEWPORT_MQ).matches);
+    }
+
+    /**
+     * @brief Return true when the URL explicitly sets a view query parameter.
+     * @param void No input parameter.
+     * @return {boolean}
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    function hasExplicitViewInUrl() {
+        return new URLSearchParams(window.location.search).has('view');
+    }
+
+    /**
+     * @brief Resolve effective layout view from preferences for current viewport.
+     * @param {Record<string, unknown>} pref Preference object.
+     * @return {string}
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    function resolveEffectiveView(pref) {
+        if (isMobileViewport()) {
+            return pref.filesViewModeMobile === 'grid' ? 'grid' : 'list';
+        }
+
+        return pref.filesViewMode === 'grid' ? 'grid' : 'list';
     }
 
     /**
@@ -275,6 +315,7 @@
     function snapshotCurrentUiPreferences() {
         var defaults = getDefaultPreferences();
         var listing = readListingState();
+        var localCanonical = readLocalCanonicalPreferences() || defaults;
         var rawColumns = parseJsonObject(String(window.localStorage.getItem(LEGACY_COLUMN_KEY) || '{}'), {});
         var columns = JSON.parse(JSON.stringify(defaults.cloudVisibilityState.columns));
         Object.keys(columns).forEach(function (key) {
@@ -288,10 +329,23 @@
         sections.shared_for_me = parseBool(String(window.localStorage.getItem(LEGACY_SECTION_SHARED_FOR_ME_KEY) || ''), sections.shared_for_me);
 
         var scope = typeof listing.listing_scope === 'string' && listing.listing_scope !== '' ? listing.listing_scope : 'both';
-        var view = typeof listing.view === 'string' && listing.view !== '' ? listing.view : 'list';
+        var viewFromListing = typeof listing.view === 'string' && listing.view !== '' ? listing.view : '';
+        var defaultView = isMobileViewport() ? 'grid' : 'list';
+        var effectiveView = viewFromListing !== '' ? viewFromListing : defaultView;
+        var filesViewMode = localCanonical.filesViewMode === 'grid' ? 'grid' : 'list';
+        var filesViewModeMobile = localCanonical.filesViewModeMobile === 'list' ? 'list' : 'grid';
+
+        if (viewFromListing !== '') {
+            if (isMobileViewport()) {
+                filesViewModeMobile = effectiveView === 'grid' ? 'grid' : 'list';
+            } else {
+                filesViewMode = effectiveView === 'grid' ? 'grid' : 'list';
+            }
+        }
 
         return {
-            filesViewMode: view === 'grid' ? 'grid' : 'list',
+            filesViewMode: filesViewMode,
+            filesViewModeMobile: filesViewModeMobile,
             filesScope: (scope === 'owned' || scope === 'shared') ? scope : 'both',
             filesSortField: normalizeSortField(listing.sort),
             filesSortDirection: normalizeSortDirection(listing.dir),
@@ -335,10 +389,13 @@
      * @author Stephane H.
      */
     function applyViewAndScopeWithReload(pref) {
+        if (hasExplicitViewInUrl()) {
+            return;
+        }
         var state = readListingState();
-        var desiredView = pref.filesViewMode === 'grid' ? 'grid' : 'list';
+        var desiredView = resolveEffectiveView(pref);
         var desiredScope = pref.filesScope === 'owned' || pref.filesScope === 'shared' ? pref.filesScope : 'both';
-        var currentView = typeof state.view === 'string' && state.view !== '' ? state.view : 'list';
+        var currentView = typeof state.view === 'string' && state.view !== '' ? state.view : (isMobileViewport() ? 'grid' : 'list');
         var currentScope = typeof state.listing_scope === 'string' && state.listing_scope !== '' ? state.listing_scope : 'both';
 
         if (desiredView === 'list') {
@@ -551,6 +608,35 @@
     }
 
     /**
+     * @brief Reload listing when crossing mobile/desktop breakpoint if view pref differs.
+     * @param void No input parameter.
+     * @return {void}
+     * @date 2026-06-30
+     * @author Stephane H.
+     */
+    function bindViewportResizeHandler() {
+        var lastMobile = isMobileViewport();
+        var resizeTimer = null;
+        window.addEventListener('resize', function () {
+            if (resizeTimer) {
+                window.clearTimeout(resizeTimer);
+            }
+            resizeTimer = window.setTimeout(function () {
+                var nowMobile = isMobileViewport();
+                if (nowMobile === lastMobile) {
+                    return;
+                }
+                lastMobile = nowMobile;
+                if (hasExplicitViewInUrl()) {
+                    return;
+                }
+                var pref = readLocalCanonicalPreferences() || getDefaultPreferences();
+                applyViewAndScopeWithReload(pref);
+            }, RESIZE_DEBOUNCE_MS);
+        });
+    }
+
+    /**
      * @brief Bootstrap preference loading sequence and apply restored state.
      * @param void No input parameter.
      * @return {void}
@@ -567,12 +653,16 @@
             hasLoadedBackend = true;
             applyViewAndScopeWithReload(localOrDefault);
             bindSaveListeners();
+            bindViewportResizeHandler();
             return;
         }
 
         var deviceId = getOrCreateDeviceId();
         fetchBackendPreferences(deviceId).then(function (backendPref) {
             var resolved = backendPref && typeof backendPref === 'object' ? backendPref : localOrDefault;
+            if (!resolved.filesViewModeMobile) {
+                resolved.filesViewModeMobile = 'grid';
+            }
             writeLocalCanonicalPreferences(resolved);
             applyCloudVisibilityPreferences(resolved);
             hasLoadedBackend = true;
@@ -583,6 +673,7 @@
             }
         }).finally(function () {
             bindSaveListeners();
+            bindViewportResizeHandler();
         });
     }
 
