@@ -20,6 +20,10 @@ parameters:
   app.public_folder_zip_max_file_count: 2000
   app.public_folder_zip_max_build_seconds: 120
   app.upload_chunk_bytes: 8388608
+  app.download_direct_max_bytes: '%env(int:APP_DOWNLOAD_DIRECT_MAX_BYTES)%'
+  app.download_prepare_tick_plain_bytes: '%env(int:APP_DOWNLOAD_PREPARE_TICK_PLAIN_BYTES)%'
+  app.download_prepare_session_ttl_seconds: '%env(int:APP_DOWNLOAD_PREPARE_SESSION_TTL_SECONDS)%'
+  app.download_prepare_max_concurrent_jobs: '%env(int:APP_DOWNLOAD_PREPARE_MAX_CONCURRENT_JOBS)%'
   app.version: ''
   app.site_title: 'StuWebStorage'
   app.antibot_threshold: 50
@@ -146,17 +150,31 @@ services:
   App\Controller\FilesController:
     arguments:
       $projectDir: '%kernel.project_dir%'
+      $downloadDirectMaxBytes: '%app.download_direct_max_bytes%'
 
   App\Service\File\ChunkedUploadService:
     arguments:
       $chunkBytesDefault: '%app.upload_chunk_bytes%'
       $projectDir: '%kernel.project_dir%'
 
+  App\Service\File\DownloadPrepareService:
+    arguments:
+      $projectDir: '%kernel.project_dir%'
+      $tickPlainBytes: '%app.download_prepare_tick_plain_bytes%'
+      $sessionTtlSeconds: '%app.download_prepare_session_ttl_seconds%'
+      $maxConcurrentJobs: '%app.download_prepare_max_concurrent_jobs%'
+      $directMaxBytes: '%app.download_direct_max_bytes%'
+
+  App\Service\File\DownloadDeliveryService:
+    arguments:
+      $trustXSendfileTypeHeader: '%env(bool:default:default:SYMFONY_TRUST_X_SENDFILE_TYPE_HEADER)%'
+
   App\Controller\PublicDownloadController:
     arguments:
       $publicDownloadTicketCache: '@cache.app'
       $publicDownloadInlineMaxBytes: '%app.public_download_inline_max_bytes%'
       $publicDownloadTicketTtlSeconds: '%app.public_download_ticket_ttl_seconds%'
+      $downloadDirectMaxBytes: '%app.download_direct_max_bytes%'
 
   App\Service\Share\PublicSharePasswordVault:
     arguments:

@@ -46,7 +46,7 @@
         </li>
         {% endif %}
         <li>
-            <a class="dropdown-item" href="{{ path('files_download', { id: file.id }) }}">{{ 'files.action.download'|trans({}, 'messages', currentLocale) }}</a>
+            <a class="dropdown-item" href="{{ path('files_download', { id: file.id }) }}" data-files-download-link data-files-byte-size="{{ file.byteSize }}" data-files-download-id="{{ file.id }}">{{ 'files.action.download'|trans({}, 'messages', currentLocale) }}</a>
         </li>
         {% if fileExtPreview == 'zip' %}
         <li>

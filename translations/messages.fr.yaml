@@ -382,6 +382,16 @@ files:
       limits_admin_tier: 'Limites elevees (compte administrateur).'
       phase_pending: 'Dechiffrement de l''archive…'
       phase_scanning: 'Analyse de l''archive…'
+  download_prepare:
+    page_title: 'Preparation du telechargement'
+    modal:
+      title: 'Preparation du telechargement'
+      close_aria: 'Fermer la fenetre de preparation'
+      cancel: Annuler
+      hint: 'Le fichier est dechiffre localement avant le telechargement. Vous pourrez reprendre en cas d''interruption une fois la preparation terminee.'
+      progress: 'Dechiffrement en cours'
+      error_generic: 'La preparation du telechargement a echoue. Reessayez.'
+      cancel_confirm: 'Annuler la preparation en cours ?'
   table:
     name: Nom
     extension: Type
@@ -735,6 +745,11 @@ files:
     godview_subject_invalid: 'Utilisateur cible invalide pour cette action.'
     expired: 'Ce fichier a expire.'
     download_failed: 'Impossible de dechiffrer le fichier stocke.'
+    download_legacy_unsupported: 'Ce fichier utilise un ancien format de stockage incompatible avec les telechargements volumineux.'
+    download_disk_full: 'Espace disque insuffisant pour preparer ce telechargement.'
+    download_prepare_busy: 'Trop de preparations de telechargement en cours. Reessayez plus tard.'
+    download_not_ready: 'Le fichier n''est pas encore pret a etre telecharge.'
+    download_prepare_not_found: 'Preparation de telechargement introuvable ou expiree.'
 admin:
   invite:
     meta:

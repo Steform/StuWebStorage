@@ -382,6 +382,16 @@ files:
       limits_admin_tier: 'Elevated limits (administrator account).'
       phase_pending: 'Decrypting archive…'
       phase_scanning: 'Scanning archive…'
+  download_prepare:
+    page_title: 'Download preparation'
+    modal:
+      title: 'Download preparation'
+      close_aria: 'Close preparation dialog'
+      cancel: Cancel
+      hint: 'The file is decrypted locally before download. You can resume after an interruption once preparation is complete.'
+      progress: 'Decryption in progress'
+      error_generic: 'Download preparation failed. Try again.'
+      cancel_confirm: 'Cancel preparation in progress?'
   table:
     name: Name
     extension: Type
@@ -735,6 +745,11 @@ files:
     godview_subject_invalid: 'Invalid target user for this action.'
     expired: 'This file expired.'
     download_failed: 'Could not decrypt the stored file.'
+    download_legacy_unsupported: 'This file uses a legacy storage format incompatible with large downloads.'
+    download_disk_full: 'Not enough disk space to prepare this download.'
+    download_prepare_busy: 'Too many download preparations in progress. Try again later.'
+    download_not_ready: 'The file is not ready to download yet.'
+    download_prepare_not_found: 'Download preparation not found or expired.'
 admin:
   invite:
     meta:

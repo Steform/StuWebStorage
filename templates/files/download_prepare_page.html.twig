@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+{% block title %}{{ 'files.download_prepare.page_title'|trans({}, 'messages', currentLocale) }}{% endblock %}
+{% block main_container_class %}container py-4{% endblock %}
+{% block body %}
+<div
+    id="files-download-prepare-page"
+    class="row justify-content-center"
+    data-file-id="{{ sharedFile.id }}"
+    data-file-name="{{ sharedFile.originalFileName|e('html_attr') }}"
+    data-file-bytes="{{ sharedFile.byteSize }}"
+    data-prepare-url="{{ prepareUrl|e('html_attr') }}"
+    data-tick-url-template="{{ tickUrlTemplate|e('html_attr') }}"
+    data-cancel-url-template="{{ cancelUrlTemplate|e('html_attr') }}"
+    data-deliver-url-template="{{ deliverUrlTemplate|e('html_attr') }}"
+    data-csrf-token="{{ csrf_token(csrfPrepare)|e('html_attr') }}"
+    data-msg-error="{{ 'files.download_prepare.modal.error_generic'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-progress="{{ 'files.download_prepare.modal.progress'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+>
+    <div class="col-12 col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-3">{{ 'files.download_prepare.page_title'|trans({}, 'messages', currentLocale) }}</h1>
+                <p class="mb-2"><strong>{{ sharedFile.originalFileName }}</strong></p>
+                <p class="text-body-secondary small mb-4">{{ 'files.download_prepare.modal.hint'|trans({}, 'messages', currentLocale) }}</p>
+                <div id="files-download-prepare-page-error" class="alert alert-danger d-none" role="alert"></div>
+                <div class="progress mb-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div id="files-download-prepare-page-progress-bar" class="progress-bar" style="width: 0%"></div>
+                </div>
+                <p class="small text-muted mb-0" id="files-download-prepare-page-count" aria-live="polite"></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+    <script src="{{ asset('js/files-download-prepare-shared.js') }}?v=20260707" defer></script>
+    <script src="{{ asset('js/files-download-prepare-page.js') }}?v=20260707" defer></script>
+{% endblock %}

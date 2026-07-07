@@ -17,6 +17,9 @@ class FileEncryptionService
     /** @brief Plaintext chunk size for streaming encrypt (4 MiB). */
     private const PLAIN_CHUNK_BYTES = 4194304;
 
+    /** @brief Byte offset in v2 storage where the first ciphertext segment begins. */
+    public const V2_CIPHER_BODY_START_OFFSET = 16;
+
     /** @brief Maximum plaintext buffered by decryptFromStorage for legacy callers (v2 path). */
     private const DECRYPT_STRING_MAX_BYTES = 52428800;
 
@@ -215,6 +218,93 @@ class FileEncryptionService
      * @date 2026-06-26
      * @author Stephane H.
      */
+    /**
+     * @brief Continue decrypting v2 storage from a stored cipher file offset (incremental jobs).
+     * @param string $storagePath Encrypted file path.
+     * @param int $cipherOffset Absolute read offset in the cipher file (use V2_CIPHER_BODY_START_OFFSET for first tick).
+     * @param int $maxPlainBytes Maximum plaintext bytes to emit in this call.
+     * @param resource $target Writable binary stream (append mode recommended).
+     * @return array{plainWritten: int, nextCipherOffset: int}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
+    public function streamDecryptStorageContinueToHandle(string $storagePath, int $cipherOffset, int $maxPlainBytes, $target): array
+    {
+        if ($storagePath === '' || !is_readable($storagePath)) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+        if ($maxPlainBytes < 1) {
+            throw new RuntimeException('file.encryption.range_invalid');
+        }
+        if (!$this->isV2StorageFormat($storagePath)) {
+            throw new RuntimeException('file.encryption.range_v2_only');
+        }
+
+        $fh = fopen($storagePath, 'rb');
+        if ($fh === false) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+
+        try {
+            $magic = fread($fh, 4);
+            if ($magic !== self::STORAGE_MAGIC_V2) {
+                throw new RuntimeException('file.encryption.invalid_payload');
+            }
+
+            $plainTotal = $this->readV2PlainTotalFromHandleAfterMagic($fh);
+            $startOffset = $cipherOffset < 1 ? self::V2_CIPHER_BODY_START_OFFSET : $cipherOffset;
+            if ($startOffset < self::V2_CIPHER_BODY_START_OFFSET) {
+                throw new RuntimeException('file.encryption.range_invalid');
+            }
+            if (fseek($fh, $startOffset) !== 0) {
+                throw new RuntimeException('file.encryption.storage_unreadable');
+            }
+
+            $plainWritten = $this->decryptV2SegmentsUpToPlainBytes($fh, $target, $plainTotal, $maxPlainBytes);
+            $nextCipherOffset = (int) ftell($fh);
+
+            return [
+                'plainWritten' => $plainWritten,
+                'nextCipherOffset' => $nextCipherOffset,
+            ];
+        } finally {
+            fclose($fh);
+        }
+    }
+
+    /**
+     * @brief Read expected v2 plaintext byte length from storage header.
+     * @param string $storagePath Encrypted file path.
+     * @return int
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
+    public function readV2PlainTotalFromStorage(string $storagePath): int
+    {
+        if ($storagePath === '' || !is_readable($storagePath)) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+        if (!$this->isV2StorageFormat($storagePath)) {
+            throw new RuntimeException('file.encryption.range_v2_only');
+        }
+
+        $fh = fopen($storagePath, 'rb');
+        if ($fh === false) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+
+        try {
+            $magic = fread($fh, 4);
+            if ($magic !== self::STORAGE_MAGIC_V2) {
+                throw new RuntimeException('file.encryption.invalid_payload');
+            }
+
+            return $this->readV2PlainTotalFromHandleAfterMagic($fh);
+        } finally {
+            fclose($fh);
+        }
+    }
+
     public function streamDecryptStorageRangeToHandle(string $storagePath, int $plainStart, int $plainLength, $target): int
     {
         if ($storagePath === '' || !is_readable($storagePath)) {
@@ -447,6 +537,22 @@ class FileEncryptionService
      */
     private function decryptV2Segments($fh, $target, int $expectedPlainTotal): int
     {
+        return $this->decryptV2SegmentsUpToPlainBytes($fh, $target, $expectedPlainTotal, PHP_INT_MAX, true);
+    }
+
+    /**
+     * @brief Decrypt chained v2 segments until a plaintext byte budget is reached or EOF.
+     * @param resource $fh Cipher file handle positioned at the next segment.
+     * @param resource $target Plain output handle.
+     * @param int $expectedPlainTotal Expected total plaintext length from header.
+     * @param int $maxPlainBytes Maximum plaintext bytes to write in this call.
+     * @param bool $requireExactTotal When true at EOF, plaintext written must equal expected total.
+     * @return int Plaintext bytes written.
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
+    private function decryptV2SegmentsUpToPlainBytes($fh, $target, int $expectedPlainTotal, int $maxPlainBytes, bool $requireExactTotal = false): int
+    {
         if ($this->encryptionKey === '') {
             throw new RuntimeException('file.encryption.key_missing');
         }
@@ -457,7 +563,7 @@ class FileEncryptionService
         }
 
         $written = 0;
-        while (!feof($fh)) {
+        while (!feof($fh) && $written < $maxPlainBytes) {
             $segment = $this->readV2CipherSegment($fh);
             if ($segment === null) {
                 break;
@@ -466,11 +572,19 @@ class FileEncryptionService
             if (!is_string($plainChunk)) {
                 throw new RuntimeException('file.encryption.failed');
             }
+
+            $nextWritten = $written + strlen($plainChunk);
+            if ($nextWritten > $maxPlainBytes && $written > 0) {
+                $segmentSize = 2 + strlen($segment['iv']) + 4 + strlen($segment['cipherText']);
+                fseek($fh, -$segmentSize, SEEK_CUR);
+                break;
+            }
+
             fwrite($target, $plainChunk);
-            $written += strlen($plainChunk);
+            $written = $nextWritten;
         }
 
-        if ($expectedPlainTotal > 0 && $written !== $expectedPlainTotal) {
+        if ($requireExactTotal && $expectedPlainTotal > 0 && $written !== $expectedPlainTotal) {
             throw new RuntimeException('file.encryption.invalid_payload');
         }
 

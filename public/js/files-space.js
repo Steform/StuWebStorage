@@ -7590,4 +7590,67 @@
         });
     }
 
+    var downloadPrepareModal = document.getElementById('filesDownloadPrepareModal');
+    var downloadPrepareRunner = null;
+    var downloadPrepareActiveJobId = '';
+
+    function openDownloadPrepareModal(fileId, fileName) {
+        if (!downloadPrepareModal || typeof window.FilesDownloadPrepare === 'undefined') {
+            return;
+        }
+        var prepareTemplate = downloadPrepareModal.getAttribute('data-files-download-prepare-url-template') || '';
+        var tickTemplate = downloadPrepareModal.getAttribute('data-files-download-prepare-tick-url-template') || '';
+        var deliverTemplate = downloadPrepareModal.getAttribute('data-files-download-prepare-deliver-url-template') || '';
+        var csrfInput = downloadPrepareModal.querySelector('[data-files-download-prepare-csrf-input]');
+        var nameEl = downloadPrepareModal.querySelector('[data-files-download-prepare-file-name]');
+        var errorEl = document.getElementById('files-download-prepare-error');
+        if (nameEl) {
+            nameEl.textContent = fileName || '';
+        }
+        if (errorEl) {
+            errorEl.classList.add('d-none');
+            errorEl.textContent = '';
+        }
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            bootstrap.Modal.getOrCreateInstance(downloadPrepareModal).show();
+        }
+        downloadPrepareRunner = window.FilesDownloadPrepare.run({
+            root: downloadPrepareModal,
+            csrfToken: csrfInput ? csrfInput.value : '',
+            prepareUrl: prepareTemplate.replace('999999', String(fileId)),
+            tickUrlTemplate: tickTemplate,
+            deliverUrlTemplate: deliverTemplate
+        });
+    }
+
+    document.addEventListener('click', function (event) {
+        var link = event.target.closest('[data-files-download-link]');
+        if (!link) {
+            return;
+        }
+        var liveRegionNode = document.getElementById('files-live-region');
+        var maxBytes = liveRegionNode ? parseInt(liveRegionNode.getAttribute('data-download-direct-max-bytes') || '0', 10) : 0;
+        var fileBytes = parseInt(link.getAttribute('data-files-byte-size') || '0', 10);
+        var fileId = parseInt(link.getAttribute('data-files-download-id') || '0', 10);
+        if (maxBytes < 1 || fileBytes <= maxBytes || fileId < 1) {
+            return;
+        }
+        event.preventDefault();
+        openDownloadPrepareModal(fileId, link.textContent.trim());
+    });
+
+    if (downloadPrepareModal) {
+        var cancelBtn = downloadPrepareModal.querySelector('[data-files-download-prepare-cancel]');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function () {
+                if (downloadPrepareRunner && typeof downloadPrepareRunner.cancel === 'function') {
+                    downloadPrepareRunner.cancel();
+                }
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    bootstrap.Modal.getOrCreateInstance(downloadPrepareModal).hide();
+                }
+            });
+        }
+    }
+
 }());
