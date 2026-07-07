@@ -977,6 +977,7 @@ admin:
       per_user_label: 'Naudotojo kvota'
       per_user_help: 'Asmenine kvota nustatoma naudotojo profilyje.'
       manage_users: 'Tvarkyti naudotojus'
+      download_diagnostics: 'Atsisiuntimo diagnostika'
     server_disk:
       title: 'Serverio diskas'
       subtitle: 'Laisva vieta diske, kuriame saugomi užšifruoti failai.'
@@ -984,6 +985,31 @@ admin:
       total_label: 'Bendra talpa'
       used_label: 'Naudojimas'
       unavailable: 'Nepavyko nuskaityti serverio disko vietos.'
+  download_diagnostics:
+    meta:
+      title: 'Atsisiuntimo diagnostika'
+    list:
+      title: 'Atsisiuntimo diagnostika'
+      empty: 'Diagnostikos ivykiu nera.'
+    show:
+      title: 'Atsisiuntimo chronologija'
+      empty: 'Ivykiu nerasta.'
+    filters:
+      download_id: 'Atsisiuntimo ID'
+      phase: Faze
+      status: Busena
+      shared_file_id: 'Bendrinamo failo ID'
+      apply: Filtruoti
+    export:
+      json: 'Eksportuoti JSON'
+      csv: 'Eksportuoti CSV'
+    fields:
+      id: ID
+      download_id: 'Atsisiuntimo ID'
+      phase: Faze
+      status: Busena
+      created_at: Sukurta
+    back: Atgal
   bug_reports:
     meta:
       title: 'Bug tiketai'

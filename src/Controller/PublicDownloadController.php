@@ -7,6 +7,7 @@ use App\Entity\SharedFile;
 use App\Repository\FolderRepository;
 use App\Repository\SharedFileRepository;
 use App\Service\Audit\DownloadAuditService;
+use App\Service\Audit\DownloadDiagnosticLogger;
 use App\Service\File\DownloadDeliveryService;
 use App\Service\File\DownloadPrepareService;
 use App\Service\File\FileEncryptionService;
@@ -51,6 +52,7 @@ class PublicDownloadController
         private readonly PublicSharePasswordRateLimiterService $publicSharePasswordRateLimiterService,
         private readonly CacheItemPoolInterface $publicDownloadTicketCache,
         private readonly TranslatorInterface $translator,
+        private readonly DownloadDiagnosticLogger $downloadDiagnosticLogger,
         private readonly DownloadPrepareService $downloadPrepareService,
         private readonly DownloadDeliveryService $downloadDeliveryService,
         private readonly int $publicDownloadInlineMaxBytes = 3145728,
@@ -378,6 +380,11 @@ class PublicDownloadController
             try {
                 $job = $this->downloadPrepareService->createPublicJob($storageChallengeId, $token, $sharedFile);
             } catch (\RuntimeException) {
+                $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'prepare_start', 'error', [
+                    'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
+                    'actorType' => 'public',
+                    'errorCode' => 'prepare_create_failed',
+                ]);
                 $this->downloadAuditService->createDenied($challenge->getEmail(), $ip, $resourceToken);
 
                 return new JsonResponse(['status' => 'error', 'message' => 'download.resource.unreadable'], 500);
@@ -565,6 +572,10 @@ class PublicDownloadController
                 (int) $ticket['challengeId'],
             );
         } catch (\RuntimeException) {
+            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'prepare_tick', 'error', [
+                'actorType' => 'public',
+                'errorCode' => 'public_tick_failed',
+            ]);
             return new JsonResponse(['status' => 'error', 'message' => 'download.resource.unreadable'], 400);
         }
 
@@ -611,6 +622,10 @@ class PublicDownloadController
                 (int) $ticket['challengeId'],
             );
         } catch (\RuntimeException) {
+            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'deliver_start', 'error', [
+                'actorType' => 'public',
+                'errorCode' => 'public_deliver_not_ready',
+            ]);
             return new Response('', Response::HTTP_NOT_FOUND);
         }
 
@@ -621,8 +636,18 @@ class PublicDownloadController
             $delivery['file_name'],
             $delivery['mime_type'],
         );
+        $this->downloadDiagnosticLogger->log((string) ($delivery['download_id'] ?? $this->downloadDiagnosticLogger->newDownloadId()), 'deliver_start', 'ok', [
+            'actorType' => 'public',
+            'bytesTotal' => (int) ($delivery['bytes'] ?? 0),
+            'httpStatus' => 200,
+        ]);
         $response->deleteFileAfterSend(true);
         $this->downloadPrepareService->finalizeDelivery($namespace, $jobId);
+        $this->downloadDiagnosticLogger->log((string) ($delivery['download_id'] ?? $this->downloadDiagnosticLogger->newDownloadId()), 'deliver_end', 'ok', [
+            'actorType' => 'public',
+            'bytesTotal' => (int) ($delivery['bytes'] ?? 0),
+            'httpStatus' => 200,
+        ]);
 
         return $response;
     }

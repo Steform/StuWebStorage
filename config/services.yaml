@@ -42,6 +42,10 @@ services:
     arguments:
       $lifetimeSeconds: '%app.remember_me_lifetime%'
 
+  App\Service\Audit\DownloadDiagnosticLogger:
+    arguments:
+      $appSecret: '%kernel.secret%'
+
   App\Service\Auth\TotpChallengeService:
     arguments:
       $defaultTtlSeconds: '%app.totp_challenge_ttl_seconds%'

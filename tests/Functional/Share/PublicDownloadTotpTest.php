@@ -7,6 +7,7 @@ use App\Entity\PublicDownloadChallenge;
 use App\Entity\SharedFile;
 use App\Repository\SharedFileRepository;
 use App\Service\Audit\DownloadAuditService;
+use App\Service\Audit\DownloadDiagnosticLogger;
 use App\Service\File\DownloadDeliveryService;
 use App\Service\File\DownloadPrepareService;
 use App\Service\File\FileEncryptionService;
@@ -75,7 +76,8 @@ class PublicDownloadTotpTest extends TestCase
             new PublicSharePasswordRateLimiterService(new ArrayAdapter()),
             new ArrayAdapter(),
             $this->createMock(TranslatorInterface::class),
-            new DownloadPrepareService($files, sys_get_temp_dir(), 134217728, 86400, 3, 209715200),
+            $this->createMock(DownloadDiagnosticLogger::class),
+            new DownloadPrepareService($files, $this->createMock(DownloadDiagnosticLogger::class), sys_get_temp_dir(), 134217728, 86400, 3, 209715200),
             new DownloadDeliveryService(false),
             3145728,
             900,

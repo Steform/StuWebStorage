@@ -977,6 +977,7 @@ admin:
       per_user_label: Benutzer-Kontingent
       per_user_help: 'Persoenliches Kontingent auf der Benutzerdetailseite setzen.'
       manage_users: 'Benutzer verwalten'
+      download_diagnostics: 'Download-Diagnose'
     server_disk:
       title: Server-Speicher
       subtitle: 'Freier Speicher auf dem Volume der verschluesselten Dateien.'
@@ -984,6 +985,31 @@ admin:
       total_label: Gesamtkapazitaet
       used_label: Auslastung
       unavailable: 'Server-Speicher konnte nicht gelesen werden.'
+  download_diagnostics:
+    meta:
+      title: 'Download-Diagnose'
+    list:
+      title: 'Download-Diagnose'
+      empty: 'Keine Diagnoseereignisse.'
+    show:
+      title: 'Download-Zeitachse'
+      empty: 'Keine Ereignisse gefunden.'
+    filters:
+      download_id: 'Download-ID'
+      phase: Phase
+      status: Status
+      shared_file_id: 'Freigegebene Datei-ID'
+      apply: Filtern
+    export:
+      json: 'JSON exportieren'
+      csv: 'CSV exportieren'
+    fields:
+      id: ID
+      download_id: 'Download-ID'
+      phase: Phase
+      status: Status
+      created_at: Erstellt
+    back: Zurueck
   bug_reports:
     meta:
       title: 'Bug-Tickets'

@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+{% set currentLocale = app.request.locale|default('fr') %}
+
+{% block title %}{{ 'admin.download_diagnostics.show.title'|trans({}, 'messages', currentLocale) }} — {{ downloadId }}{% endblock %}
+
+{% block top_navigation %}
+    {% include 'components/_storage_admin_nav.html.twig' %}
+{% endblock %}
+
+{% block main_container_class %}container-fluid py-4{% endblock %}
+
+{% block body %}
+    <h1 class="h4 mb-3">{{ 'admin.download_diagnostics.show.title'|trans({}, 'messages', currentLocale) }}</h1>
+    <p class="mb-3"><code>{{ downloadId }}</code></p>
+    <a class="btn btn-outline-secondary btn-sm mb-3" href="{{ path('admin_download_diagnostics_index') }}">{{ 'admin.download_diagnostics.back'|trans({}, 'messages', currentLocale) }}</a>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+            <tr>
+                <th>{{ 'admin.download_diagnostics.fields.created_at'|trans({}, 'messages', currentLocale) }}</th>
+                <th>{{ 'admin.download_diagnostics.fields.phase'|trans({}, 'messages', currentLocale) }}</th>
+                <th>{{ 'admin.download_diagnostics.fields.status'|trans({}, 'messages', currentLocale) }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for event in events %}
+                <tr>
+                    <td>{{ event.createdAt|date('Y-m-d H:i:s') }}</td>
+                    <td>{{ event.phase }}</td>
+                    <td>{{ event.status }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="3" class="text-muted">{{ 'admin.download_diagnostics.show.empty'|trans({}, 'messages', currentLocale) }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

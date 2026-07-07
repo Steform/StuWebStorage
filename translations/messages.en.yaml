@@ -1014,6 +1014,7 @@ admin:
       per_user_label: 'Per-user quota'
       per_user_help: 'Set a personal quota on each user profile page.'
       manage_users: 'Manage users'
+      download_diagnostics: 'Download diagnostics'
     server_disk:
       title: 'Server disk'
       subtitle: 'Free space on the volume hosting encrypted uploads.'
@@ -1021,6 +1022,31 @@ admin:
       total_label: 'Total capacity'
       used_label: Usage
       unavailable: 'Unable to read server disk space.'
+  download_diagnostics:
+    meta:
+      title: 'Download diagnostics'
+    list:
+      title: 'Download diagnostics'
+      empty: 'No diagnostic events.'
+    show:
+      title: 'Download timeline'
+      empty: 'No events found.'
+    filters:
+      download_id: 'Download ID'
+      phase: Phase
+      status: Status
+      shared_file_id: 'Shared file ID'
+      apply: Filter
+    export:
+      json: 'Export JSON'
+      csv: 'Export CSV'
+    fields:
+      id: ID
+      download_id: 'Download ID'
+      phase: Phase
+      status: Status
+      created_at: Created
+    back: Back
   bug_reports:
     meta:
       title: 'Bug tickets'

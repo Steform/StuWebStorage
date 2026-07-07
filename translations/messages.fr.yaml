@@ -1014,6 +1014,7 @@ admin:
       per_user_label: 'Quota par utilisateur'
       per_user_help: 'Definissez un quota personnel sur la fiche de chaque utilisateur.'
       manage_users: 'Gerer les utilisateurs'
+      download_diagnostics: 'Diagnostic des telechargements'
     server_disk:
       title: 'Espace serveur'
       subtitle: 'Capacite libre sur le volume qui heberge les fichiers chiffres.'
@@ -1021,6 +1022,31 @@ admin:
       total_label: 'Capacite totale'
       used_label: 'Utilisation'
       unavailable: 'Impossible de lire l''espace disque du serveur.'
+  download_diagnostics:
+    meta:
+      title: 'Diagnostic des telechargements'
+    list:
+      title: 'Diagnostic des telechargements'
+      empty: 'Aucun evenement de diagnostic.'
+    show:
+      title: 'Chronologie du telechargement'
+      empty: 'Aucun evenement trouve.'
+    filters:
+      download_id: 'ID telechargement'
+      phase: Phase
+      status: Statut
+      shared_file_id: 'ID fichier partage'
+      apply: Filtrer
+    export:
+      json: 'Exporter JSON'
+      csv: 'Exporter CSV'
+    fields:
+      id: ID
+      download_id: 'ID telechargement'
+      phase: Phase
+      status: Statut
+      created_at: 'Cree le'
+    back: Retour
   bug_reports:
     meta:
       title: 'Tickets bug'

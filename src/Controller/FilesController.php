@@ -16,6 +16,7 @@ use App\Repository\ShareGrantRepository;
 use App\Repository\SharedFileRepository;
 use App\Repository\UserRepository;
 use App\Service\Admin\AdminGodviewSessionStateService;
+use App\Service\Audit\DownloadDiagnosticLogger;
 use App\Service\Audit\DownloadAuditService;
 use App\Service\File\ChunkedUploadService;
 use App\Service\File\DownloadDeliveryService;
@@ -170,6 +171,7 @@ class FilesController extends AbstractController
         private readonly FilesUiPreferenceService $filesUiPreferenceService,
         private readonly UserFilesPaneBuilderService $userFilesPaneBuilderService,
         private readonly AdminGodviewSessionStateService $adminGodviewSessionStateService,
+        private readonly DownloadDiagnosticLogger $downloadDiagnosticLogger,
         private readonly DownloadPrepareService $downloadPrepareService,
         private readonly DownloadDeliveryService $downloadDeliveryService,
         private readonly string $projectDir,
@@ -3518,6 +3520,12 @@ class FilesController extends AbstractController
         try {
             $result = $this->downloadPrepareService->createAuthenticatedJob((int) $user->getId(), $sharedFile);
         } catch (\RuntimeException $e) {
+            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'prepare_start', 'error', [
+                'ownerUserId' => (int) $user->getId(),
+                'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
+                'actorType' => 'user',
+                'errorCode' => $e->getMessage(),
+            ]);
             return $this->extractJsonOrRedirect($request, $this->translator, DownloadPrepareService::mapExceptionToFlashKey($e), 400);
         }
 
@@ -3561,6 +3569,11 @@ class FilesController extends AbstractController
                 (int) $user->getId(),
             );
         } catch (\RuntimeException $e) {
+            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'prepare_tick', 'error', [
+                'ownerUserId' => (int) $user->getId(),
+                'actorType' => 'user',
+                'errorCode' => $e->getMessage(),
+            ]);
             return $this->extractJsonOrRedirect($request, $this->translator, DownloadPrepareService::mapExceptionToFlashKey($e), 400);
         }
 
@@ -3635,6 +3648,11 @@ class FilesController extends AbstractController
                 (int) $user->getId(),
             );
         } catch (\RuntimeException $e) {
+            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'deliver_start', 'error', [
+                'ownerUserId' => (int) $user->getId(),
+                'actorType' => 'user',
+                'errorCode' => $e->getMessage(),
+            ]);
             $this->addFlash('danger', DownloadPrepareService::mapExceptionToFlashKey($e));
 
             return $this->redirectToFilesIndex($request);
@@ -3643,6 +3661,14 @@ class FilesController extends AbstractController
         $ip = (string) ($request->getClientIp() ?? '0.0.0.0');
         $actor = (string) $user->getUserIdentifier();
         $this->downloadAuditService->create($actor, $ip, 'prepare:'.$jobId);
+        $this->downloadDiagnosticLogger->log((string) ($delivery['download_id'] ?? $this->downloadDiagnosticLogger->newDownloadId()), 'deliver_start', 'ok', [
+            'ownerUserId' => (int) $user->getId(),
+            'actorType' => 'user',
+            'actorIdentity' => $actor,
+            'ip' => $ip,
+            'sharedFileId' => null,
+            'bytesTotal' => (int) ($delivery['bytes'] ?? 0),
+        ]);
 
         $response = $this->downloadDeliveryService->buildFileResponse(
             $delivery['plain_path'],
@@ -3651,6 +3677,12 @@ class FilesController extends AbstractController
         );
         $response->deleteFileAfterSend(true);
         $this->downloadPrepareService->finalizeDelivery($namespace, $jobId);
+        $this->downloadDiagnosticLogger->log((string) ($delivery['download_id'] ?? $this->downloadDiagnosticLogger->newDownloadId()), 'deliver_end', 'ok', [
+            'ownerUserId' => (int) $user->getId(),
+            'actorType' => 'user',
+            'httpStatus' => 200,
+            'bytesTotal' => (int) ($delivery['bytes'] ?? 0),
+        ]);
 
         return $response;
     }

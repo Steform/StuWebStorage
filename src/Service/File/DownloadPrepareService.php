@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\File;
 
 use App\Entity\SharedFile;
+use App\Service\Audit\DownloadDiagnosticLogger;
 
 /**
  * @brief Filesystem-backed incremental decrypt jobs for large download delivery.
@@ -33,6 +34,7 @@ final class DownloadPrepareService
 
     public function __construct(
         private readonly FileEncryptionService $fileEncryptionService,
+        private readonly DownloadDiagnosticLogger $downloadDiagnosticLogger,
         private readonly string $projectDir,
         private readonly int $tickPlainBytes,
         private readonly int $sessionTtlSeconds,
@@ -69,6 +71,12 @@ final class DownloadPrepareService
 
         $existing = $this->findReusableJob($namespace, self::ACTOR_USER, $userId, $sharedFile);
         if ($existing !== null) {
+            $this->downloadDiagnosticLogger->log((string) ($existing['download_id'] ?? ''), 'prepare_reuse', 'ok', [
+                'ownerUserId' => $userId,
+                'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
+                'actorType' => self::ACTOR_USER,
+                'bytesTotal' => (int) $sharedFile->getByteSize(),
+            ]);
             return $this->buildCreatePayload($existing, true);
         }
 
@@ -99,6 +107,11 @@ final class DownloadPrepareService
 
         $existing = $this->findReusableJob($namespace, self::ACTOR_PUBLIC, $challengeId, $sharedFile);
         if ($existing !== null) {
+            $this->downloadDiagnosticLogger->log((string) ($existing['download_id'] ?? ''), 'prepare_reuse', 'ok', [
+                'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
+                'actorType' => self::ACTOR_PUBLIC,
+                'bytesTotal' => (int) $sharedFile->getByteSize(),
+            ]);
             return $this->buildCreatePayload($existing, true);
         }
 
@@ -132,6 +145,12 @@ final class DownloadPrepareService
 
         $phase = (string) ($meta['phase'] ?? self::PHASE_PENDING);
         if ($phase === self::PHASE_READY) {
+            $this->downloadDiagnosticLogger->log((string) ($meta['download_id'] ?? ''), 'prepare_tick', 'ok', [
+                'sharedFileId' => (int) ($meta['shared_file_id'] ?? 0),
+                'bytesTotal' => (int) ($meta['total_plain_bytes'] ?? 0),
+                'bytesSent' => (int) ($meta['plain_written'] ?? 0),
+                'actorType' => (string) ($meta['actor_kind'] ?? ''),
+            ]);
             return $this->buildProgressPayload($meta, true);
         }
         if ($phase === self::PHASE_FAILED || $phase === self::PHASE_CANCELLED) {
@@ -162,6 +181,11 @@ final class DownloadPrepareService
                 $out,
             );
         } catch (\RuntimeException) {
+            $this->downloadDiagnosticLogger->log((string) ($meta['download_id'] ?? ''), 'prepare_tick', 'error', [
+                'sharedFileId' => (int) ($meta['shared_file_id'] ?? 0),
+                'actorType' => (string) ($meta['actor_kind'] ?? ''),
+                'errorCode' => 'decrypt_failed',
+            ]);
             $this->failJob($namespace, $jobId, $meta, 'download.prepare.decrypt_failed');
             throw new \RuntimeException('download.prepare.decrypt_failed');
         } finally {
@@ -181,6 +205,12 @@ final class DownloadPrepareService
         }
 
         $this->saveMeta($namespace, $jobId, $meta);
+        $this->downloadDiagnosticLogger->log((string) ($meta['download_id'] ?? ''), 'prepare_tick', 'ok', [
+            'sharedFileId' => (int) ($meta['shared_file_id'] ?? 0),
+            'bytesTotal' => $totalPlainBytes,
+            'bytesSent' => $plainWritten,
+            'actorType' => (string) ($meta['actor_kind'] ?? ''),
+        ]);
 
         return $this->buildProgressPayload($meta, $meta['phase'] === self::PHASE_READY);
     }
@@ -213,7 +243,7 @@ final class DownloadPrepareService
      * @param string $jobId Job identifier.
      * @param string $actorKind Expected actor kind.
      * @param int $actorId Expected actor id.
-     * @return array{plain_path: string, file_name: string, mime_type: string, bytes: int}
+     * @return array{plain_path: string, file_name: string, mime_type: string, bytes: int, download_id: string}
      * @date 2026-07-07
      * @author Stephane H.
      */
@@ -236,6 +266,7 @@ final class DownloadPrepareService
             'file_name' => (string) ($meta['file_name'] ?? 'download.bin'),
             'mime_type' => (string) ($meta['mime_type'] ?? 'application/octet-stream'),
             'bytes' => (int) ($meta['total_plain_bytes'] ?? 0),
+            'download_id' => (string) ($meta['download_id'] ?? ''),
         ];
     }
 
@@ -377,6 +408,7 @@ final class DownloadPrepareService
         }
 
         $meta = [
+            'download_id' => $this->newDownloadId($actorKind, $actorId, $sharedFile),
             'job_id' => $jobId,
             'namespace' => $namespace,
             'created_at' => time(),
@@ -395,8 +427,28 @@ final class DownloadPrepareService
             'mime_type' => $this->guessMimeTypeFromExtension($sharedFile),
         ];
         $this->saveMeta($namespace, $jobId, $meta);
+        $this->downloadDiagnosticLogger->log((string) $meta['download_id'], 'prepare_start', 'ok', [
+            'ownerUserId' => $actorKind === self::ACTOR_USER ? $actorId : null,
+            'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
+            'actorType' => $actorKind,
+            'bytesTotal' => $totalPlainBytes,
+        ]);
 
         return $meta;
+    }
+
+    /**
+     * @brief Build stable correlation id from actor and file context.
+     * @param string $actorKind Actor kind.
+     * @param int $actorId Actor identifier.
+     * @param SharedFile $sharedFile Shared file aggregate.
+     * @return string
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
+    private function newDownloadId(string $actorKind, int $actorId, SharedFile $sharedFile): string
+    {
+        return $this->downloadDiagnosticLogger->newDownloadId();
     }
 
     /**

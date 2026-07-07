@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service\File;
 
 use App\Entity\SharedFile;
+use App\Service\Audit\DownloadDiagnosticLogger;
 use App\Service\File\DownloadPrepareService;
 use App\Service\File\FileEncryptionService;
 use PHPUnit\Framework\TestCase;
@@ -62,6 +63,7 @@ final class DownloadPrepareServiceTest extends TestCase
 
         $service = new DownloadPrepareService(
             new FileEncryptionService(self::ENCRYPTION_KEY),
+            $this->createMock(DownloadDiagnosticLogger::class),
             $projectDir,
             16384,
             3600,

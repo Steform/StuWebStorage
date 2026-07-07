@@ -977,6 +977,7 @@ admin:
       per_user_label: Brukerkvote
       per_user_help: 'Personlig kvote settes pa brukerprofilen.'
       manage_users: 'Administrer brukere'
+      download_diagnostics: 'Nedlastingsdiagnostikk'
     server_disk:
       title: Serverdisk
       subtitle: 'Ledig plass på volumet som lagrer krypterte filer.'
@@ -984,6 +985,31 @@ admin:
       total_label: 'Total kapasitet'
       used_label: Bruk
       unavailable: 'Kunne ikke lese serverdiskplass.'
+  download_diagnostics:
+    meta:
+      title: 'Nedlastingsdiagnostikk'
+    list:
+      title: 'Nedlastingsdiagnostikk'
+      empty: 'Ingen diagnosehendelser.'
+    show:
+      title: 'Nedlastingstidslinje'
+      empty: 'Ingen hendelser funnet.'
+    filters:
+      download_id: 'Nedlastings-ID'
+      phase: Fase
+      status: Status
+      shared_file_id: 'Delt fil-ID'
+      apply: Filtrer
+    export:
+      json: 'Eksporter JSON'
+      csv: 'Eksporter CSV'
+    fields:
+      id: ID
+      download_id: 'Nedlastings-ID'
+      phase: Fase
+      status: Status
+      created_at: Opprettet
+    back: Tilbake
   bug_reports:
     meta:
       title: 'Bug-billetter'
