@@ -127,6 +127,26 @@ final class DownloadDiagnosticEvent
         return $this->createdAt;
     }
 
+    public function getSharedFileId(): ?int
+    {
+        return $this->sharedFileId;
+    }
+
+    public function getBytesTotal(): ?int
+    {
+        return $this->bytesTotal === null ? null : (int) $this->bytesTotal;
+    }
+
+    public function getBytesSent(): ?int
+    {
+        return $this->bytesSent === null ? null : (int) $this->bytesSent;
+    }
+
+    public function getHttpStatus(): ?int
+    {
+        return $this->httpStatus;
+    }
+
     public function setOwnerUserId(?int $ownerUserId): void
     {
         $this->ownerUserId = $ownerUserId;

@@ -19,8 +19,8 @@ use App\Service\Admin\AdminGodviewSessionStateService;
 use App\Service\Audit\DownloadDiagnosticLogger;
 use App\Service\Audit\DownloadAuditService;
 use App\Service\File\ChunkedUploadService;
-use App\Service\File\DownloadDeliveryService;
-use App\Service\File\DownloadPrepareService;
+use App\Service\File\DownloadTokenService;
+use App\Service\File\EncryptedStreamDeliveryService;
 use App\Service\File\FilesQueryScopeResolver;
 use App\Service\File\FilesUiPreferenceService;
 use App\Service\File\UserFilesPaneBuilderService;
@@ -30,8 +30,6 @@ use App\Service\File\ZipExtractLimitsResolver;
 use App\Service\File\ZipExtractService;
 use App\Service\Format\BinaryByteFormatter;
 use App\Service\File\FileEncryptionService;
-use App\Service\Http\HttpByteRange;
-use App\Service\Http\InvalidByteRangeException;
 use App\Service\Share\FolderAncestorService;
 use App\Service\Share\FolderPublicTokenService;
 use App\Service\Share\FolderShareAuthorizationService;
@@ -47,7 +45,6 @@ use App\Service\Share\ZipEntryNameSanitizer;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ParameterBag;
@@ -96,7 +93,7 @@ class FilesController extends AbstractController
 
     private const CSRF_EXTRACT = 'files_extract';
 
-    private const CSRF_DOWNLOAD_PREPARE = 'files_download_prepare';
+    private const CSRF_DOWNLOAD_TOKEN = 'files_download_token';
 
     private const CSRF_CONTENT_EDIT = 'files_content_edit';
 
@@ -172,10 +169,11 @@ class FilesController extends AbstractController
         private readonly UserFilesPaneBuilderService $userFilesPaneBuilderService,
         private readonly AdminGodviewSessionStateService $adminGodviewSessionStateService,
         private readonly DownloadDiagnosticLogger $downloadDiagnosticLogger,
-        private readonly DownloadPrepareService $downloadPrepareService,
-        private readonly DownloadDeliveryService $downloadDeliveryService,
+        private readonly EncryptedStreamDeliveryService $encryptedStreamDeliveryService,
+        private readonly DownloadTokenService $downloadTokenService,
         private readonly string $projectDir,
         private readonly int $downloadDirectMaxBytes,
+        private readonly int $downloadManagerUiThresholdBytes,
         private readonly TranslatorInterface $translator,
     ) {
     }
@@ -1133,10 +1131,11 @@ class FilesController extends AbstractController
             'csrfFolderShareFriends' => self::CSRF_FOLDER_SHARE_FRIENDS,
             'csrfFolderRename' => self::CSRF_FOLDER_RENAME,
             'csrfExtract' => self::CSRF_EXTRACT,
-            'csrfDownloadPrepare' => self::CSRF_DOWNLOAD_PREPARE,
+            'csrfDownloadToken' => self::CSRF_DOWNLOAD_TOKEN,
             'csrfContentEdit' => self::CSRF_CONTENT_EDIT,
             'maxUploadBytes' => $this->resolveAppMaxUploadBytes(),
             'downloadDirectMaxBytes' => $this->downloadDirectMaxBytes,
+            'downloadManagerUiThresholdBytes' => $this->downloadManagerUiThresholdBytes,
         ];
     }
 
@@ -3434,7 +3433,7 @@ class FilesController extends AbstractController
      * @date 2026-04-27
      * @author Stephane H.
      */
-    #[Route('/files/download/{id}', name: 'files_download', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[Route('/files/download/{id}', name: 'files_download', methods: ['GET', 'HEAD'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_USER')]
     public function download(Request $request, int $id): Response
     {
@@ -3453,8 +3452,14 @@ class FilesController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $ip = (string) ($request->getClientIp() ?? '0.0.0.0');
-        $actor = (string) $user->getUserIdentifier();
+        if (!$this->downloadTokenService->isValidForRequest(
+            $request,
+            (int) ($sharedFile->getId() ?? 0),
+            (string) $user->getId(),
+            'user',
+        )) {
+            throw $this->createAccessDeniedException();
+        }
 
         $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', $sharedFile->getOriginalFileName()) ?: 'download.bin';
 
@@ -3467,42 +3472,69 @@ class FilesController extends AbstractController
                 : $this->redirectToRoute('app_home');
         }
 
-        if ($this->downloadPrepareService->requiresPreparedDownload($sharedFile)) {
-            return $this->render('files/download_prepare_page.html.twig', [
-                'sharedFile' => $sharedFile,
-                'csrfPrepare' => self::CSRF_DOWNLOAD_PREPARE,
-                'prepareUrl' => $this->generateUrl('files_download_prepare', ['id' => $id]),
-                'tickUrlTemplate' => $this->generateUrl('files_download_prepare_tick', ['jobId' => '00000000000000000000000000000000']),
-                'cancelUrlTemplate' => $this->generateUrl('files_download_prepare_cancel', ['jobId' => '00000000000000000000000000000000']),
-                'deliverUrlTemplate' => $this->generateUrl('files_download_prepare_deliver', ['jobId' => '00000000000000000000000000000000']),
+        $downloadId = $this->downloadDiagnosticLogger->newDownloadId();
+        $byteSize = (int) $sharedFile->getByteSize();
+        $hasRange = $request->headers->has('Range');
+        $this->downloadDiagnosticLogger->log($downloadId, $hasRange ? 'stream_range' : 'stream_start', 'ok', [
+            'ownerUserId' => (int) $user->getId(),
+            'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
+            'actorType' => 'user',
+            'bytesTotal' => $byteSize,
+        ]);
+
+        $response = $this->encryptedStreamDeliveryService->buildEncryptedStreamResponse(
+            $request,
+            $storagePath,
+            $byteSize,
+            'application/octet-stream',
+            EncryptedStreamDeliveryService::DISPOSITION_ATTACHMENT,
+            $safeName,
+            true,
+            true,
+        );
+
+        if ($response->getStatusCode() >= 400) {
+            $this->downloadDiagnosticLogger->log($downloadId, 'stream_end', 'error', [
+                'ownerUserId' => (int) $user->getId(),
+                'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
+                'actorType' => 'user',
+                'httpStatus' => $response->getStatusCode(),
             ]);
+
+            return $response;
         }
 
-        $response = new StreamedResponse(function () use ($storagePath): void {
-            $this->fileEncryptionService->streamDecryptStorageToStdout($storagePath);
-        });
-        $response->headers->set('Content-Type', 'application/octet-stream');
-        $response->headers->set('Content-Disposition', 'attachment; filename="'.$safeName.'"');
-        $response->headers->set('Content-Length', (string) $sharedFile->getByteSize());
+        if (!$hasRange && !$request->isMethod('HEAD')) {
+            $ip = (string) ($request->getClientIp() ?? '0.0.0.0');
+            $actor = (string) $user->getUserIdentifier();
+            $this->downloadAuditService->create($actor, $ip, $sharedFile->getPublicToken());
+        }
 
-        $this->downloadAuditService->create($actor, $ip, $sharedFile->getPublicToken());
+        $this->downloadDiagnosticLogger->log($downloadId, 'stream_end', 'ok', [
+            'ownerUserId' => (int) $user->getId(),
+            'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
+            'actorType' => 'user',
+            'httpStatus' => $response->getStatusCode(),
+            'bytesTotal' => $byteSize,
+            'bytesSent' => (int) ($response->headers->get('Content-Length') ?? $byteSize),
+        ]);
 
         return $response;
     }
 
     /**
-     * @brief Create a prepared download job for a large shared file.
+     * @brief Issue a short-lived download token for chunked authenticated delivery.
      * @param Request $request HTTP request.
      * @param int $id Shared file identifier.
      * @return JsonResponse|Response
      * @date 2026-07-07
      * @author Stephane H.
      */
-    #[Route('/files/{id}/download/prepare', name: 'files_download_prepare', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/files/{id}/download/token', name: 'files_download_token', methods: ['POST'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_USER')]
-    public function prepareDownload(Request $request, int $id): JsonResponse|Response
+    public function issueDownloadToken(Request $request, int $id): JsonResponse|Response
     {
-        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_DOWNLOAD_PREPARE, (string) $request->request->get('_csrf_token', '')))) {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_DOWNLOAD_TOKEN, (string) $request->request->get('_csrf_token', '')))) {
             return $this->extractJsonOrRedirect($request, $this->translator, 'files.flash.csrf_invalid', 403);
         }
 
@@ -3517,174 +3549,53 @@ class FilesController extends AbstractController
             return $this->extractJsonOrRedirect($request, $this->translator, 'files.flash.not_found', 403);
         }
 
-        try {
-            $result = $this->downloadPrepareService->createAuthenticatedJob((int) $user->getId(), $sharedFile);
-        } catch (\RuntimeException $e) {
-            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'prepare_start', 'error', [
-                'ownerUserId' => (int) $user->getId(),
-                'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
-                'actorType' => 'user',
-                'errorCode' => $e->getMessage(),
-            ]);
-            return $this->extractJsonOrRedirect($request, $this->translator, DownloadPrepareService::mapExceptionToFlashKey($e), 400);
-        }
+        $token = $this->downloadTokenService->mint(
+            (int) ($sharedFile->getId() ?? 0),
+            (string) $user->getId(),
+            'user',
+        );
 
         return new JsonResponse([
             'status' => 'ok',
-            'job_id' => $result['job_id'],
-            'phase' => $result['phase'],
-            'bytes' => $result['bytes'],
-            'plain_written' => $result['plain_written'],
-            'file_name' => $result['file_name'],
-            'reused' => $result['reused'],
-            'deliver_url' => $this->generateUrl('files_download_prepare_deliver', ['jobId' => $result['job_id']]),
+            'download_token' => $token,
+            'download_url' => $this->generateUrl('files_download', ['id' => $id]),
+            'bytes' => (int) $sharedFile->getByteSize(),
+            'file_name' => $sharedFile->getOriginalFileName(),
+            'use_manager' => (int) $sharedFile->getByteSize() > $this->downloadManagerUiThresholdBytes,
         ]);
     }
 
     /**
-     * @brief Advance one prepared download decrypt tick.
+     * @brief Render download progress page for managed large-file delivery.
      * @param Request $request HTTP request.
-     * @param string $jobId Prepared download job identifier.
-     * @return JsonResponse|Response
+     * @param int $id Shared file identifier.
+     * @return Response
      * @date 2026-07-07
      * @author Stephane H.
      */
-    #[Route('/files/download/{jobId}/tick', name: 'files_download_prepare_tick', methods: ['POST'], requirements: ['jobId' => '[a-f0-9]{32}'])]
+    #[Route('/files/download/{id}/progress', name: 'files_download_progress', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_USER')]
-    public function tickDownloadPrepare(Request $request, string $jobId): JsonResponse|Response
+    public function downloadProgressPage(Request $request, int $id): Response
     {
-        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_DOWNLOAD_PREPARE, (string) $request->request->get('_csrf_token', '')))) {
-            return $this->extractJsonOrRedirect($request, $this->translator, 'files.flash.csrf_invalid', 403);
-        }
-
-        /** @var User $user */
-        $user = $this->getUser();
-        $namespace = $this->downloadPrepareService->userNamespace((int) $user->getId());
-
-        try {
-            $progress = $this->downloadPrepareService->tickJob(
-                $namespace,
-                $jobId,
-                DownloadPrepareService::ACTOR_USER,
-                (int) $user->getId(),
-            );
-        } catch (\RuntimeException $e) {
-            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'prepare_tick', 'error', [
-                'ownerUserId' => (int) $user->getId(),
-                'actorType' => 'user',
-                'errorCode' => $e->getMessage(),
-            ]);
-            return $this->extractJsonOrRedirect($request, $this->translator, DownloadPrepareService::mapExceptionToFlashKey($e), 400);
-        }
-
-        return new JsonResponse([
-            'status' => 'ok',
-            'job_id' => $progress['job_id'],
-            'phase' => $progress['phase'],
-            'bytes' => $progress['bytes'],
-            'plain_written' => $progress['plain_written'],
-            'percent' => $progress['percent'],
-            'complete' => $progress['complete'],
-            'file_name' => $progress['file_name'],
-            'deliver_url' => $this->generateUrl('files_download_prepare_deliver', ['jobId' => $progress['job_id']]),
-        ]);
-    }
-
-    /**
-     * @brief Cancel a prepared download job.
-     * @param Request $request HTTP request.
-     * @param string $jobId Prepared download job identifier.
-     * @return JsonResponse|Response
-     * @date 2026-07-07
-     * @author Stephane H.
-     */
-    #[Route('/files/download/{jobId}/cancel', name: 'files_download_prepare_cancel', methods: ['POST'], requirements: ['jobId' => '[a-f0-9]{32}'])]
-    #[IsGranted('ROLE_USER')]
-    public function cancelDownloadPrepare(Request $request, string $jobId): JsonResponse|Response
-    {
-        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_DOWNLOAD_PREPARE, (string) $request->request->get('_csrf_token', '')))) {
-            return $this->extractJsonOrRedirect($request, $this->translator, 'files.flash.csrf_invalid', 403);
-        }
-
-        /** @var User $user */
-        $user = $this->getUser();
-        $namespace = $this->downloadPrepareService->userNamespace((int) $user->getId());
-
-        try {
-            $this->downloadPrepareService->cancelJob(
-                $namespace,
-                $jobId,
-                DownloadPrepareService::ACTOR_USER,
-                (int) $user->getId(),
-            );
-        } catch (\RuntimeException $e) {
-            return $this->extractJsonOrRedirect($request, $this->translator, DownloadPrepareService::mapExceptionToFlashKey($e), 400);
-        }
-
-        return new JsonResponse(['status' => 'ok']);
-    }
-
-    /**
-     * @brief Deliver a prepared plaintext file using BinaryFileResponse.
-     * @param Request $request HTTP request.
-     * @param string $jobId Prepared download job identifier.
-     * @return BinaryFileResponse|Response
-     * @date 2026-07-07
-     * @author Stephane H.
-     */
-    #[Route('/files/download/{jobId}/deliver', name: 'files_download_prepare_deliver', methods: ['GET'], requirements: ['jobId' => '[a-f0-9]{32}'])]
-    #[IsGranted('ROLE_USER')]
-    public function deliverDownloadPrepare(Request $request, string $jobId): BinaryFileResponse|Response
-    {
-        /** @var User $user */
-        $user = $this->getUser();
-        $namespace = $this->downloadPrepareService->userNamespace((int) $user->getId());
-
-        try {
-            $delivery = $this->downloadPrepareService->resolveReadyDelivery(
-                $namespace,
-                $jobId,
-                DownloadPrepareService::ACTOR_USER,
-                (int) $user->getId(),
-            );
-        } catch (\RuntimeException $e) {
-            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'deliver_start', 'error', [
-                'ownerUserId' => (int) $user->getId(),
-                'actorType' => 'user',
-                'errorCode' => $e->getMessage(),
-            ]);
-            $this->addFlash('danger', DownloadPrepareService::mapExceptionToFlashKey($e));
+        $sharedFile = $this->sharedFileRepository->find($id);
+        if (!$sharedFile instanceof SharedFile) {
+            $this->addFlash('danger', 'files.flash.not_found');
 
             return $this->redirectToFilesIndex($request);
         }
 
-        $ip = (string) ($request->getClientIp() ?? '0.0.0.0');
-        $actor = (string) $user->getUserIdentifier();
-        $this->downloadAuditService->create($actor, $ip, 'prepare:'.$jobId);
-        $this->downloadDiagnosticLogger->log((string) ($delivery['download_id'] ?? $this->downloadDiagnosticLogger->newDownloadId()), 'deliver_start', 'ok', [
-            'ownerUserId' => (int) $user->getId(),
-            'actorType' => 'user',
-            'actorIdentity' => $actor,
-            'ip' => $ip,
-            'sharedFileId' => null,
-            'bytesTotal' => (int) ($delivery['bytes'] ?? 0),
-        ]);
+        /** @var User $user */
+        $user = $this->getUser();
+        if (!$this->canUserDownloadSharedFile($user, $sharedFile)) {
+            throw $this->createAccessDeniedException();
+        }
 
-        $response = $this->downloadDeliveryService->buildFileResponse(
-            $delivery['plain_path'],
-            $delivery['file_name'],
-            $delivery['mime_type'],
-        );
-        $response->deleteFileAfterSend(true);
-        $this->downloadPrepareService->finalizeDelivery($namespace, $jobId);
-        $this->downloadDiagnosticLogger->log((string) ($delivery['download_id'] ?? $this->downloadDiagnosticLogger->newDownloadId()), 'deliver_end', 'ok', [
-            'ownerUserId' => (int) $user->getId(),
-            'actorType' => 'user',
-            'httpStatus' => 200,
-            'bytesTotal' => (int) ($delivery['bytes'] ?? 0),
+        return $this->render('files/download_progress_page.html.twig', [
+            'sharedFile' => $sharedFile,
+            'csrfDownloadToken' => self::CSRF_DOWNLOAD_TOKEN,
+            'tokenUrl' => $this->generateUrl('files_download_token', ['id' => $id]),
+            'downloadUrl' => $this->generateUrl('files_download', ['id' => $id]),
         ]);
-
-        return $response;
     }
 
     /**
@@ -3745,48 +3656,17 @@ class FilesController extends AbstractController
             $safeName = 'preview.'.$ext;
         }
 
-        $byteRange = null;
-        if ($rangeEnabled) {
-            try {
-                $byteRange = HttpByteRange::tryFromRequest($request, $byteSize);
-            } catch (InvalidByteRangeException) {
-                return new Response('', Response::HTTP_REQUESTED_RANGE_NOT_SATISFIABLE, [
-                    'Content-Range' => 'bytes */'.$byteSize,
-                ]);
-            }
-        }
+        $response = $this->encryptedStreamDeliveryService->buildEncryptedStreamResponse(
+            $request,
+            $storagePath,
+            $byteSize,
+            $streamProfile['mime'],
+            EncryptedStreamDeliveryService::DISPOSITION_INLINE,
+            $safeName,
+            $rangeEnabled,
+            true,
+        );
 
-        $usePartialContent = $byteRange !== null
-            && $rangeEnabled
-            && $this->fileEncryptionService->isV2StorageFormat($storagePath);
-
-        $statusCode = $usePartialContent ? Response::HTTP_PARTIAL_CONTENT : Response::HTTP_OK;
-
-        if ($request->isMethod('HEAD')) {
-            $response = new Response('', $statusCode);
-        } elseif ($usePartialContent) {
-            $rangeStart = $byteRange->getStart();
-            $rangeLength = $byteRange->getLength();
-            $response = new StreamedResponse(function () use ($storagePath, $rangeStart, $rangeLength): void {
-                $this->fileEncryptionService->streamDecryptStorageRangeToStdout($storagePath, $rangeStart, $rangeLength);
-            }, $statusCode);
-        } else {
-            $response = new StreamedResponse(function () use ($storagePath): void {
-                $this->fileEncryptionService->streamDecryptStorageToStdout($storagePath);
-            }, $statusCode);
-        }
-
-        $response->headers->set('Content-Type', $streamProfile['mime']);
-        $response->headers->set('Content-Disposition', 'inline; filename="'.$safeName.'"');
-        if ($rangeEnabled) {
-            $response->headers->set('Accept-Ranges', 'bytes');
-        }
-        if ($usePartialContent && $byteRange !== null) {
-            $response->headers->set('Content-Range', $byteRange->contentRangeHeader());
-            $response->headers->set('Content-Length', (string) $byteRange->getLength());
-        } else {
-            $response->headers->set('Content-Length', (string) $byteSize);
-        }
         if ($kind === 'text') {
             $response->headers->set('X-Content-Type-Options', 'nosniff');
             $response->headers->set('Cache-Control', 'private, max-age=0, no-store');

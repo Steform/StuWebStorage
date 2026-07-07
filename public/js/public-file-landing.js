@@ -11,8 +11,7 @@
     var endpointVerify = root.getAttribute('data-endpoint-verify') || '';
     var endpointVerifyPassword = root.getAttribute('data-endpoint-verify-password') || '';
     var endpointFile = root.getAttribute('data-endpoint-file') || '';
-    var endpointTick = '/download/public/prepare/tick';
-    var endpointDeliver = '/download/public/deliver';
+    var managerThreshold = parseInt(root.getAttribute('data-download-manager-threshold-bytes') || '0', 10);
     var apiMsgs = {};
     try {
         apiMsgs = JSON.parse(root.getAttribute('data-api-msgs') || '{}');
@@ -29,14 +28,14 @@
     var passwordSection = document.getElementById('public-landing-share-password-section');
     var passwordInput = document.getElementById('public-landing-share-password');
     var passwordBtn = document.getElementById('public-landing-submit-share-password');
+    var progressBar = document.getElementById('public-landing-download-progress-bar');
+    var progressCount = document.getElementById('public-landing-download-progress-count');
+    var progressWrap = document.getElementById('public-landing-download-progress-wrap');
 
     var challengeId = 0;
     var preAuthToken = '';
     var downloadKey = '';
-    var prepareJobId = '';
-    var prepareRequired = false;
-    var tickTimer = null;
-    var tickInFlight = false;
+    var downloadAbortController = null;
 
     function msg(key, fallback) {
         return apiMsgs[key] || fallback || key;
@@ -69,71 +68,52 @@
         });
     }
 
-    function formatBytes(bytes) {
-        var n = Number(bytes) || 0;
-        if (n < 1048576) {
-            return (n / 1024).toFixed(1) + ' KiB';
+    function updateProgress(received, total) {
+        var percent = total > 0 ? Math.floor((received / total) * 100) : 0;
+        if (progressBar) {
+            progressBar.style.width = percent + '%';
+            progressBar.setAttribute('aria-valuenow', String(percent));
         }
-        if (n < 1073741824) {
-            return (n / 1048576).toFixed(1) + ' MiB';
-        }
-        return (n / 1073741824).toFixed(2) + ' GiB';
-    }
-
-    function stopTickLoop() {
-        if (tickTimer !== null) {
-            window.clearTimeout(tickTimer);
-            tickTimer = null;
+        if (progressCount && window.FilesDownloadManager) {
+            progressCount.textContent = window.FilesDownloadManager.formatBytes(received) + ' / ' + window.FilesDownloadManager.formatBytes(total) + ' (' + percent + '%)';
         }
     }
 
-    function scheduleTick() {
-        stopTickLoop();
-        tickTimer = window.setTimeout(runPrepareTick, 300);
-    }
-
-    function runPrepareTick() {
-        if (!prepareRequired || downloadKey === '' || prepareJobId === '' || tickInFlight) {
+    function startManagedDownload(data) {
+        if (typeof window.FilesDownloadManager === 'undefined') {
+            if (downloadLink) {
+                downloadLink.href = data.downloadUrl || (endpointFile + '?key=' + encodeURIComponent(downloadKey));
+                downloadLink.classList.remove('d-none');
+            }
             return;
         }
-        tickInFlight = true;
-        postJson(endpointTick, {
-            downloadKey: downloadKey,
-            jobId: prepareJobId
-        }).then(function (pack) {
-            tickInFlight = false;
-            if (!pack.ok || !pack.json || pack.json.status !== 'ok') {
-                showAlert(msg('download.resource.unreadable', ''), true);
-                stopTickLoop();
+        if (progressWrap) {
+            progressWrap.classList.remove('d-none');
+        }
+        if (downloadLink) {
+            downloadLink.classList.add('d-none');
+        }
+        downloadAbortController = new AbortController();
+        window.FilesDownloadManager.download({
+            url: data.downloadUrl || (endpointFile + '?key=' + encodeURIComponent(downloadKey)),
+            fileName: data.fileName || 'download.bin',
+            signal: downloadAbortController.signal,
+            onProgress: updateProgress,
+            onError: function () {}
+        }).then(function () {
+            showAlert(msg('download.authorized', ''), false);
+        }).catch(function (error) {
+            if (error && error.name === 'AbortError') {
                 return;
             }
-            var percent = Number(pack.json.percent) || 0;
-            showAlert(formatBytes(pack.json.plain_written) + ' / ' + formatBytes(pack.json.bytes) + ' (' + percent + '%)', false);
-            if (pack.json.complete) {
-                stopTickLoop();
-                window.location.href = endpointDeliver + '?key=' + encodeURIComponent(downloadKey) + '&job=' + encodeURIComponent(prepareJobId);
-                return;
-            }
-            scheduleTick();
-        }).catch(function () {
-            tickInFlight = false;
-            showAlert(root.getAttribute('data-msg-api-fallback') || '', true);
-            stopTickLoop();
+            showAlert(msg('download.resource.unreadable', ''), true);
         });
     }
 
     function revealDownload(data) {
         downloadKey = String(data.downloadKey || '');
-        prepareRequired = !!data.prepareRequired;
-        prepareJobId = String(data.jobId || '');
+        var useManager = !!data.useManager || ((Number(data.bytes) || 0) > managerThreshold);
         if (downloadLink) {
-            if (prepareRequired) {
-                downloadLink.href = '#';
-                downloadLink.classList.remove('d-none');
-                showAlert(msg('download.authorized', ''), false);
-                scheduleTick();
-                return;
-            }
             if (data.contentBase64) {
                 var mime = data.mimeType || 'application/octet-stream';
                 var binary = window.atob(data.contentBase64);
@@ -145,10 +125,13 @@
                 var blob = new Blob([bytes], { type: mime });
                 downloadLink.href = URL.createObjectURL(blob);
                 downloadLink.download = data.fileName || 'download.bin';
+                downloadLink.classList.remove('d-none');
+            } else if (useManager) {
+                startManagedDownload(data);
             } else {
-                downloadLink.href = endpointFile + '?key=' + encodeURIComponent(downloadKey);
+                downloadLink.href = data.downloadUrl || (endpointFile + '?key=' + encodeURIComponent(downloadKey));
+                downloadLink.classList.remove('d-none');
             }
-            downloadLink.classList.remove('d-none');
         }
         showAlert(msg('download.authorized', ''), false);
     }
@@ -228,13 +211,11 @@
         });
     }
 
-    if (downloadLink) {
-        downloadLink.addEventListener('click', function (event) {
-            if (prepareRequired) {
-                event.preventDefault();
-                if (prepareJobId !== '') {
-                    window.location.href = endpointDeliver + '?key=' + encodeURIComponent(downloadKey) + '&job=' + encodeURIComponent(prepareJobId);
-                }
+    var cancelBtn = document.getElementById('public-landing-download-cancel');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function () {
+            if (downloadAbortController) {
+                downloadAbortController.abort();
             }
         });
     }

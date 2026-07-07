@@ -477,7 +477,6 @@
     {% include 'files/_rename_modal.html.twig' %}
     {% include 'files/_text_file_editor_modal.html.twig' %}
     {% include 'files/_extract_zip_modal.html.twig' %}
-    {% include 'files/_download_prepare_modal.html.twig' %}
     <div class="modal fade" id="filesCreateFolderModal" tabindex="-1" aria-labelledby="filesCreateFolderModalTitle" aria-hidden="true" data-require-target-owner="{{ requireAdminTargetOwner|default(false) ? '1' : '0' }}" data-files-admin-owner-suggest-url="{{ path('admin_files_owner_suggest') }}">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -552,8 +551,8 @@
             data-files-move-toast-partial-template="{{ 'files.move_bulk.toast_partial'|trans({'%ok%':'%ok%', '%failed%':'%failed%'}, 'messages', currentLocale) }}"
             data-files-move-toast-error="{{ 'files.move_bulk.toast_error'|trans({}, 'messages', currentLocale) }}"
             data-files-download-url-template="{{ path('files_download', {id: 999999}) }}"
-            data-files-download-prepare-url-template="{{ path('files_download_prepare', {id: 999999}) }}"
-            data-download-direct-max-bytes="{{ downloadDirectMaxBytes }}"
+            data-files-download-progress-url-template="{{ path('files_download_progress', {id: 999999}) }}"
+            data-download-manager-threshold-bytes="{{ downloadManagerUiThresholdBytes }}"
             data-files-download-zip-url="{{ path('files_download_selection_zip') }}"
             data-files-shared-folder-download-zip-url-template="{{ path('files_shared_folder_download_zip', {id: 999999}) }}"
             data-files-folder-public-landing-url-template="{{ path('files_folder_public_landing_url', { id: 999999 }) }}"
@@ -595,7 +594,6 @@
         }
         </script>
         <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js" defer></script>
-        <script src="{{ asset('js/files-download-prepare-shared.js') }}?v=20260707" defer></script>
         <script src="{{ asset('js/text-file-editor.js') }}?v=20260626" defer></script>
         <script src="{{ asset('js/files-space.js') }}?v={{ 'now'|date('U') }}" defer></script>
         <script src="{{ asset('js/files-ui-preferences.js') }}?v=20260630-mobile-prefs" defer></script>

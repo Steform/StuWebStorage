@@ -382,6 +382,11 @@ files:
       limits_admin_tier: 'Elevated limits (administrator account).'
       phase_pending: 'Decrypting archive…'
       phase_scanning: 'Scanning archive…'
+  download_progress:
+    page_title: 'Download in progress'
+    hint: 'The file is downloaded in chunks with automatic resume on interruption.'
+    cancel: Cancel
+    error_generic: 'Download failed. Please try again.'
   download_prepare:
     page_title: 'Download preparation'
     modal:

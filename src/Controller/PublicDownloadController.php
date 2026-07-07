@@ -8,8 +8,7 @@ use App\Repository\FolderRepository;
 use App\Repository\SharedFileRepository;
 use App\Service\Audit\DownloadAuditService;
 use App\Service\Audit\DownloadDiagnosticLogger;
-use App\Service\File\DownloadDeliveryService;
-use App\Service\File\DownloadPrepareService;
+use App\Service\File\EncryptedStreamDeliveryService;
 use App\Service\File\FileEncryptionService;
 use App\Service\Share\PublicDownloadTotpService;
 use App\Service\Share\PublicFolderZipService;
@@ -18,8 +17,6 @@ use App\Service\Share\PublicSharePasswordCredentialService;
 use App\Service\Share\PublicSharePasswordRateLimiterService;
 use App\Service\Share\PublicSharePreAuthTokenService;
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -53,11 +50,11 @@ class PublicDownloadController
         private readonly CacheItemPoolInterface $publicDownloadTicketCache,
         private readonly TranslatorInterface $translator,
         private readonly DownloadDiagnosticLogger $downloadDiagnosticLogger,
-        private readonly DownloadPrepareService $downloadPrepareService,
-        private readonly DownloadDeliveryService $downloadDeliveryService,
+        private readonly EncryptedStreamDeliveryService $encryptedStreamDeliveryService,
         private readonly int $publicDownloadInlineMaxBytes = 3145728,
-        private readonly int $publicDownloadTicketTtlSeconds = 900,
+        private readonly int $publicDownloadTicketTtlSeconds = 7200,
         private readonly int $downloadDirectMaxBytes = 209715200,
+        private readonly int $downloadManagerUiThresholdBytes = 209715200,
     ) {
     }
 
@@ -363,7 +360,7 @@ class PublicDownloadController
         $this->publicDownloadTicketCache->save($item);
 
         $byteLen = (int) $sharedFile->getByteSize();
-        $prepareRequired = $byteLen > $this->downloadDirectMaxBytes;
+        $useManager = $byteLen > $this->downloadManagerUiThresholdBytes;
 
         $body = [
             'status' => 'ok',
@@ -373,30 +370,12 @@ class PublicDownloadController
             'bytes' => $byteLen,
             'fileName' => $sharedFile->getOriginalFileName(),
             'downloadKey' => $downloadKey,
-            'prepareRequired' => $prepareRequired,
+            'prepareRequired' => false,
+            'useManager' => $useManager,
+            'downloadUrl' => '/download/public/file?key='.rawurlencode($downloadKey),
         ];
 
-        if ($prepareRequired) {
-            try {
-                $job = $this->downloadPrepareService->createPublicJob($storageChallengeId, $token, $sharedFile);
-            } catch (\RuntimeException) {
-                $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'prepare_start', 'error', [
-                    'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
-                    'actorType' => 'public',
-                    'errorCode' => 'prepare_create_failed',
-                ]);
-                $this->downloadAuditService->createDenied($challenge->getEmail(), $ip, $resourceToken);
-
-                return new JsonResponse(['status' => 'error', 'message' => 'download.resource.unreadable'], 500);
-            }
-            $body['jobId'] = $job['job_id'];
-            $body['phase'] = $job['phase'];
-            $body['plainWritten'] = $job['plain_written'];
-            $body['tickUrl'] = $this->generatePublicTickUrl();
-            $body['deliverUrl'] = $this->generatePublicDeliverUrl();
-            $body['mimeType'] = $this->detectMimeTypeFromExtension($sharedFile);
-            $body['inlinePayloadOmitted'] = true;
-        } elseif ($byteLen <= $this->publicDownloadInlineMaxBytes) {
+        if ($byteLen <= $this->publicDownloadInlineMaxBytes) {
             try {
                 $decryptedContent = $this->fileEncryptionService->decryptFromStorage($storagePath);
             } catch (\RuntimeException) {
@@ -470,7 +449,7 @@ class PublicDownloadController
      * @date 2026-05-02
      * @author Stephane H.
      */
-    #[Route('/download/public/file', name: 'download_public_file', methods: ['GET'])]
+    #[Route('/download/public/file', name: 'download_public_file', methods: ['GET', 'HEAD'])]
     public function downloadFile(Request $request): Response
     {
         $key = (string) $request->query->get('key', '');
@@ -514,139 +493,47 @@ class PublicDownloadController
             return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        if ($this->downloadPrepareService->requiresPreparedDownload($sharedFile)) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
+        $downloadId = $this->downloadDiagnosticLogger->newDownloadId();
+        $byteSize = (int) $sharedFile->getByteSize();
+        $hasRange = $request->headers->has('Range');
+        $this->downloadDiagnosticLogger->log($downloadId, $hasRange ? 'stream_range' : 'stream_start', 'ok', [
+            'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
+            'actorType' => 'public',
+            'bytesTotal' => $byteSize,
+        ]);
 
         $mime = $this->detectMimeTypeFromExtension($sharedFile);
-        $contentDisposition = HeaderUtils::makeDisposition(
-            HeaderUtils::DISPOSITION_ATTACHMENT,
+        $response = $this->encryptedStreamDeliveryService->buildEncryptedStreamResponse(
+            $request,
+            $storagePath,
+            $byteSize,
+            $mime,
+            EncryptedStreamDeliveryService::DISPOSITION_ATTACHMENT,
             $sharedFile->getOriginalFileName(),
-            'download.bin'
+            true,
+            true,
         );
 
-        $response = new StreamedResponse(function () use ($storagePath): void {
-            $this->fileEncryptionService->streamDecryptStorageToStdout($storagePath);
-        }, Response::HTTP_OK, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => $contentDisposition,
-            'Content-Length' => (string) $sharedFile->getByteSize(),
-        ]);
-
-        return $response;
-    }
-
-    /**
-     * @brief Advance one public prepared download decrypt tick using an authorized download key.
-     * @param Request $request JSON request with downloadKey and jobId.
-     * @return JsonResponse
-     * @date 2026-07-07
-     * @author Stephane H.
-     */
-    #[Route('/download/public/prepare/tick', name: 'download_public_prepare_tick', methods: ['POST'])]
-    public function tickPublicPrepare(Request $request): JsonResponse
-    {
-        $payload = json_decode($request->getContent(), true);
-        if (!is_array($payload)) {
-            $payload = $request->request->all();
-        }
-
-        $downloadKey = (string) ($payload['downloadKey'] ?? '');
-        $jobId = (string) ($payload['jobId'] ?? '');
-        if ($downloadKey === '' || strlen($downloadKey) < 32 || !preg_match('/^[a-f0-9]{32}$/', $jobId)) {
-            return new JsonResponse(['status' => 'error', 'message' => 'download.verify.invalid_payload'], 400);
-        }
-
-        $ticket = $this->loadAuthorizedPublicFileTicket($downloadKey);
-        if ($ticket === null) {
-            return new JsonResponse(['status' => 'error', 'message' => 'download.verify.challenge_not_found'], 404);
-        }
-
-        $namespace = $this->downloadPrepareService->publicNamespace((int) $ticket['challengeId']);
-
-        try {
-            $progress = $this->downloadPrepareService->tickJob(
-                $namespace,
-                $jobId,
-                DownloadPrepareService::ACTOR_PUBLIC,
-                (int) $ticket['challengeId'],
-            );
-        } catch (\RuntimeException) {
-            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'prepare_tick', 'error', [
+        if ($response->getStatusCode() >= 400) {
+            $this->downloadDiagnosticLogger->log($downloadId, 'stream_end', 'error', [
+                'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
                 'actorType' => 'public',
-                'errorCode' => 'public_tick_failed',
+                'httpStatus' => $response->getStatusCode(),
             ]);
-            return new JsonResponse(['status' => 'error', 'message' => 'download.resource.unreadable'], 400);
+
+            return $response;
         }
 
-        return new JsonResponse([
-            'status' => 'ok',
-            'job_id' => $progress['job_id'],
-            'phase' => $progress['phase'],
-            'bytes' => $progress['bytes'],
-            'plain_written' => $progress['plain_written'],
-            'percent' => $progress['percent'],
-            'complete' => $progress['complete'],
-            'file_name' => $progress['file_name'],
-        ]);
-    }
-
-    /**
-     * @brief Deliver a prepared public download using an authorized download key.
-     * @param Request $request Request carrying query key and job.
-     * @return BinaryFileResponse|Response
-     * @date 2026-07-07
-     * @author Stephane H.
-     */
-    #[Route('/download/public/deliver', name: 'download_public_prepare_deliver', methods: ['GET'])]
-    public function deliverPublicPrepare(Request $request): BinaryFileResponse|Response
-    {
-        $downloadKey = (string) $request->query->get('key', '');
-        $jobId = (string) $request->query->get('job', '');
-        if ($downloadKey === '' || strlen($downloadKey) < 32 || !preg_match('/^[a-f0-9]{32}$/', $jobId)) {
-            return new Response('', Response::HTTP_NOT_FOUND);
+        if (!$hasRange && !$request->isMethod('HEAD')) {
+            $this->downloadAuditService->create($challenge->getEmail(), $ip, $resourceToken);
         }
 
-        $ticket = $this->loadAuthorizedPublicFileTicket($downloadKey);
-        if ($ticket === null) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
-
-        $namespace = $this->downloadPrepareService->publicNamespace((int) $ticket['challengeId']);
-
-        try {
-            $delivery = $this->downloadPrepareService->resolveReadyDelivery(
-                $namespace,
-                $jobId,
-                DownloadPrepareService::ACTOR_PUBLIC,
-                (int) $ticket['challengeId'],
-            );
-        } catch (\RuntimeException) {
-            $this->downloadDiagnosticLogger->log($this->downloadDiagnosticLogger->newDownloadId(), 'deliver_start', 'error', [
-                'actorType' => 'public',
-                'errorCode' => 'public_deliver_not_ready',
-            ]);
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
-
-        $this->publicDownloadTicketCache->deleteItem($this->ticketCacheKey($downloadKey));
-
-        $response = $this->downloadDeliveryService->buildFileResponse(
-            $delivery['plain_path'],
-            $delivery['file_name'],
-            $delivery['mime_type'],
-        );
-        $this->downloadDiagnosticLogger->log((string) ($delivery['download_id'] ?? $this->downloadDiagnosticLogger->newDownloadId()), 'deliver_start', 'ok', [
+        $this->downloadDiagnosticLogger->log($downloadId, 'stream_end', 'ok', [
+            'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
             'actorType' => 'public',
-            'bytesTotal' => (int) ($delivery['bytes'] ?? 0),
-            'httpStatus' => 200,
-        ]);
-        $response->deleteFileAfterSend(true);
-        $this->downloadPrepareService->finalizeDelivery($namespace, $jobId);
-        $this->downloadDiagnosticLogger->log((string) ($delivery['download_id'] ?? $this->downloadDiagnosticLogger->newDownloadId()), 'deliver_end', 'ok', [
-            'actorType' => 'public',
-            'bytesTotal' => (int) ($delivery['bytes'] ?? 0),
-            'httpStatus' => 200,
+            'httpStatus' => $response->getStatusCode(),
+            'bytesTotal' => $byteSize,
+            'bytesSent' => (int) ($response->headers->get('Content-Length') ?? $byteSize),
         ]);
 
         return $response;
@@ -741,72 +628,6 @@ class PublicDownloadController
     private function ticketCacheKey(string $downloadKey): string
     {
         return self::TICKET_CACHE_PREFIX.hash('sha256', $downloadKey);
-    }
-
-    /**
-     * @brief Load and validate a public file download ticket without consuming it.
-     * @param string $downloadKey Authorized download key.
-     * @return array{challengeId: int, publicToken: string}|null
-     * @date 2026-07-07
-     * @author Stephane H.
-     */
-    private function loadAuthorizedPublicFileTicket(string $downloadKey): ?array
-    {
-        $cacheKey = $this->ticketCacheKey($downloadKey);
-        $item = $this->publicDownloadTicketCache->getItem($cacheKey);
-        if (!$item->isHit()) {
-            return null;
-        }
-        $data = $item->get();
-        if (!is_array($data)) {
-            return null;
-        }
-
-        $claimChallengeId = (int) ($data['challengeId'] ?? 0);
-        $publicToken = (string) ($data['publicToken'] ?? '');
-        $resourceKind = (string) ($data['resourceKind'] ?? self::RESOURCE_KIND_FILE);
-        if ($claimChallengeId < 1 || $publicToken === '' || $resourceKind !== self::RESOURCE_KIND_FILE) {
-            return null;
-        }
-
-        $challenge = $this->publicDownloadTotpService->findChallengeById($claimChallengeId);
-        if ($challenge === null || $challenge->getPublicToken() !== $publicToken || !$challenge->isVerified()) {
-            return null;
-        }
-
-        $sharedFile = $this->sharedFileRepository->findOneByPublicToken($publicToken);
-        try {
-            $this->publicLandingAccessService->requireAccessiblePublicSharedFile($sharedFile);
-        } catch (NotFoundHttpException) {
-            return null;
-        }
-
-        return [
-            'challengeId' => $claimChallengeId,
-            'publicToken' => $publicToken,
-        ];
-    }
-
-    /**
-     * @brief Relative path for the public prepare tick endpoint.
-     * @return string
-     * @date 2026-07-07
-     * @author Stephane H.
-     */
-    private function generatePublicTickUrl(): string
-    {
-        return '/download/public/prepare/tick';
-    }
-
-    /**
-     * @brief Relative path for the public prepared deliver endpoint.
-     * @return string
-     * @date 2026-07-07
-     * @author Stephane H.
-     */
-    private function generatePublicDeliverUrl(): string
-    {
-        return '/download/public/deliver';
     }
 
     /**

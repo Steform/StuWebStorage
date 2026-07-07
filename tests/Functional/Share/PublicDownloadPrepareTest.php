@@ -9,19 +9,19 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 /**
- * @brief Contract checks for public prepared download flow.
+ * @brief Contract checks for public streaming download flow.
  * @date 2026-07-07
  * @author Stephane H.
  */
 final class PublicDownloadPrepareTest extends TestCase
 {
     /**
-     * @brief Public prepared download endpoints and flags exist in controller source.
+     * @brief Public download no longer exposes prepare tick/deliver endpoints.
      * @return void
      * @date 2026-07-07
      * @author Stephane H.
      */
-    public function testPublicPrepareFlowContract(): void
+    public function testPublicPrepareRoutesRemoved(): void
     {
         $ref = new ReflectionClass(PublicDownloadController::class);
         $path = $ref->getFileName();
@@ -29,10 +29,9 @@ final class PublicDownloadPrepareTest extends TestCase
         $source = file_get_contents($path);
         self::assertIsString($source);
 
-        self::assertStringContainsString('prepareRequired', $source);
-        self::assertStringContainsString('download_public_prepare_tick', $source);
-        self::assertStringContainsString('download_public_prepare_deliver', $source);
-        self::assertStringContainsString('loadAuthorizedPublicFileTicket', $source);
-        self::assertStringContainsString('deleteItem($this->ticketCacheKey($downloadKey))', $source);
+        self::assertStringContainsString('encryptedStreamDeliveryService->buildEncryptedStreamResponse', $source);
+        self::assertStringContainsString("'prepareRequired' => false", $source);
+        self::assertStringNotContainsString('download_public_prepare_tick', $source);
+        self::assertStringNotContainsString('download_public_prepare_deliver', $source);
     }
 }

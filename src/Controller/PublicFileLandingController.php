@@ -25,6 +25,7 @@ class PublicFileLandingController extends AbstractController
     public function __construct(
         private readonly SharedFileRepository $sharedFileRepository,
         private readonly PublicLandingAccessService $publicLandingAccessService,
+        private readonly int $downloadManagerUiThresholdBytes = 209715200,
     ) {
     }
 
@@ -57,6 +58,7 @@ class PublicFileLandingController extends AbstractController
             'publicToken' => $publicToken,
             'needsSharePassword' => $sharedFile->isPublicPasswordGateActive(),
             'sharePasswordPrefill' => $sharePasswordPrefill !== '' ? rawurldecode($sharePasswordPrefill) : '',
+            'downloadManagerUiThresholdBytes' => $this->downloadManagerUiThresholdBytes,
         ]);
     }
 }

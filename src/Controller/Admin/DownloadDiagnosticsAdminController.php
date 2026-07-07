@@ -75,10 +75,10 @@ final class DownloadDiagnosticsAdminController extends AbstractController
                     $event->getDownloadId(),
                     $event->getPhase(),
                     $event->getStatus(),
-                    '',
-                    '',
-                    '',
-                    '',
+                    $event->getSharedFileId() === null ? '' : (string) $event->getSharedFileId(),
+                    $event->getBytesTotal() === null ? '' : (string) $event->getBytesTotal(),
+                    $event->getBytesSent() === null ? '' : (string) $event->getBytesSent(),
+                    $event->getHttpStatus() === null ? '' : (string) $event->getHttpStatus(),
                     $event->getCreatedAt()->format(\DateTimeInterface::ATOM)
                 );
             }
@@ -94,6 +94,10 @@ final class DownloadDiagnosticsAdminController extends AbstractController
             'downloadId' => $event->getDownloadId(),
             'phase' => $event->getPhase(),
             'status' => $event->getStatus(),
+            'sharedFileId' => $event->getSharedFileId(),
+            'bytesTotal' => $event->getBytesTotal(),
+            'bytesSent' => $event->getBytesSent(),
+            'httpStatus' => $event->getHttpStatus(),
             'createdAt' => $event->getCreatedAt()->format(\DateTimeInterface::ATOM),
         ], $events);
 

@@ -15,7 +15,7 @@ class FileEncryptionService
     private const STORAGE_MAGIC_V2 = 'CVF2';
 
     /** @brief Plaintext chunk size for streaming encrypt (4 MiB). */
-    private const PLAIN_CHUNK_BYTES = 4194304;
+    public const PLAIN_CHUNK_BYTES = 4194304;
 
     /** @brief Byte offset in v2 storage where the first ciphertext segment begins. */
     public const V2_CIPHER_BODY_START_OFFSET = 16;
@@ -99,6 +99,7 @@ class FileEncryptionService
             fwrite($out, "\0\0\0");
             fwrite($out, pack('J', $plainTotal));
 
+            $cipherOffsets = [ftell($out)];
             $remaining = $plainTotal;
             while ($remaining > 0) {
                 $toRead = (int) min(self::PLAIN_CHUNK_BYTES, $remaining);
@@ -113,7 +114,10 @@ class FileEncryptionService
                     throw new RuntimeException('file.encryption.failed');
                 }
                 $this->writeBinarySegment($out, $iv, $cipherText);
+                $cipherOffsets[] = ftell($out);
             }
+            array_pop($cipherOffsets);
+            $this->writeV2SegmentIndexSidecar($outputEncryptedPath, $plainTotal, $cipherOffsets);
         } finally {
             fclose($in);
             fclose($out);
@@ -345,6 +349,101 @@ class FileEncryptionService
     }
 
     /**
+     * @brief Stream a plaintext range using a pre-built segment index.
+     * @param string $storagePath Encrypted storage path.
+     * @param V2SegmentIndex $index Parsed segment index.
+     * @param int $plainStart Inclusive plaintext offset.
+     * @param int $plainLength Number of plaintext bytes.
+     * @param resource $target Writable output handle.
+     * @return int Bytes written.
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
+    public function streamDecryptStorageRangeFromIndex(
+        string $storagePath,
+        V2SegmentIndex $index,
+        int $plainStart,
+        int $plainLength,
+        $target,
+    ): int {
+        if ($storagePath === '' || !is_readable($storagePath)) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+        if ($plainStart < 0 || $plainLength < 1) {
+            throw new RuntimeException('file.encryption.range_invalid');
+        }
+
+        $plainTotal = $index->plainTotal;
+        if ($plainStart >= $plainTotal) {
+            throw new RuntimeException('file.encryption.range_invalid');
+        }
+
+        $plainLength = min($plainLength, $plainTotal - $plainStart);
+        $plainEnd = $plainStart + $plainLength - 1;
+
+        $fh = fopen($storagePath, 'rb');
+        if ($fh === false) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+
+        try {
+            $cipherOffset = $index->resolveCipherOffset($plainStart);
+            if (fseek($fh, $cipherOffset) !== 0) {
+                throw new RuntimeException('file.encryption.storage_unreadable');
+            }
+
+            return $this->decryptV2SegmentRangeFromSeek($fh, $target, $plainTotal, $plainStart, $plainEnd, $index->plainChunkBytes);
+        } finally {
+            fclose($fh);
+        }
+    }
+
+    /**
+     * @brief Scan v2 storage and collect cipher offsets for each segment.
+     * @param string $storagePath Encrypted storage path.
+     * @return array{plain_total: int, cipher_offsets: array<int, int>}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
+    public function scanV2CipherOffsets(string $storagePath): array
+    {
+        if (!$this->isV2StorageFormat($storagePath)) {
+            throw new RuntimeException('file.encryption.range_v2_only');
+        }
+
+        $fh = fopen($storagePath, 'rb');
+        if ($fh === false) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+
+        try {
+            $magic = fread($fh, 4);
+            if ($magic !== self::STORAGE_MAGIC_V2) {
+                throw new RuntimeException('file.encryption.invalid_payload');
+            }
+
+            $plainTotal = $this->readV2PlainTotalFromHandleAfterMagic($fh);
+            $cipherOffsets = [(int) ftell($fh)];
+
+            while (!feof($fh)) {
+                $segment = $this->readV2CipherSegment($fh);
+                if ($segment === null) {
+                    break;
+                }
+                $cipherOffsets[] = (int) ftell($fh);
+            }
+            array_pop($cipherOffsets);
+
+            return [
+                'plain_total' => $plainTotal,
+                'cipher_offsets' => $cipherOffsets,
+            ];
+        } finally {
+            fclose($fh);
+        }
+    }
+
+    /**
      * @brief Copy decrypted plaintext into a binary handle (bounded memory).
      * @param string $storagePath Encrypted file path.
      * @param resource $target Writable binary stream.
@@ -485,6 +584,94 @@ class FileEncryptionService
         }
 
         return $written;
+    }
+
+    /**
+     * @brief Decrypt v2 segments overlapping a range when cipher handle is already seeked.
+     * @param resource $fh Cipher file handle at first relevant segment.
+     * @param resource $target Plain output handle.
+     * @param int $plainTotal Total plaintext size.
+     * @param int $plainStart Inclusive plaintext start.
+     * @param int $plainEnd Inclusive plaintext end.
+     * @param int $plainChunkBytes Plaintext bytes per segment.
+     * @return int Bytes written.
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
+    private function decryptV2SegmentRangeFromSeek($fh, $target, int $plainTotal, int $plainStart, int $plainEnd, int $plainChunkBytes): int
+    {
+        if ($this->encryptionKey === '') {
+            throw new RuntimeException('file.encryption.key_missing');
+        }
+
+        $written = 0;
+        $segmentPlainStart = (int) (floor($plainStart / $plainChunkBytes) * $plainChunkBytes);
+
+        while ($segmentPlainStart < $plainTotal && !feof($fh)) {
+            $segmentPlainLen = (int) min($plainChunkBytes, $plainTotal - $segmentPlainStart);
+            $segmentPlainEnd = $segmentPlainStart + $segmentPlainLen - 1;
+            $overlaps = $segmentPlainStart <= $plainEnd && $segmentPlainEnd >= $plainStart;
+
+            $segment = $this->readV2CipherSegment($fh);
+            if ($segment === null) {
+                break;
+            }
+
+            if ($overlaps) {
+                $plainChunk = openssl_decrypt(
+                    $segment['cipherText'],
+                    self::CIPHER,
+                    $this->encryptionKey,
+                    OPENSSL_RAW_DATA,
+                    $segment['iv'],
+                );
+                if (!is_string($plainChunk)) {
+                    throw new RuntimeException('file.encryption.failed');
+                }
+
+                $sliceStart = max(0, $plainStart - $segmentPlainStart);
+                $sliceEnd = min(strlen($plainChunk) - 1, $plainEnd - $segmentPlainStart);
+                if ($sliceEnd >= $sliceStart) {
+                    $slice = substr($plainChunk, $sliceStart, $sliceEnd - $sliceStart + 1);
+                    fwrite($target, $slice);
+                    $written += strlen($slice);
+                }
+            }
+
+            $segmentPlainStart += $segmentPlainLen;
+            if ($segmentPlainStart > $plainEnd) {
+                break;
+            }
+        }
+
+        return $written;
+    }
+
+    /**
+     * @brief Write v2 segment index sidecar next to encrypted storage.
+     * @param string $outputEncryptedPath Encrypted output path.
+     * @param int $plainTotal Total plaintext bytes.
+     * @param array<int, int> $cipherOffsets Cipher offsets per segment.
+     * @return void
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
+    private function writeV2SegmentIndexSidecar(string $outputEncryptedPath, int $plainTotal, array $cipherOffsets): void
+    {
+        $payload = [
+            'version' => V2SegmentIndexService::INDEX_VERSION,
+            'plain_chunk_bytes' => self::PLAIN_CHUNK_BYTES,
+            'plain_total' => $plainTotal,
+            'cipher_offsets' => array_values($cipherOffsets),
+        ];
+
+        $target = $outputEncryptedPath.V2SegmentIndexService::INDEX_EXTENSION;
+        $tmp = $target.'.tmp';
+        file_put_contents($tmp, json_encode($payload, JSON_THROW_ON_ERROR));
+        if (!rename($tmp, $target)) {
+            @unlink($tmp);
+            throw new RuntimeException('file.encryption.index_write_failed');
+        }
     }
 
     /**

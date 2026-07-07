@@ -14,6 +14,7 @@
     data-endpoint-verify="{{ path('download_public_verify')|e('html_attr') }}"
     data-endpoint-verify-password="{{ path('download_public_verify_share_password')|e('html_attr') }}"
     data-endpoint-file="{{ path('download_public_file')|e('html_attr') }}"
+    data-download-manager-threshold-bytes="{{ downloadManagerUiThresholdBytes }}"
     data-share-password-prefill="{{ sharePasswordPrefill|default('')|e('html_attr') }}"
     data-msg-api-fallback="{{ 'files.public_landing.api_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
     data-api-msgs="{{ {
@@ -84,6 +85,13 @@
                         <div class="col-12 d-flex flex-wrap gap-2">
                             <button type="button" class="btn btn-primary" id="public-landing-verify" data-public-landing-verify disabled>{{ 'files.public_landing.verify_submit'|trans({}, 'messages', currentLocale) }}</button>
                             <a href="#" class="btn btn-success d-none" id="public-landing-download" data-public-landing-download download>{{ 'files.public_landing.download_file'|trans({}, 'messages', currentLocale) }}</a>
+                            <button type="button" class="btn btn-outline-secondary d-none" id="public-landing-download-cancel">{{ 'files.download_progress.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                        </div>
+                        <div class="col-12 d-none" id="public-landing-download-progress-wrap">
+                            <div class="progress mb-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                <div id="public-landing-download-progress-bar" class="progress-bar" style="width: 0%"></div>
+                            </div>
+                            <p class="small text-muted mb-0" id="public-landing-download-progress-count" aria-live="polite"></p>
                         </div>
                         <div class="col-12 d-none border-top pt-3 mt-2" id="public-landing-share-password-section">
                             <label for="public-landing-share-password" class="form-label">{{ 'files.public_landing.share_password_label'|trans({}, 'messages', currentLocale) }}</label>
@@ -99,5 +107,6 @@
 </div>
 {% endblock %}
 {% block extra_scripts %}
-    <script src="{{ asset('js/public-file-landing.js') }}?v=20260504-share-pwd" defer></script>
+    <script src="{{ asset('js/files-download-manager.js') }}?v=20260707" defer></script>
+    <script src="{{ asset('js/public-file-landing.js') }}?v=20260707" defer></script>
 {% endblock %}

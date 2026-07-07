@@ -382,6 +382,11 @@ files:
       limits_admin_tier: 'Limites elevees (compte administrateur).'
       phase_pending: 'Dechiffrement de l''archive…'
       phase_scanning: 'Analyse de l''archive…'
+  download_progress:
+    page_title: 'Telechargement en cours'
+    hint: 'Le fichier est telecharge par morceaux avec reprise automatique en cas d''interruption.'
+    cancel: Annuler
+    error_generic: 'Le telechargement a echoue. Reessayez.'
   download_prepare:
     page_title: 'Preparation du telechargement'
     modal:

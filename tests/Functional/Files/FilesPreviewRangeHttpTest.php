@@ -43,10 +43,8 @@ final class FilesPreviewRangeHttpTest extends TestCase
     {
         $source = $this->readSource('src/Controller/FilesController.php');
 
-        self::assertStringContainsString('InvalidByteRangeException', $source);
+        self::assertStringContainsString('encryptedStreamDeliveryService->buildEncryptedStreamResponse', $source);
         self::assertStringContainsString('if (!$hasRangeHeader)', $source);
-        self::assertStringContainsString('isV2StorageFormat($storagePath)', $source);
-        self::assertStringContainsString("'Content-Range', \$byteRange->contentRangeHeader()", $source);
     }
 
     /**
