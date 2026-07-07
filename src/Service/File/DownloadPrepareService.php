@@ -567,11 +567,36 @@ final class DownloadPrepareService
      */
     private function assertDiskSpaceForPlainBytes(int $plainBytes): void
     {
-        $probe = $this->prepareRootDir();
+        $probe = $this->resolveDiskProbePath();
         $free = @disk_free_space($probe);
-        if ($free === false || $free < ($plainBytes * 2)) {
+        $required = $plainBytes * 2;
+        if ($free === false || $free < $required) {
             throw new \RuntimeException('download.prepare.insufficient_disk');
         }
+    }
+
+    /**
+     * @brief Resolve an existing directory on the storage filesystem for free-space probes.
+     * @return string
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
+    private function resolveDiskProbePath(): string
+    {
+        $candidates = [
+            $this->prepareRootDir(),
+            $this->projectDir.'/var/shared',
+            $this->projectDir.'/var',
+            $this->projectDir,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_dir($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $this->projectDir;
     }
 
     /**
