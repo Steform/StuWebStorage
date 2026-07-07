@@ -24,6 +24,7 @@ parameters:
   app.download_prepare_tick_plain_bytes: '%env(int:APP_DOWNLOAD_PREPARE_TICK_PLAIN_BYTES)%'
   app.download_prepare_session_ttl_seconds: '%env(int:APP_DOWNLOAD_PREPARE_SESSION_TTL_SECONDS)%'
   app.download_prepare_max_concurrent_jobs: '%env(int:APP_DOWNLOAD_PREPARE_MAX_CONCURRENT_JOBS)%'
+  app.trust_x_sendfile_type_header: false
   app.version: ''
   app.site_title: 'StuWebStorage'
   app.antibot_threshold: 50
@@ -167,7 +168,7 @@ services:
 
   App\Service\File\DownloadDeliveryService:
     arguments:
-      $trustXSendfileTypeHeader: '%env(bool:default:default:SYMFONY_TRUST_X_SENDFILE_TYPE_HEADER)%'
+      $trustXSendfileTypeHeader: '%app.trust_x_sendfile_type_header%'
 
   App\Controller\PublicDownloadController:
     arguments:
