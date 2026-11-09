@@ -1,0 +1,45 @@
+---
+description: Keep crypto progress, ETA, and background-task UX in sync when encrypt/decrypt evolves
+globs: src/Service/File/FileEncryptionService.php,src/Service/File/ChunkedUploadService.php,src/Controller/FilesController.php,public/js/files-space.js,public/js/transfer-eta.js,templates/files/**/*.twig,templates/components/_storage_nav.html.twig,translations/messages.*.yaml
+alwaysApply: false
+---
+
+# Crypto progress, ETA, background tasks
+
+Epic: `docs/epics/EPIC-ENC-progression-chiffrement.md`  
+Estimator: `public/js/transfer-eta.js` (also `transfer-eta.mdc`)
+
+## Copy
+
+- Post-upload phase label is **Chiffrement / Encrypting**, never generic “Traitement / Processing”.
+
+## Progress + time
+
+- Expose real `plainDone` / `plainTotal` during encrypt; feed **`TransferEta`** for débit/s + ETA.
+- Reset estimator when the encryption phase starts.
+
+## Dismiss ≠ cancel (UX)
+
+- Closing the modal during encryption must be **intercepted**: offer **Continue in background** (default) or **Cancel**.
+- Continue → job keeps running server-side; task appears in the **nav tasks** dropdown (near Accueil).
+- Cancel → stop between segments + **cleanup** useless `.part` / partial `.dat` / job meta; no `SharedFile`.
+- Each task has a stable **`taskId`**; click reopens the related modal.
+
+## When evolving encryption OR decryption
+
+If you change encrypt/decrypt APIs, segment size, finalize, long crypto UI, task center, or cancel:
+
+1. Keep progress ticks + `TransferEta` wiring correct.
+2. Keep dismiss/background/cancel semantics consistent.
+3. **Disk**: refuse **before upload** if free space cannot cover the encrypt peak; mid-job failure → `failed` + cleanup, no ghost `SharedFile`.
+4. **Quota**: count **only the final encrypted file**, not the temporary `.part`.
+5. Update i18n and contract/smoke tests (incl. large-volume smokes when behavior changes).
+
+## Quick check
+
+- [ ] Label = Chiffrement
+- [ ] ETA/speed via `TransferEta`
+- [ ] Background continue vs cancel both work
+- [ ] Task center shows running work; taskId reopens modal
+- [ ] Disk preflight before chunks; quota = final cipher only
+- [ ] Mid-job disk/quota race → failed + cleanup

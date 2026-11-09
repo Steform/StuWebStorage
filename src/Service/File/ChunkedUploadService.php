@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Service\File;
 
 use App\Entity\Folder;
-use App\Entity\SharedFile;
+use App\Service\Admin\ServerDiskSpaceService;
 use App\Service\Share\FolderTreeService;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
@@ -24,11 +23,9 @@ final class ChunkedUploadService
     private const SESSION_TTL_SECONDS = 86400;
 
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
         private readonly FolderTreeService $folderTreeService,
-        private readonly FileEncryptionService $fileEncryptionService,
         private readonly UserStorageQuotaService $userStorageQuotaService,
-        private readonly FolderPathMaterializerService $folderPathMaterializerService,
+        private readonly ServerDiskSpaceService $serverDiskSpaceService,
         private readonly string $projectDir,
         private readonly int $chunkBytesDefault,
     ) {
@@ -58,6 +55,15 @@ final class ChunkedUploadService
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED) {
                 throw new \RuntimeException('chunk_upload.quota_exceeded', 0, $e);
+            }
+
+            throw $e;
+        }
+        try {
+            $this->serverDiskSpaceService->assertFreeBytesForUploadEncryptPeak($expectedBytes);
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === ServerDiskSpaceService::EXCEPTION_DISK_FULL) {
+                throw new \RuntimeException('chunk_upload.disk_full', 0, $e);
             }
 
             throw $e;
@@ -98,6 +104,7 @@ final class ChunkedUploadService
             @unlink($partPath);
             throw new \RuntimeException('chunk_upload.meta_write_failed');
         }
+
 
         return [
             'upload_id' => $uploadId,
@@ -160,116 +167,12 @@ final class ChunkedUploadService
         $meta['next_chunk_index'] = $expectedIndex + 1;
         $this->saveMeta($ownerUserId, $uploadId, $meta);
 
+        $complete = $received >= $expectedTotal && $expectedTotal >= 0;
+
         return [
             'received_bytes' => $received,
-            'complete' => $received >= $expectedTotal && $expectedTotal >= 0,
+            'complete' => $complete,
         ];
-    }
-
-    /**
-     * @brief Encrypt assembled plaintext to storage and persist SharedFile.
-     * @param int $effectiveOwnerId Owner namespace for session paths and SharedFile row (must match createSession/appendChunk).
-     * @param string $uploadId Session id.
-     * @param int $maxUploadBytes Effective max plaintext bytes.
-     * @return SharedFile
-     * @date 2026-05-08
-     * @author Stephane H.
-     */
-    public function finalizeAndPersist(int $effectiveOwnerId, string $uploadId, int $maxUploadBytes): SharedFile
-    {
-        $ownerId = $effectiveOwnerId;
-        $meta = $this->loadMeta($ownerId, $uploadId);
-        if ($meta === null) {
-            throw new \RuntimeException('chunk_upload.session_not_found');
-        }
-
-        $expectedTotal = (int) ($meta['expected_bytes'] ?? 0);
-        $received = (int) ($meta['received_bytes'] ?? 0);
-        if ($received !== $expectedTotal || $expectedTotal < 1) {
-            throw new \RuntimeException('chunk_upload.incomplete');
-        }
-
-        if ($expectedTotal > $maxUploadBytes) {
-            throw new \RuntimeException('chunk_upload.too_large');
-        }
-
-        try {
-            $this->userStorageQuotaService->assertOwnerCanStoreBytes($ownerId, $expectedTotal);
-        } catch (\RuntimeException $e) {
-            if ($e->getMessage() === UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED) {
-                throw new \RuntimeException('chunk_upload.quota_exceeded', 0, $e);
-            }
-
-            throw $e;
-        }
-
-        $displayName = trim((string) ($meta['display_name'] ?? ''));
-        if ($displayName === '') {
-            $displayName = 'file';
-        }
-
-        $targetFolderId = (int) ($meta['folder_retain_id'] ?? 0);
-        $targetFolder = $this->folderTreeService->resolveCurrentFolder($ownerId, $targetFolderId > 0 ? $targetFolderId : null);
-        if ($targetFolderId > 0 && !$targetFolder instanceof Folder) {
-            throw new \RuntimeException('chunk_upload.folder_invalid');
-        }
-
-        $relativePath = trim((string) ($meta['relative_path'] ?? ''));
-        if ($relativePath !== '') {
-            $split = $this->folderPathMaterializerService->splitRelativeFilePath($relativePath);
-            $displayName = $split['file_name'];
-            $folderResult = $this->folderPathMaterializerService->ensureFolderPathFromRelative(
-                $ownerId,
-                $targetFolder,
-                $split['folder_path'],
-                FolderPathMaterializerService::CONFLICT_ABORT
-            );
-            if ($folderResult === FolderPathMaterializerService::CONFLICT_ABORT) {
-                throw new \RuntimeException('chunk_upload.path_invalid');
-            }
-            /** @var Folder|null $targetFolder */
-            $targetFolder = $folderResult;
-        }
-
-        if ($this->folderPathMaterializerService->hasFileNameConflict($ownerId, $targetFolder, $displayName)) {
-            throw new \RuntimeException('chunk_upload.name_conflict');
-        }
-
-        $partPath = $this->partPath($ownerId, $uploadId);
-        if (!is_readable($partPath)) {
-            throw new \RuntimeException('chunk_upload.part_missing');
-        }
-
-        $relativeDir = \sprintf('var/shared/%d', $ownerId);
-        $absoluteDir = $this->projectDir.'/'.$relativeDir;
-        $this->ensureWritableDirectory($absoluteDir);
-
-        $storageName = bin2hex(random_bytes(16)).'.dat';
-        $absolutePath = $absoluteDir.'/'.$storageName;
-
-        $encrypted = $this->fileEncryptionService->encryptPlainFileToV2Storage($partPath, $absolutePath);
-        $plainSize = (int) $encrypted['plain_total'];
-
-        @unlink($partPath);
-        @unlink($this->metaPath($ownerId, $uploadId));
-
-        $sharedFile = new SharedFile(
-            $ownerId,
-            $absolutePath,
-            'private',
-            bin2hex(random_bytes(16)),
-            $displayName,
-            $plainSize,
-            null,
-            null
-        );
-        $sharedFile->applyContentFingerprints($encrypted);
-        $sharedFile->setFolder($targetFolder);
-
-        $this->entityManager->persist($sharedFile);
-        $this->entityManager->flush();
-
-        return $sharedFile;
     }
 
     /**
@@ -319,6 +222,32 @@ final class ChunkedUploadService
                 continue;
             }
         }
+    }
+
+    /**
+     * @brief Public accessor for chunk session meta (encrypt job bootstrap).
+     * @param int $ownerUserId Owner id.
+     * @param string $uploadId Upload session id.
+     * @return array<string, mixed>|null
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function loadSessionMeta(int $ownerUserId, string $uploadId): ?array
+    {
+        return $this->loadMeta($ownerUserId, $uploadId);
+    }
+
+    /**
+     * @brief Absolute path of the assembled plaintext part file.
+     * @param int $ownerUserId Owner id.
+     * @param string $uploadId Upload session id.
+     * @return string
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function resolvePartPath(int $ownerUserId, string $uploadId): string
+    {
+        return $this->partPath($ownerUserId, $uploadId);
     }
 
     /**

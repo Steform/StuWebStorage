@@ -75,7 +75,7 @@ final class AdminTargetOwnerContractTest extends TestCase
         self::assertStringContainsString("files.flash.target_folder_invalid", $src);
         self::assertStringContainsString('isActiveUserWithShareOrAdminRole', $src);
         self::assertStringContainsString("return ['ownerId' => \$actorId];", $src);
-        self::assertStringContainsString('finalizeAndPersist($ownerId, $uploadId, $maxUploadBytes)', $src);
+        self::assertStringContainsString('createFromUploadSession($ownerId, $uploadId, $maxUploadBytes)', $src);
         self::assertStringContainsString('function listingRedirectRouteName(', $src);
     }
 }

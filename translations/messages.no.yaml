@@ -321,7 +321,7 @@ files:
     submit: 'Last opp'
     bytes_hint: 'Maksimal klartekststorrelse: %formatted_size%.'
     progress_sending: Sender
-    progress_processing: 'Behandles pa serveren'
+    progress_processing: 'Kryptering pa serveren'
     progress_bar_aria: 'Fremdrift for filopplasting'
     xhr_network_error: 'Kunne ikke na serveren. Sjekk tilkoblingen og proev igjen.'
     selected_byte_size_label: 'Storrelse:'
@@ -335,13 +335,20 @@ files:
       filter_system_hint: 'Ekskluderer node_modules, .git, __pycache__, .DS_Store og Thumbs.db.'
       global_label: 'Fil %current% av %total%'
       global_bytes: '%done% / %total%'
+      eta_calculating: 'Beregner gjenstående tid…'
+      eta_remaining: '~%duration% igjen'
+      eta_speed: '%speed%/s'
+      eta_line: '%speed% · %eta%'
+      eta_unit_s: s
+      eta_unit_m: min
+      eta_unit_h: t
       tree_detected: 'Mappestruktur oppdaget (%root%)'
       too_many_files: 'For mange filer (%count%). Reduser utvalget.'
       confirm_many: 'Last opp %count% filer (%size%)?'
       status:
         pending: 'Venter'
         uploading: 'Sender…'
-        processing: 'Behandler…'
+        processing: 'Krypterer…'
         done: 'Ferdig'
         error: 'Feil'
         cancelled: 'Avbrutt'

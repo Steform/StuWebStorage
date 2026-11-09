@@ -328,7 +328,7 @@ files:
     submit: Upload
     bytes_hint: 'Maximum encrypted payload size: %formatted_size%.'
     progress_sending: Sending
-    progress_processing: 'Processing on the server'
+    progress_processing: 'Encrypting on the server'
     progress_bar_aria: 'File upload progress'
     xhr_network_error: 'The server could not be reached. Check your connection and try again.'
     selected_byte_size_label: 'Size:'
@@ -342,13 +342,20 @@ files:
       filter_system_hint: 'Excludes node_modules, .git, __pycache__, .DS_Store, and Thumbs.db.'
       global_label: 'File %current% of %total%'
       global_bytes: '%done% / %total%'
+      eta_calculating: 'Estimating time left…'
+      eta_remaining: '~%duration% left'
+      eta_speed: '%speed%/s'
+      eta_line: '%speed% · %eta%'
+      eta_unit_s: s
+      eta_unit_m: min
+      eta_unit_h: h
       tree_detected: 'Folder tree detected (%root%)'
       too_many_files: 'Too many files (%count%). Reduce the selection.'
       confirm_many: 'Upload %count% files (%size%)?'
       status:
         pending: Pending
         uploading: Uploading…
-        processing: Processing…
+        processing: Encrypting…
         done: Done
         error: Failed
         cancelled: Cancelled
@@ -394,10 +401,40 @@ files:
     resume_opfs_info: 'Resume will use the browser temporary file (no action required).'
     checkpoint_invalid: 'The file changed on the server. The download will start from the beginning.'
     parallel_tab: 'Another tab is already downloading this file. Close it or wait for completion.'
+    eta_calculating: 'Estimating time left…'
+    eta_remaining: '~%duration% left'
+    eta_speed: '%speed%/s'
+    eta_line: '%speed% · %eta%'
+    eta_unit_s: s
+    eta_unit_m: min
+    eta_unit_h: h
   archive:
     progress_title: 'Preparing archive'
     progress_hint: 'Computing fingerprints, then downloading the ZIP with the browser native resume.'
     create_failed: 'Unable to prepare the ZIP archive.'
+    eta_calculating: 'Estimating time left (preparation)…'
+    eta_remaining: '~%duration% left (preparation)'
+    eta_speed: '%speed%/s'
+    eta_line: '%speed% · %eta%'
+    eta_unit_s: s
+    eta_unit_m: min
+    eta_unit_h: h
+  transfer:
+    eta_note_native: 'Native browser downloads do not expose progress to JavaScript; in-page ETA applies to uploads, the managed download page, and archive preparation.'
+  tasks:
+    nav_label: Tasks
+    nav_aria: 'Background tasks'
+    empty: 'No tasks in progress'
+    open: Open
+    cancel: Cancel
+    dismiss_title: 'Encryption in progress'
+    dismiss_body: 'Closing this window does not stop encryption automatically. Continue in the background or cancel?'
+    dismiss_stay: 'Stay here'
+    dismiss_continue: 'Continue in background'
+    dismiss_cancel: 'Cancel encryption'
+    toast_done: 'Encryption finished: %name%'
+    toast_failed: 'Encryption failed: %name%'
+    type_upload_encrypt: Encryption
   download_prepare:
     page_title: 'Download preparation'
     modal:
@@ -706,6 +743,7 @@ files:
     upload_too_large: 'File exceeds the maximum allowed size.'
     upload_chunk_too_large: 'Upload chunk exceeds the server PHP limit (raise upload_max_filesize and post_max_size).'
     quota_exceeded: 'Storage quota reached for this user.'
+    disk_full: 'Not enough free disk space to upload and encrypt this file.'
     public_not_allowed: 'Your roles do not allow public visibility.'
     storage_failed: 'Could not store the encrypted file.'
     uploaded: 'File uploaded successfully.'

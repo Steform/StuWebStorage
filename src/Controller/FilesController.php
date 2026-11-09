@@ -26,6 +26,7 @@ use App\Service\Download\FileDownloadResource;
 use App\Service\Download\RangeStreamResponder;
 use App\Service\File\ChunkedUploadService;
 use App\Service\File\EncryptedStreamDeliveryService;
+use App\Service\File\UploadEncryptJobService;
 use App\Service\File\FilesQueryScopeResolver;
 use App\Service\File\FilesUiPreferenceService;
 use App\Service\File\UserFilesPaneBuilderService;
@@ -165,6 +166,7 @@ class FilesController extends AbstractController
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
         private readonly BinaryByteFormatter $binaryByteFormatter,
         private readonly ChunkedUploadService $chunkedUploadService,
+        private readonly UploadEncryptJobService $uploadEncryptJobService,
         private readonly ZipExtractService $zipExtractService,
         private readonly ZipExtractLimitsResolver $zipExtractLimitsResolver,
         private readonly UserStorageQuotaService $userStorageQuotaService,
@@ -1553,11 +1555,11 @@ class FilesController extends AbstractController
     }
 
     /**
-     * @brief Finalize chunked upload: encrypt to storage and create SharedFile row.
+     * @brief Start background encryption job after chunk assembly is complete.
      * @param Request $request HTTP request (upload_id).
      * @param TranslatorInterface $translator Translator for JSON errors.
      * @return JsonResponse|Response
-     * @date 2026-05-03
+     * @date 2026-11-09
      * @author Stephane H.
      */
     #[Route('/files/upload/finalize', name: 'files_upload_finalize', methods: ['POST'])]
@@ -1583,12 +1585,129 @@ class FilesController extends AbstractController
         $maxUploadBytes = $this->resolveAppMaxUploadBytes();
 
         try {
-            $sharedFile = $this->chunkedUploadService->finalizeAndPersist($ownerId, $uploadId, $maxUploadBytes);
+            $task = $this->uploadEncryptJobService->createFromUploadSession($ownerId, $uploadId, $maxUploadBytes);
+            // First tick so tiny files finish without an extra round-trip.
+            $task = $this->uploadEncryptJobService->tick($ownerId, (string) $task['taskId']);
         } catch (\RuntimeException $e) {
             return $this->chunkUploadJsonOrRedirect($request, $translator, $this->mapChunkExceptionToFlashKey($e), 400);
         }
 
-        return $this->uploadSuccessJsonOrRedirect($request, $translator);
+
+        return new JsonResponse(['status' => 'ok', 'task' => $task]);
+    }
+
+    /**
+     * @brief Advance an upload-encrypt background job.
+     * @param Request $request HTTP request.
+     * @param string $taskId Task identifier.
+     * @param TranslatorInterface $translator Translator.
+     * @return JsonResponse
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    #[Route('/files/upload/encrypt/{taskId}/tick', name: 'files_upload_encrypt_tick', methods: ['POST'], requirements: ['taskId' => '[a-f0-9]{32}'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function uploadEncryptTick(Request $request, string $taskId, TranslatorInterface $translator): JsonResponse
+    {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            return new JsonResponse(['status' => 'error', 'message' => $translator->trans('files.flash.csrf_invalid')], 403);
+        }
+        /** @var User $user */
+        $user = $this->getUser();
+        $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
+        if (isset($resolved['error'])) {
+            return new JsonResponse(['status' => 'error', 'message_key' => $resolved['error']], 400);
+        }
+        try {
+            $task = $this->uploadEncryptJobService->tick((int) $resolved['ownerId'], $taskId);
+        } catch (\RuntimeException $e) {
+            return new JsonResponse(['status' => 'error', 'message_key' => $this->mapChunkExceptionToFlashKey($e)], 400);
+        }
+
+        return new JsonResponse(['status' => 'ok', 'task' => $task]);
+    }
+
+    /**
+     * @brief Cancel an upload-encrypt job and clean artifacts.
+     * @param Request $request HTTP request.
+     * @param string $taskId Task identifier.
+     * @param TranslatorInterface $translator Translator.
+     * @return JsonResponse
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    #[Route('/files/upload/encrypt/{taskId}/cancel', name: 'files_upload_encrypt_cancel', methods: ['POST'], requirements: ['taskId' => '[a-f0-9]{32}'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function uploadEncryptCancel(Request $request, string $taskId, TranslatorInterface $translator): JsonResponse
+    {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            return new JsonResponse(['status' => 'error', 'message' => $translator->trans('files.flash.csrf_invalid')], 403);
+        }
+        /** @var User $user */
+        $user = $this->getUser();
+        $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
+        if (isset($resolved['error'])) {
+            return new JsonResponse(['status' => 'error', 'message_key' => $resolved['error']], 400);
+        }
+        try {
+            $task = $this->uploadEncryptJobService->cancel((int) $resolved['ownerId'], $taskId);
+        } catch (\RuntimeException $e) {
+            return new JsonResponse(['status' => 'error', 'message_key' => $this->mapChunkExceptionToFlashKey($e)], 400);
+        }
+
+        return new JsonResponse(['status' => 'ok', 'task' => $task]);
+    }
+
+    /**
+     * @brief List background tasks for the effective owner (nav task center).
+     * @param Request $request HTTP request.
+     * @return JsonResponse
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    #[Route('/files/tasks', name: 'files_tasks_list', methods: ['GET'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function tasksList(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+        $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
+        if (isset($resolved['error'])) {
+            return new JsonResponse(['status' => 'error', 'message_key' => $resolved['error']], 400);
+        }
+        $tasks = $this->uploadEncryptJobService->listForOwner((int) $resolved['ownerId']);
+
+        return new JsonResponse(['status' => 'ok', 'tasks' => $tasks]);
+    }
+
+    /**
+     * @brief Acknowledge terminal task toasts.
+     * @param Request $request HTTP request (task_ids[]).
+     * @param TranslatorInterface $translator Translator.
+     * @return JsonResponse
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    #[Route('/files/tasks/ack', name: 'files_tasks_ack', methods: ['POST'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function tasksAck(Request $request, TranslatorInterface $translator): JsonResponse
+    {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            return new JsonResponse(['status' => 'error', 'message' => $translator->trans('files.flash.csrf_invalid')], 403);
+        }
+        /** @var User $user */
+        $user = $this->getUser();
+        $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
+        if (isset($resolved['error'])) {
+            return new JsonResponse(['status' => 'error', 'message_key' => $resolved['error']], 400);
+        }
+        $ids = $request->request->all('task_ids');
+        if (!\is_array($ids)) {
+            $ids = [];
+        }
+        $this->uploadEncryptJobService->acknowledge((int) $resolved['ownerId'], array_map('strval', $ids));
+
+        return new JsonResponse(['status' => 'ok']);
     }
 
     /**
@@ -1830,11 +1949,13 @@ class FilesController extends AbstractController
             'chunk_upload.folder_invalid' => 'files.flash.target_folder_invalid',
             'chunk_upload.size_overflow', 'chunk_upload.too_large' => 'files.flash.upload_too_large',
             'chunk_upload.quota_exceeded', 'storage_quota.exceeded' => 'files.flash.quota_exceeded',
+            'chunk_upload.disk_full', 'storage_disk.full' => 'files.flash.disk_full',
             'chunk_upload.incomplete' => 'files.flash.upload_invalid',
             'chunk_upload.name_conflict' => 'files.flash.upload_name_conflict',
             'chunk_upload.path_invalid' => 'files.flash.upload_path_invalid',
             'chunk_upload.part_missing' => 'files.flash.upload_invalid',
-            'chunk_upload.storage_failed', 'chunk_upload.append_failed', 'chunk_upload.part_init_failed', 'chunk_upload.meta_write_failed', 'chunk_upload.mkdir_failed' => 'files.flash.storage_failed',
+            'upload_encrypt.not_found' => 'files.flash.upload_invalid',
+            'chunk_upload.storage_failed', 'chunk_upload.append_failed', 'chunk_upload.part_init_failed', 'chunk_upload.meta_write_failed', 'chunk_upload.mkdir_failed', 'upload_encrypt.mkdir_failed' => 'files.flash.storage_failed',
             default => 'files.flash.upload_invalid',
         };
     }

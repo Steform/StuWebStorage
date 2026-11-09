@@ -173,6 +173,10 @@ services:
       $chunkBytesDefault: '%app.upload_chunk_bytes%'
       $projectDir: '%kernel.project_dir%'
 
+  App\Service\File\UploadEncryptJobService:
+    arguments:
+      $projectDir: '%kernel.project_dir%'
+
   App\Service\Download\DownloadGrantService:
     arguments:
       $appSecret: '%kernel.secret%'

@@ -9,6 +9,10 @@
      * @return {void}
      * @date 2026-11-02
      * @author Stephane H.
+     *
+     * Note (EPIC-ETA): native downloads do not expose loaded/total to page JS,
+     * so in-page ETA is impossible here. ETA applies to uploads, managed
+     * download progress page, and archive preparation only.
      */
     function startNativeDownload(downloadUrl, grant, fileName) {
         var url = String(downloadUrl || '');

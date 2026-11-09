@@ -321,7 +321,7 @@ files:
     submit: Įkelti
     bytes_hint: 'Didžiausias leistinas švarus dydis: %formatted_size%.'
     progress_sending: Siunčiama
-    progress_processing: 'Apdorojama serveryje'
+    progress_processing: 'Sifravimas serveryje'
     progress_bar_aria: 'Failo įkėlimo eiga'
     xhr_network_error: 'Serveris nepasiekiamas. Patikrinkite ryšį ir bandykite dar kartą.'
     selected_byte_size_label: 'Dydis:'
@@ -335,13 +335,20 @@ files:
       filter_system_hint: 'Neįtraukia node_modules, .git, __pycache__, .DS_Store ir Thumbs.db.'
       global_label: 'Failas %current% iš %total%'
       global_bytes: '%done% / %total%'
+      eta_calculating: 'Skaičiuojamas likęs laikas…'
+      eta_remaining: '~%duration% liko'
+      eta_speed: '%speed%/s'
+      eta_line: '%speed% · %eta%'
+      eta_unit_s: s
+      eta_unit_m: min
+      eta_unit_h: h
       tree_detected: 'Aptikta aplankų struktūra (%root%)'
       too_many_files: 'Per daug failų (%count%). Sumažinkite pasirinkimą.'
       confirm_many: 'Įkelti %count% failus (%size%)?'
       status:
         pending: 'Laukiama'
         uploading: 'Siunčiama…'
-        processing: 'Apdorojama…'
+        processing: 'Sifruojama…'
         done: 'Baigta'
         error: 'Klaida'
         cancelled: 'Atšaukta'

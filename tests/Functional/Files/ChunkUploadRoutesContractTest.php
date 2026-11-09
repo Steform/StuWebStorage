@@ -59,12 +59,21 @@ final class ChunkUploadRoutesContractTest extends TestCase
         self::assertStringContainsString('createSession(', $src);
         self::assertStringContainsString("'relative_path'", $src);
         self::assertStringContainsString("'chunk_upload.path_invalid' => 'files.flash.upload_path_invalid'", $src);
-        self::assertStringContainsString('finalizeAndPersist($ownerId, $uploadId, $maxUploadBytes)', $src);
+        self::assertStringContainsString('createFromUploadSession($ownerId, $uploadId, $maxUploadBytes)', $src);
+        self::assertStringContainsString("#[Route('/files/upload/encrypt/{taskId}/tick'", $src);
+        self::assertStringContainsString("#[Route('/files/upload/encrypt/{taskId}/cancel'", $src);
         self::assertStringContainsString('resolveUploadOrFolderTargetOwnerId', $src);
 
         $chunked = $this->readChunkedUploadService();
-        self::assertStringContainsString('folderPathMaterializerService', $chunked);
         self::assertStringContainsString("'relative_path'", $chunked);
-        self::assertStringContainsString('chunk_upload.path_invalid', $chunked);
+        self::assertStringContainsString('loadSessionMeta', $chunked);
+        self::assertStringContainsString('resolvePartPath', $chunked);
+        self::assertStringNotContainsString('finalizeAndPersist', $chunked);
+
+        $encryptJob = is_readable(dirname(__DIR__, 3).'/src/Service/File/UploadEncryptJobService.php')
+            ? (string) file_get_contents(dirname(__DIR__, 3).'/src/Service/File/UploadEncryptJobService.php')
+            : '';
+        self::assertStringContainsString('folderPathMaterializerService', $encryptJob);
+        self::assertStringContainsString('chunk_upload.path_invalid', $encryptJob);
     }
 }

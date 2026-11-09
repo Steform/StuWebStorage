@@ -37,6 +37,10 @@
 <script src="{{ asset('js/bug-report-tracker.js') }}" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 <script src="{{ asset('js/bug-report-screenshot.js') }}" defer></script>
+{% if app.user and is_granted('ROLE_SHARE_SEND') %}
+<script src="{{ asset('js/files-upload-encrypt.js') }}?v=20261109b" defer></script>
+<script src="{{ asset('js/files-background-tasks.js') }}?v=20261109b" defer></script>
+{% endif %}
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

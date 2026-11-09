@@ -14,6 +14,7 @@
     var fileBytes = parseInt(root.getAttribute('data-file-bytes') || '0', 10);
     var bar = document.getElementById('files-download-progress-bar');
     var count = document.getElementById('files-download-progress-count');
+    var etaEl = document.getElementById('files-download-progress-eta');
     var errorEl = document.getElementById('files-download-progress-error');
     var resumePrompt = document.getElementById('files-download-resume-prompt');
     var resumeMessage = document.getElementById('files-download-resume-message');
@@ -22,11 +23,47 @@
     var restartBtn = document.getElementById('files-download-restart-btn');
     var abortController = null;
     var pendingCheckpoint = null;
+    var downloadEta = window.TransferEta && typeof window.TransferEta.createEstimator === 'function'
+        ? window.TransferEta.createEstimator()
+        : null;
 
+    /**
+     * @brief Build ETA message templates from page datasets.
+     * @return {object}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function etaTemplates() {
+        return {
+            calculating: root.getAttribute('data-msg-eta-calculating') || '',
+            remaining: root.getAttribute('data-msg-eta-remaining') || '',
+            speed: root.getAttribute('data-msg-eta-speed') || '',
+            line: root.getAttribute('data-msg-eta-line') || '',
+            units: {
+                s: root.getAttribute('data-msg-eta-unit-s') || 's',
+                m: root.getAttribute('data-msg-eta-unit-m') || 'min',
+                h: root.getAttribute('data-msg-eta-unit-h') || 'h'
+            }
+        };
+    }
+
+    /**
+     * @brief Job key for checkpoint storage.
+     * @return {string}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function jobKey() {
         return window.FilesDownloadCheckpoint.buildJobKey('auth', fileId, fileBytes);
     }
 
+    /**
+     * @brief Show an error banner.
+     * @param {string} message Error text.
+     * @return {void}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function showError(message) {
         if (!errorEl) {
             return;
@@ -35,6 +72,12 @@
         errorEl.classList.remove('d-none');
     }
 
+    /**
+     * @brief Hide the error banner.
+     * @return {void}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function hideError() {
         if (errorEl) {
             errorEl.classList.add('d-none');
@@ -42,6 +85,14 @@
         }
     }
 
+    /**
+     * @brief Update progress bar, byte count, and ETA.
+     * @param {number} received Received bytes.
+     * @param {number} total Total bytes.
+     * @return {void}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
     function updateProgress(received, total) {
         var percent = total > 0 ? Math.floor((received / total) * 100) : 0;
         if (bar) {
@@ -51,8 +102,21 @@
         if (count) {
             count.textContent = window.FilesDownloadManager.formatBytes(received) + ' / ' + window.FilesDownloadManager.formatBytes(total) + ' (' + percent + '%)';
         }
+        if (etaEl && downloadEta && window.TransferEta) {
+            var snap = downloadEta.update(received, total);
+            if (snap.shouldRefreshUi || received >= total) {
+                etaEl.textContent = window.TransferEta.formatLine(snap, etaTemplates());
+            }
+        }
     }
 
+    /**
+     * @brief Format resume prompt copy.
+     * @param {object} checkpoint Checkpoint payload.
+     * @return {string}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function formatResumePrompt(checkpoint) {
         var template = root.getAttribute('data-msg-resume-prompt') || '';
         var received = Number(checkpoint.receivedBytes) || 0;
@@ -64,8 +128,18 @@
             .replace('%total%', window.FilesDownloadManager.formatBytes(total));
     }
 
+    /**
+     * @brief Show resume UI for an existing checkpoint.
+     * @param {object} checkpoint Checkpoint payload.
+     * @return {void}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function showResumePrompt(checkpoint) {
         pendingCheckpoint = checkpoint;
+        if (downloadEta) {
+            downloadEta.reset();
+        }
         updateProgress(Number(checkpoint.receivedBytes) || 0, Number(checkpoint.totalBytes) || fileBytes);
         if (resumeMessage) {
             resumeMessage.textContent = formatResumePrompt(checkpoint);
@@ -85,12 +159,24 @@
         }
     }
 
+    /**
+     * @brief Hide resume UI.
+     * @return {void}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function hideResumePrompt() {
         if (resumePrompt) {
             resumePrompt.classList.add('d-none');
         }
     }
 
+    /**
+     * @brief Request a short-lived download token.
+     * @return {Promise<{ok: boolean, json: object}>}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function requestToken() {
         var body = new URLSearchParams();
         body.append('_csrf_token', csrfToken);
@@ -112,6 +198,13 @@
         });
     }
 
+    /**
+     * @brief Map manager errors to user-facing copy.
+     * @param {Error} error Thrown error.
+     * @return {string}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function resolveErrorMessage(error) {
         if (!error || !error.message) {
             return root.getAttribute('data-msg-error') || '';
@@ -125,6 +218,14 @@
         return root.getAttribute('data-msg-error') || '';
     }
 
+    /**
+     * @brief Build FilesDownloadManager config.
+     * @param {string} token Download token.
+     * @param {object|null} resumeCheckpoint Optional checkpoint.
+     * @return {object}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function buildDownloadConfig(token, resumeCheckpoint) {
         return {
             url: downloadUrl,
@@ -142,9 +243,19 @@
         };
     }
 
+    /**
+     * @brief Start or resume a managed download.
+     * @param {object|null} resumeCheckpoint Optional checkpoint.
+     * @return {Promise<*>}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
     function startDownload(resumeCheckpoint) {
         hideError();
         hideResumePrompt();
+        if (downloadEta) {
+            downloadEta.reset();
+        }
         abortController = new AbortController();
         return requestToken().then(function (pack) {
             if (!pack.ok || !pack.json || pack.json.status !== 'ok') {
@@ -157,6 +268,9 @@
             return window.FilesDownloadManager.download(buildDownloadConfig(pack.json.download_token || '', resumeCheckpoint));
         }).then(function () {
             pendingCheckpoint = null;
+            if (etaEl) {
+                etaEl.textContent = '';
+            }
         }).catch(function (error) {
             if (error && error.name === 'AbortError') {
                 if (resumeCheckpoint) {
@@ -173,6 +287,12 @@
         });
     }
 
+    /**
+     * @brief Clear checkpoint artifacts and restart from byte 0.
+     * @return {void}
+     * @date 2026-07-07
+     * @author Stephane H.
+     */
     function restartDownload() {
         var checkpoint = pendingCheckpoint;
         hideError();
@@ -183,6 +303,9 @@
         }
         Promise.all([clearPromise, destroyPromise]).then(function () {
             pendingCheckpoint = null;
+            if (downloadEta) {
+                downloadEta.reset();
+            }
             updateProgress(0, fileBytes);
             return startDownload(null);
         }).catch(function () {

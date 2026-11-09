@@ -64,6 +64,55 @@ final class ServerDiskSpaceService
         ];
     }
 
+    public const EXCEPTION_DISK_FULL = 'storage_disk.full';
+
+    /**
+     * @brief Ensure the storage filesystem can absorb an upload+encrypt peak (~2× plaintext).
+     * @param int $plainBytes Declared plaintext size.
+     * @return void
+     * @throws \RuntimeException When free space is insufficient.
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function assertFreeBytesForUploadEncryptPeak(int $plainBytes): void
+    {
+        // Before any bytes land: need room for plaintext part + cipher output.
+        $this->assertFreeBytes((int) ($plainBytes * 2 + (16 * 1024 * 1024)));
+    }
+
+    /**
+     * @brief Ensure free space for remaining cipher writes when plaintext is already on disk.
+     * @param int $remainingPlainBytes Plaintext bytes still to encrypt.
+     * @return void
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function assertFreeBytesForRemainingCipher(int $remainingPlainBytes): void
+    {
+        $this->assertFreeBytes((int) (max(0, $remainingPlainBytes) + (16 * 1024 * 1024)));
+    }
+
+    /**
+     * @brief Throw when free disk bytes are below the required amount.
+     * @param int $neededBytes Required free bytes.
+     * @return void
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function assertFreeBytes(int $neededBytes): void
+    {
+        if ($neededBytes < 1) {
+            return;
+        }
+        $snapshot = $this->buildSnapshot();
+        if (!$snapshot['available'] || $snapshot['freeBytes'] === null) {
+            return;
+        }
+        if ((int) $snapshot['freeBytes'] < $neededBytes) {
+            throw new \RuntimeException(self::EXCEPTION_DISK_FULL);
+        }
+    }
+
     /**
      * @brief Resolve an existing directory used to query the storage filesystem.
      *

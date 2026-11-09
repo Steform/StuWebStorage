@@ -51,11 +51,13 @@ final class AdminAllUsersUploadFolderTargetContractTest extends TestCase
      */
     public function testChunkedUploadServiceRejectsInvalidFolderRetain(): void
     {
-        $source = $this->readSource('src/Service/File/ChunkedUploadService.php');
+        $chunked = $this->readSource('src/Service/File/ChunkedUploadService.php');
+        self::assertStringContainsString("throw new \\RuntimeException('chunk_upload.folder_invalid');", $chunked);
+        self::assertStringContainsString('resolveCurrentFolder($ownerUserId, $folderRetainId)', $chunked);
 
-        self::assertStringContainsString("throw new \\RuntimeException('chunk_upload.folder_invalid');", $source);
-        self::assertStringContainsString('resolveCurrentFolder($ownerUserId, $folderRetainId)', $source);
-        self::assertStringContainsString('resolveCurrentFolder($ownerId, $targetFolderId > 0 ? $targetFolderId : null)', $source);
+        $encryptJob = $this->readSource('src/Service/File/UploadEncryptJobService.php');
+        self::assertStringContainsString("throw new \\RuntimeException('chunk_upload.folder_invalid');", $encryptJob);
+        self::assertStringContainsString('resolveCurrentFolder($ownerUserId, $targetFolderId > 0 ? $targetFolderId : null)', $encryptJob);
     }
 
     /**

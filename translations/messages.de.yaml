@@ -321,7 +321,7 @@ files:
     submit: Hochladen
     bytes_hint: 'Maximale Klartextgroesse: %formatted_size%.'
     progress_sending: 'Wird gesendet'
-    progress_processing: 'Verarbeitung auf dem Server'
+    progress_processing: 'Verschluesselung auf dem Server'
     progress_bar_aria: 'Fortschritt des Datei-Uploads'
     xhr_network_error: 'Server nicht erreichbar. Verbindung pruefen und erneut versuchen.'
     selected_byte_size_label: 'Groesse:'
@@ -335,13 +335,20 @@ files:
       filter_system_hint: 'Schliesst node_modules, .git, __pycache__, .DS_Store und Thumbs.db aus.'
       global_label: 'Datei %current% von %total%'
       global_bytes: '%done% / %total%'
+      eta_calculating: 'Restzeit wird berechnet…'
+      eta_remaining: '~%duration% verbleibend'
+      eta_speed: '%speed%/s'
+      eta_line: '%speed% · %eta%'
+      eta_unit_s: s
+      eta_unit_m: Min
+      eta_unit_h: h
       tree_detected: 'Ordnerstruktur erkannt (%root%)'
       too_many_files: 'Zu viele Dateien (%count%). Auswahl verkleinern.'
       confirm_many: '%count% Dateien (%size%) hochladen?'
       status:
         pending: 'Wartend'
         uploading: 'Senden…'
-        processing: 'Verarbeitung…'
+        processing: 'Verschluesselung…'
         done: 'Fertig'
         error: 'Fehler'
         cancelled: 'Abgebrochen'

@@ -1,4 +1,17 @@
-<div class="modal fade" id="filesArchiveProgressModal" tabindex="-1" aria-labelledby="filesArchiveProgressModalLabel" aria-hidden="true">
+<div
+    class="modal fade"
+    id="filesArchiveProgressModal"
+    tabindex="-1"
+    aria-labelledby="filesArchiveProgressModalLabel"
+    aria-hidden="true"
+    data-msg-eta-calculating="{{ 'files.archive.eta_calculating'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-remaining="{{ 'files.archive.eta_remaining'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-speed="{{ 'files.archive.eta_speed'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-line="{{ 'files.archive.eta_line'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-unit-s="{{ 'files.archive.eta_unit_s'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-unit-m="{{ 'files.archive.eta_unit_m'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-unit-h="{{ 'files.archive.eta_unit_h'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+>
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -10,7 +23,8 @@
                 <div class="progress mb-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <div id="files-archive-progress-bar" class="progress-bar" style="width: 0%"></div>
                 </div>
-                <p class="small text-muted mb-0" id="files-archive-progress-status" aria-live="polite"></p>
+                <p class="small text-muted mb-1" id="files-archive-progress-status" aria-live="polite"></p>
+                <p class="small text-muted mb-0" id="files-archive-progress-eta" aria-live="polite"></p>
             </div>
         </div>
     </div>

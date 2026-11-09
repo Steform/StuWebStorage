@@ -1,0 +1,40 @@
+---
+description: Keep transfer ETA and throughput (B/s) in sync when upload/download evolves
+globs: public/js/files-space.js,public/js/files-download-*.js,public/js/files-archive-flow.js,public/js/public-file-landing.js,public/js/transfer-eta.js,templates/files/**/*.twig,translations/messages.*.yaml
+alwaysApply: false
+---
+
+# Transfer ETA + throughput (upload / download)
+
+Epic: `docs/epics/EPIC-ETA-temps-restant-transfert.md` (US-07, **US-08**)
+
+## Mandatory
+
+- **One estimator only**: all ETA **and** bytes/sec UI goes through `public/js/transfer-eta.js`. Do not reimplement rate, speed, or ETA inline in upload/download scripts.
+- **ETA and speed are a pair**: when progress UI shows remaining time, it must also show smoothed throughput (`Ko/s` / `Mo/s` / …) from the same snapshot (`bytesPerSec` + `formatLine` / `formatSpeedValue`).
+- **Same hook as progress**: whenever you add/change a bytes progress callback (`onFileProgress`, `onGlobalProgress`, `onProgress`, archive `preparedBytes` tick), call `TransferEta.update(...)` on **that same tick** so both ETA and débit/s stay correct.
+- **No fake numbers**: require enough samples (and `bytesTotal > 0` for ETA). Otherwise i18n “calculating” / empty — never invent duration or speed.
+- **Smooth rate**: sliding window / EMA only. Never display raw instant `Δbytes/Δt`.
+- **UI cadence ≤ ~2 Hz** for ETA/speed text. Progress bars may update faster.
+- **Reset** the estimator when a job/file/queue starts, resumes from checkpoint, or is cancelled; clear speed+ETA on done/error/cancel.
+
+## When evolving upload or download (required)
+
+If you change chunk size, queue semantics, Range size, prepare-archive polling, progress callbacks, or progress UI markup:
+
+1. Keep feeding `(bytesDone, bytesTotal)` into `transfer-eta.js` on every progress tick.
+2. **Re-verify débit/s** on the touched surface (upload item, global bar, download progress page, archive prepare) — not only the percentage bar.
+3. If the new flow breaks rate/ETA math or display, update `transfer-eta.js` **and** the UI wiring in the same change; document math changes in EPIC-ETA.
+4. Update i18n keys (`eta_speed`, `eta_line`, `eta_remaining`, `eta_calculating`, units) in all locale files you touch.
+5. Extend `TransferEtaContractTest` (or add a hook assertion) when introducing a new transfer progress surface.
+
+## Out of scope (do not pretend)
+
+- Browser-native downloads without JS byte events (`FilesDownloadLauncher` grant → native): **no in-page ETA and no in-page débit/s**. If that flow later uses the managed progress page/manager, US-03 + US-08 apply automatically.
+
+## Quick check before finishing a transfer PR
+
+- [ ] Progress tick still calls the shared estimator
+- [ ] ETA **and** débit/s still visible / cleared correctly at 100%, error, cancel
+- [ ] No duplicate speed or ETA formula outside `transfer-eta.js`
+- [ ] Contract test still green (or updated for the new hook)

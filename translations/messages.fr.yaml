@@ -328,7 +328,7 @@ files:
     submit: Envoyer
     bytes_hint: 'Taille maximale du fichier en clair : %formatted_size%.'
     progress_sending: 'Envoi en cours'
-    progress_processing: 'Traitement sur le serveur'
+    progress_processing: 'Chiffrement sur le serveur'
     progress_bar_aria: 'Progression de l''envoi du fichier'
     xhr_network_error: 'Le serveur est injoignable. Verifiez votre connexion et reessayez.'
     selected_byte_size_label: 'Taille :'
@@ -342,13 +342,20 @@ files:
       filter_system_hint: 'Exclut node_modules, .git, __pycache__, .DS_Store et Thumbs.db.'
       global_label: 'Fichier %current% sur %total%'
       global_bytes: '%done% / %total%'
+      eta_calculating: 'Calcul du temps restant…'
+      eta_remaining: '~%duration% restantes'
+      eta_speed: '%speed%/s'
+      eta_line: '%speed% · %eta%'
+      eta_unit_s: s
+      eta_unit_m: min
+      eta_unit_h: h
       tree_detected: 'Arborescence detectee (%root%)'
       too_many_files: 'Trop de fichiers (%count%). Reduisez la selection.'
       confirm_many: 'Envoyer %count% fichiers (%size%) ?'
       status:
         pending: 'En attente'
         uploading: 'Envoi…'
-        processing: 'Traitement…'
+        processing: 'Chiffrement…'
         done: 'Termine'
         error: 'Echec'
         cancelled: 'Annule'
@@ -394,10 +401,40 @@ files:
     resume_opfs_info: 'La reprise utilisera le fichier temporaire du navigateur (aucune action requise).'
     checkpoint_invalid: 'Le fichier a change cote serveur. Le telechargement repartira depuis le debut.'
     parallel_tab: 'Un autre onglet telecharge deja ce fichier. Fermez-le ou attendez la fin.'
+    eta_calculating: 'Calcul du temps restant…'
+    eta_remaining: '~%duration% restantes'
+    eta_speed: '%speed%/s'
+    eta_line: '%speed% · %eta%'
+    eta_unit_s: s
+    eta_unit_m: min
+    eta_unit_h: h
   archive:
     progress_title: 'Preparation de l''archive'
     progress_hint: 'Calcul des empreintes puis telechargement de l''archive ZIP (reprise native du navigateur).'
     create_failed: 'Impossible de preparer l''archive ZIP.'
+    eta_calculating: 'Calcul du temps restant (preparation)…'
+    eta_remaining: '~%duration% restantes (preparation)'
+    eta_speed: '%speed%/s'
+    eta_line: '%speed% · %eta%'
+    eta_unit_s: s
+    eta_unit_m: min
+    eta_unit_h: h
+  transfer:
+    eta_note_native: 'Le telechargement natif du navigateur n''expose pas de progression au JavaScript ; l''ETA in-page s''applique aux uploads, a la page de telechargement managé et a la preparation d''archive.'
+  tasks:
+    nav_label: Taches
+    nav_aria: 'Taches en cours'
+    empty: 'Aucune tache en cours'
+    open: Ouvrir
+    cancel: Annuler
+    dismiss_title: 'Chiffrement en cours'
+    dismiss_body: 'Fermer la fenetre n''arrete pas automatiquement le chiffrement. Continuer en arriere-plan ou annuler ?'
+    dismiss_stay: 'Rester ici'
+    dismiss_continue: 'Continuer en arriere-plan'
+    dismiss_cancel: 'Annuler le chiffrement'
+    toast_done: 'Chiffrement termine : %name%'
+    toast_failed: 'Chiffrement echoue : %name%'
+    type_upload_encrypt: Chiffrement
   download_prepare:
     page_title: 'Preparation du telechargement'
     modal:
@@ -706,6 +743,7 @@ files:
     upload_too_large: 'Fichier trop volumineux.'
     upload_chunk_too_large: 'Morceau d''envoi trop volumineux pour la configuration PHP du serveur (augmentez upload_max_filesize et post_max_size).'
     quota_exceeded: 'Quota de stockage atteint pour cet utilisateur.'
+    disk_full: 'Espace disque insuffisant pour telecharger et chiffrer ce fichier.'
     public_not_allowed: 'Vos roles ne permettent pas la visibilite publique.'
     storage_failed: 'Impossible d''enregistrer le fichier chiffre.'
     uploaded: 'Fichier envoye avec succes.'

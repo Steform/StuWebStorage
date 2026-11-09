@@ -368,6 +368,13 @@
         data-msg-xhr-network-error="{{ 'files.upload.xhr_network_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-global-label="{{ 'files.upload.multi.global_label'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-global-bytes="{{ 'files.upload.multi.global_bytes'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-eta-calculating="{{ 'files.upload.multi.eta_calculating'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-eta-remaining="{{ 'files.upload.multi.eta_remaining'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-eta-speed="{{ 'files.upload.multi.eta_speed'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-eta-line="{{ 'files.upload.multi.eta_line'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-eta-unit-s="{{ 'files.upload.multi.eta_unit_s'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-eta-unit-m="{{ 'files.upload.multi.eta_unit_m'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-multi-eta-unit-h="{{ 'files.upload.multi.eta_unit_h'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-status-pending="{{ 'files.upload.multi.status.pending'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-status-uploading="{{ 'files.upload.multi.status.uploading'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-status-processing="{{ 'files.upload.multi.status.processing'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
@@ -443,6 +450,7 @@
                                     <div id="files-upload-global-progress-bar" class="progress-bar" style="width: 0%"></div>
                                 </div>
                                 <p class="small text-muted mb-0 mt-1" id="files-upload-global-bytes"></p>
+                                <p class="small text-muted mb-0 mt-1" id="files-upload-global-eta" aria-live="polite"></p>
                             </div>
                             <ul id="files-upload-queue" class="list-unstyled files-upload-queue mb-0" aria-live="polite"></ul>
                         </div>
@@ -530,6 +538,7 @@
             </div>
         </div>
     </div>
+    {% include 'files/_upload_encrypt_dismiss_modal.html.twig' %}
     {% endif %}
 
     <div id="files-target-owner-i18n" class="d-none" aria-hidden="true"
@@ -559,6 +568,8 @@
             data-files-download-zip-url="{{ path('files_download_selection_zip') }}"
             data-files-archives-create-url="{{ path('files_archives_create') }}"
             data-files-archives-csrf="{{ csrf_token('files_download_archive') }}"
+            data-files-upload-encrypt-tick-url-template="{{ path('files_upload_encrypt_tick', {taskId: '00000000000000000000000000000000'}) }}"
+            data-files-upload-encrypt-cancel-url-template="{{ path('files_upload_encrypt_cancel', {taskId: '00000000000000000000000000000000'}) }}"
             data-files-msg-archive-failed="{{ 'files.archive.create_failed'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
             data-files-msg-download-failed="{{ 'files.download_progress.error_generic'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
             data-files-shared-folder-download-zip-url-template="{{ path('files_shared_folder_download_zip', {id: 999999}) }}"
@@ -602,8 +613,9 @@
         </script>
         <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js" defer></script>
         <script src="{{ asset('js/text-file-editor.js') }}?v=20260626" defer></script>
-        <script src="{{ asset('js/files-download-launcher.js') }}?v=20261102" defer></script>
-        <script src="{{ asset('js/files-archive-flow.js') }}?v=20261102" defer></script>
+        <script src="{{ asset('js/transfer-eta.js') }}?v=20261109c" defer></script>
+        <script src="{{ asset('js/files-download-launcher.js') }}?v=20261109" defer></script>
+        <script src="{{ asset('js/files-archive-flow.js') }}?v=20261109" defer></script>
         <script src="{{ asset('js/files-space.js') }}?v={{ 'now'|date('U') }}" defer></script>
         <script src="{{ asset('js/files-ui-preferences.js') }}?v=20260630-mobile-prefs" defer></script>
 {% endblock %}

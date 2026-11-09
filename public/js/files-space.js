@@ -496,20 +496,31 @@
                         body: fdF,
                         credentials: 'same-origin',
                         headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
+                    }).then(function (res) {
+                        return parseFetchJsonResponse(res);
+                    }).then(function (pack) {
+                        if (!pack.json || pack.json.status !== 'ok' || !pack.json.task) {
+                            if (pack.json && typeof pack.json.message === 'string' && pack.json.message !== '') {
+                                throw new Error(pack.json.message);
+                            }
+                            throw new Error(msg('msgXhrNetworkError'));
+                        }
+                        if (!window.FilesUploadEncrypt || typeof window.FilesUploadEncrypt.pollUntilTerminal !== 'function') {
+                            throw new Error(msg('msgXhrNetworkError'));
+                        }
+                        return window.FilesUploadEncrypt.pollUntilTerminal(pack.json.task, {
+                            csrf: context.csrf,
+                            appendRetainFields: appendRetainFields,
+                            isCancelled: context.isCancelled,
+                            onProgress: context.onEncryptProgress,
+                            tickUrlTemplate: context.encryptTickUrlTemplate,
+                            cancelUrlTemplate: context.encryptCancelUrlTemplate,
+                            msgNetworkError: function () {
+                                return msg('msgXhrNetworkError');
+                            }
+                        });
                     });
                 });
-            })
-            .then(function (res) {
-                return parseFetchJsonResponse(res);
-            })
-            .then(function (pack) {
-                if (pack.json && pack.json.status === 'ok') {
-                    return { ok: true, message: typeof pack.json.message === 'string' ? pack.json.message : '' };
-                }
-                if (pack.json && typeof pack.json.message === 'string' && pack.json.message !== '') {
-                    return { ok: false, message: pack.json.message };
-                }
-                return { ok: false, message: msg('msgXhrNetworkError') };
             })
             .catch(function (err) {
                 if (err && err.message === '__upload_cancelled__') {
@@ -633,6 +644,18 @@
         var globalBarWrap = document.getElementById('files-upload-global-progress-bar-wrap');
         var globalBar = document.getElementById('files-upload-global-progress-bar');
         var globalBytes = document.getElementById('files-upload-global-bytes');
+        var globalEtaEl = document.getElementById('files-upload-global-eta');
+        var fileEta = window.TransferEta && typeof window.TransferEta.createEstimator === 'function'
+            ? window.TransferEta.createEstimator()
+            : null;
+        var globalEta = window.TransferEta && typeof window.TransferEta.createEstimator === 'function'
+            ? window.TransferEta.createEstimator()
+            : null;
+        var encryptEta = window.TransferEta && typeof window.TransferEta.createEstimator === 'function'
+            ? window.TransferEta.createEstimator()
+            : null;
+        var activeEncryptTaskId = null;
+        var encryptBackgroundPreferred = false;
         var metaWrap = document.getElementById('files-upload-selected-meta');
         var metaCountVal = document.getElementById('files-upload-selected-count-value');
         var metaVal = document.getElementById('files-upload-selected-size-value');
@@ -672,6 +695,40 @@
                 out = out.split(key).join(replacements[key]);
             });
             return out;
+        }
+
+        /**
+         * @brief Build TransferEta template bag from modal i18n datasets.
+         * @return {object}
+         * @date 2026-11-09
+         * @author Stephane H.
+         */
+        function etaTemplates() {
+            return {
+                calculating: msg('msgMultiEtaCalculating'),
+                remaining: msg('msgMultiEtaRemaining'),
+                speed: msg('msgMultiEtaSpeed'),
+                line: msg('msgMultiEtaLine'),
+                units: {
+                    s: msg('msgMultiEtaUnitS') || 's',
+                    m: msg('msgMultiEtaUnitM') || 'min',
+                    h: msg('msgMultiEtaUnitH') || 'h'
+                }
+            };
+        }
+
+        /**
+         * @brief Format an estimator snapshot for UI.
+         * @param {object} snap TransferEta snapshot.
+         * @return {string}
+         * @date 2026-11-09
+         * @author Stephane H.
+         */
+        function formatEtaSnapshot(snap) {
+            if (!window.TransferEta || typeof window.TransferEta.formatLine !== 'function' || !snap) {
+                return '';
+            }
+            return window.TransferEta.formatLine(snap, etaTemplates());
         }
 
         /**
@@ -741,7 +798,14 @@
 
             var meta = document.createElement('div');
             meta.className = 'files-upload-queue-item__meta small text-muted';
-            meta.textContent = formatFilesSize(entry.size);
+            var sizeSpan = document.createElement('span');
+            sizeSpan.setAttribute('data-files-upload-queue-size', String(idx));
+            sizeSpan.textContent = formatFilesSize(entry.size);
+            var etaSpan = document.createElement('span');
+            etaSpan.setAttribute('data-files-upload-queue-eta', String(idx));
+            etaSpan.className = 'files-upload-queue-item__eta';
+            meta.appendChild(sizeSpan);
+            meta.appendChild(etaSpan);
 
             var progress = document.createElement('div');
             progress.className = 'progress files-upload-queue-item__progress';
@@ -935,6 +999,14 @@
             var pct = Math.min(100, Math.round((loaded / total) * 100));
             bar.style.width = String(pct) + '%';
             bar.parentElement.setAttribute('aria-valuenow', String(pct));
+            var etaEl = queueList ? queueList.querySelector('[data-files-upload-queue-eta="' + String(index) + '"]') : null;
+            if (etaEl && fileEta) {
+                var snap = fileEta.update(loaded, total);
+                if (snap.shouldRefreshUi || loaded >= total) {
+                    var line = formatEtaSnapshot(snap);
+                    etaEl.textContent = line ? ' · ' + line : '';
+                }
+            }
         }
 
         /**
@@ -959,6 +1031,12 @@
             }
             if (state === 'done') {
                 updateQueueItemProgress(index, 1, 1);
+            }
+            if (state === 'done' || state === 'error' || state === 'cancelled' || state === 'processing') {
+                var etaClear = queueList ? queueList.querySelector('[data-files-upload-queue-eta="' + String(index) + '"]') : null;
+                if (etaClear) {
+                    etaClear.textContent = '';
+                }
             }
             if (errorMessage && item) {
                 var errEl = item.querySelector('.files-upload-queue-item__error');
@@ -998,6 +1076,12 @@
                 var pct = Math.min(100, Math.round((completedBytes / totalBytes) * 100));
                 globalBar.style.width = String(pct) + '%';
                 globalBarWrap.setAttribute('aria-valuenow', String(pct));
+            }
+            if (globalEtaEl && globalEta) {
+                var snap = globalEta.update(completedBytes, totalBytes);
+                if (snap.shouldRefreshUi || completedBytes >= totalBytes) {
+                    globalEtaEl.textContent = formatEtaSnapshot(snap);
+                }
             }
         }
 
@@ -1084,27 +1168,140 @@
             refreshSelectionMeta();
         };
 
+        var dismissModalEl = document.getElementById('filesUploadEncryptDismissModal');
+        var dismissModalApi = dismissModalEl && window.bootstrap && window.bootstrap.Modal
+            ? window.bootstrap.Modal.getOrCreateInstance(dismissModalEl)
+            : null;
+        var allowUploadModalHide = false;
+        var csrfInputEl = formEl.querySelector('[name="_csrf_token"]');
+
+        /**
+         * @brief CSRF token for upload / encrypt endpoints.
+         * @return {string}
+         * @date 2026-11-09
+         * @author Stephane H.
+         */
+        function readUploadCsrf() {
+            return csrfInputEl && csrfInputEl.value ? String(csrfInputEl.value) : '';
+        }
+
+        /**
+         * @brief Whether the queue currently has an encryption phase in flight.
+         * @return {boolean}
+         * @date 2026-11-09
+         * @author Stephane H.
+         */
+        function hasEncryptingEntry() {
+            return queueEntries.some(function (entry) {
+                return entry && entry.state === 'processing';
+            });
+        }
+
+        /**
+         * @brief Request server-side cancel for the active encrypt job.
+         * @return {void}
+         * @date 2026-11-09
+         * @author Stephane H.
+         */
+        function requestActiveEncryptCancel() {
+            if (!activeEncryptTaskId || !window.FilesUploadEncrypt) {
+                return;
+            }
+            window.FilesUploadEncrypt.cancelTask(activeEncryptTaskId, readUploadCsrf(), null, null);
+        }
+
+        /**
+         * @brief Hide the upload modal after an explicit allow (background continue).
+         * @return {void}
+         * @date 2026-11-09
+         * @author Stephane H.
+         */
+        function hideUploadModalAllowed() {
+            allowUploadModalHide = true;
+            if (window.bootstrap && window.bootstrap.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+            }
+        }
+
         modalEl.addEventListener('hide.bs.modal', function (ev) {
+            if (allowUploadModalHide || encryptBackgroundPreferred) {
+                allowUploadModalHide = false;
+                return;
+            }
+            if (activeEncryptTaskId && hasEncryptingEntry() && dismissModalApi) {
+                ev.preventDefault();
+                dismissModalApi.show();
+                return;
+            }
             if (uploadBusy) {
                 uploadCancelRequested = true;
                 if (activeXhr) {
                     activeXhr.abort();
                 }
+                requestActiveEncryptCancel();
                 ev.preventDefault();
             }
         });
 
         modalEl.addEventListener('hidden.bs.modal', function () {
+            if (encryptBackgroundPreferred) {
+                encryptBackgroundPreferred = false;
+                uploadBatchActive = false;
+                return;
+            }
             uploadCancelRequested = false;
             uploadBatchActive = false;
             queueListExpanded = false;
             postBatchReview = false;
+            activeEncryptTaskId = null;
             if (!uploadBusy) {
                 if (errorEl) {
                     errorEl.classList.add('d-none');
                     errorEl.textContent = '';
                 }
                 pendingEntriesOverride = null;
+            }
+        });
+
+        if (dismissModalEl) {
+            var stayBtn = dismissModalEl.querySelector('[data-files-encrypt-dismiss-stay]');
+            var continueBtn = dismissModalEl.querySelector('[data-files-encrypt-dismiss-continue]');
+            var cancelEncryptBtn = dismissModalEl.querySelector('[data-files-encrypt-dismiss-cancel]');
+            if (stayBtn) {
+                stayBtn.addEventListener('click', function () {
+                    if (dismissModalApi) {
+                        dismissModalApi.hide();
+                    }
+                });
+            }
+            if (continueBtn) {
+                continueBtn.addEventListener('click', function () {
+                    encryptBackgroundPreferred = true;
+                    if (dismissModalApi) {
+                        dismissModalApi.hide();
+                    }
+                    hideUploadModalAllowed();
+                    if (window.FilesBackgroundTasks && typeof window.FilesBackgroundTasks.refresh === 'function') {
+                        window.FilesBackgroundTasks.refresh();
+                    }
+                });
+            }
+            if (cancelEncryptBtn) {
+                cancelEncryptBtn.addEventListener('click', function () {
+                    uploadCancelRequested = true;
+                    encryptBackgroundPreferred = false;
+                    requestActiveEncryptCancel();
+                    if (dismissModalApi) {
+                        dismissModalApi.hide();
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('files:open-upload-task', function (ev) {
+            var detail = ev && ev.detail ? ev.detail : {};
+            if (detail.taskId) {
+                activeEncryptTaskId = String(detail.taskId);
             }
         });
 
@@ -1197,6 +1394,15 @@
             uploadBatchActive = true;
             queueListExpanded = false;
             queueEntries = entries.slice();
+            if (fileEta) {
+                fileEta.reset();
+            }
+            if (globalEta) {
+                globalEta.reset();
+            }
+            if (globalEtaEl) {
+                globalEtaEl.textContent = '';
+            }
             renderQueueUi();
             setSubmittingUi(true);
             if (queueWrap) {
@@ -1226,16 +1432,19 @@
                 });
             }
 
+            var liveRegion = document.getElementById('files-live-region');
             var context = {
                 formEl: formEl,
                 sessionUrl: sessionUrl,
                 chunkUrl: chunkUrl,
                 finalizeUrl: finalizeUrl,
+                encryptTickUrlTemplate: (liveRegion && liveRegion.getAttribute('data-files-upload-encrypt-tick-url-template')) || '',
+                encryptCancelUrlTemplate: (liveRegion && liveRegion.getAttribute('data-files-upload-encrypt-cancel-url-template')) || '',
                 csrf: csrf,
                 appendRetainFields: appendRetainFields,
                 msg: msg,
                 isCancelled: function () {
-                    return uploadCancelRequested;
+                    return uploadCancelRequested && !encryptBackgroundPreferred;
                 },
                 setActiveXhr: function (xhr) {
                     activeXhr = xhr;
@@ -1244,7 +1453,39 @@
                     updateQueueItemProgress(index, loaded, total);
                 },
                 onFileStateChange: function (index, state, errorMessage) {
+                    if (state === 'uploading' && fileEta) {
+                        fileEta.reset();
+                    }
+                    if (state === 'processing' && encryptEta) {
+                        encryptEta.reset();
+                        if (globalEtaEl) {
+                            globalEtaEl.textContent = '';
+                        }
+                    }
                     updateQueueItemState(index, state, errorMessage);
+                },
+                onEncryptProgress: function (done, total, task) {
+                    activeEncryptTaskId = task && task.taskId ? String(task.taskId) : activeEncryptTaskId;
+                    if (encryptEta && globalEtaEl) {
+                        var snap = encryptEta.update(done, total);
+                        if (snap.shouldRefreshUi || done >= total) {
+                            globalEtaEl.textContent = formatEtaSnapshot(snap);
+                        }
+                    }
+                    if (globalBytes) {
+                        globalBytes.textContent = fillTemplate(msg('msgMultiGlobalBytes'), {
+                            '%done%': formatFilesSize(done),
+                            '%total%': formatFilesSize(total)
+                        });
+                    }
+                    if (globalBar && globalBarWrap && total > 0) {
+                        var pct = Math.min(100, Math.round((done / total) * 100));
+                        globalBar.style.width = String(pct) + '%';
+                        globalBarWrap.setAttribute('aria-valuenow', String(pct));
+                    }
+                    if (globalLabel) {
+                        globalLabel.textContent = msg('msgProgressProcessing') || statusLabel('processing');
+                    }
                 },
                 onGlobalProgress: function (completedBytes, totalBytes, currentIndex, totalCount) {
                     updateGlobalProgress(completedBytes, totalBytes, currentIndex, totalCount);

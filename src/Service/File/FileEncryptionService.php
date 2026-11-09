@@ -58,12 +58,62 @@ class FileEncryptionService
      * @brief Encrypt a plaintext file on disk into v2 binary storage without loading whole file in RAM.
      * @param string $plainSourcePath Readable plaintext path.
      * @param string $outputEncryptedPath Writable destination path.
+     * @param callable|null $onProgress Optional `function (int $done, int $total): void`.
+     * @param callable|null $shouldCancel Optional `function (): bool` — true aborts with encryption.cancelled.
      * @return array{plain_total: int, content_crc32: int, content_sha256: string} Size and fingerprints.
      * @date 2026-11-02
      * @author Stephane H.
      */
-    public function encryptPlainFileToV2Storage(string $plainSourcePath, string $outputEncryptedPath): array
-    {
+    public function encryptPlainFileToV2Storage(
+        string $plainSourcePath,
+        string $outputEncryptedPath,
+        ?callable $onProgress = null,
+        ?callable $shouldCancel = null,
+    ): array {
+        $state = null;
+        $plainTotal = 0;
+        do {
+            $tick = $this->encryptPlainFileToV2StorageTick(
+                $plainSourcePath,
+                $outputEncryptedPath,
+                $state,
+                self::PLAIN_CHUNK_BYTES * 4,
+                $shouldCancel,
+            );
+            $state = $tick['state'];
+            $plainTotal = (int) $tick['plain_total'];
+            if (\is_callable($onProgress)) {
+                $onProgress((int) $state['plain_done'], $plainTotal);
+            }
+            if ($tick['complete']) {
+                return $tick['fingerprints'];
+            }
+        } while (true);
+    }
+
+    /**
+     * @brief Encrypt up to maxPlainBytesThisTick of a plaintext file into CVF2 (resumable across HTTP ticks).
+     * @param string $plainSourcePath Plaintext source path.
+     * @param string $outputEncryptedPath Destination cipher path.
+     * @param array{plain_done: int, cipher_offsets: list<int>, header_written: bool}|null $state Prior tick state.
+     * @param int $maxPlainBytesThisTick Max plaintext bytes to process in this call.
+     * @param callable|null $shouldCancel Optional cancel probe.
+     * @return array{
+     *     complete: bool,
+     *     plain_total: int,
+     *     state: array{plain_done: int, cipher_offsets: list<int>, header_written: bool},
+     *     fingerprints?: array{plain_total: int, content_crc32: int, content_sha256: string}
+     * }
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function encryptPlainFileToV2StorageTick(
+        string $plainSourcePath,
+        string $outputEncryptedPath,
+        ?array $state,
+        int $maxPlainBytesThisTick,
+        ?callable $shouldCancel = null,
+    ): array {
         if ($this->encryptionKey === '') {
             throw new RuntimeException('file.encryption.key_missing');
         }
@@ -81,59 +131,184 @@ class FileEncryptionService
         if ($plainTotal === false || $plainTotal < 0) {
             throw new RuntimeException('file.encryption.storage_unreadable');
         }
+        $plainTotal = (int) $plainTotal;
+
+        $plainDone = (int) ($state['plain_done'] ?? 0);
+        /** @var list<int> $cipherOffsets */
+        $cipherOffsets = isset($state['cipher_offsets']) && \is_array($state['cipher_offsets'])
+            ? array_map('intval', $state['cipher_offsets'])
+            : [];
+        $headerWritten = (bool) ($state['header_written'] ?? false);
+
+        if ($plainDone < 0 || $plainDone > $plainTotal) {
+            throw new RuntimeException('file.encryption.failed');
+        }
+        if ($plainTotal === 0) {
+            if (!$headerWritten) {
+                $out = fopen($outputEncryptedPath, 'wb');
+                if ($out === false) {
+                    throw new RuntimeException('file.encryption.storage_failed');
+                }
+                try {
+                    fwrite($out, self::STORAGE_MAGIC_V2);
+                    fwrite($out, chr(1));
+                    fwrite($out, "\0\0\0");
+                    fwrite($out, pack('J', 0));
+                } finally {
+                    fclose($out);
+                }
+            }
+
+            return $this->completeEncryptTick($plainSourcePath, $outputEncryptedPath, 0, []);
+        }
+
+        if ($plainDone === $plainTotal && $headerWritten) {
+            return $this->completeEncryptTick($plainSourcePath, $outputEncryptedPath, $plainTotal, $cipherOffsets);
+        }
 
         $in = fopen($plainSourcePath, 'rb');
         if ($in === false) {
             throw new RuntimeException('file.encryption.storage_unreadable');
         }
 
-        $out = fopen($outputEncryptedPath, 'wb');
+        $mode = $headerWritten ? 'ab' : 'wb';
+        $out = fopen($outputEncryptedPath, $mode);
         if ($out === false) {
             fclose($in);
             throw new RuntimeException('file.encryption.storage_failed');
         }
 
-        $crcContext = hash_init('crc32b');
-        $shaContext = hash_init('sha256');
+        $budget = max(self::PLAIN_CHUNK_BYTES, $maxPlainBytesThisTick);
+        $processed = 0;
 
         try {
-            fwrite($out, self::STORAGE_MAGIC_V2);
-            fwrite($out, chr(1));
-            fwrite($out, "\0\0\0");
-            fwrite($out, pack('J', $plainTotal));
+            if (!$headerWritten) {
+                fwrite($out, self::STORAGE_MAGIC_V2);
+                fwrite($out, chr(1));
+                fwrite($out, "\0\0\0");
+                fwrite($out, pack('J', $plainTotal));
+                $cipherOffsets = [(int) ftell($out)];
+                $headerWritten = true;
+            }
 
-            $cipherOffsets = [ftell($out)];
-            $remaining = $plainTotal;
-            while ($remaining > 0) {
-                $toRead = (int) min(self::PLAIN_CHUNK_BYTES, $remaining);
+            if ($plainDone > 0 && fseek($in, $plainDone) !== 0) {
+                throw new RuntimeException('file.encryption.storage_unreadable');
+            }
+
+            while ($plainDone < $plainTotal && $processed < $budget) {
+                if (\is_callable($shouldCancel) && $shouldCancel()) {
+                    throw new RuntimeException('file.encryption.cancelled');
+                }
+                $toRead = (int) min(self::PLAIN_CHUNK_BYTES, $plainTotal - $plainDone, $budget - $processed);
+                if ($toRead < 1) {
+                    break;
+                }
                 $plainChunk = fread($in, $toRead);
                 if (!is_string($plainChunk) || $plainChunk === '') {
                     throw new RuntimeException('file.encryption.storage_unreadable');
                 }
-                $remaining -= strlen($plainChunk);
-                hash_update($crcContext, $plainChunk);
-                hash_update($shaContext, $plainChunk);
+                $len = strlen($plainChunk);
                 $iv = random_bytes($ivLength);
                 $cipherText = openssl_encrypt($plainChunk, self::CIPHER, $this->encryptionKey, OPENSSL_RAW_DATA, $iv);
                 if (!is_string($cipherText)) {
                     throw new RuntimeException('file.encryption.failed');
                 }
                 $this->writeBinarySegment($out, $iv, $cipherText);
-                $cipherOffsets[] = ftell($out);
+                $cipherOffsets[] = (int) ftell($out);
+                $plainDone += $len;
+                $processed += $len;
             }
-            array_pop($cipherOffsets);
-            $this->writeV2SegmentIndexSidecar($outputEncryptedPath, $plainTotal, $cipherOffsets);
         } finally {
             fclose($in);
             fclose($out);
         }
 
+        // After each written segment we append ftell() (= start of the next segment / EOF).
+        // Persist only completed segment starts (drop the trailing caret) between ticks.
+        $indexOffsets = $cipherOffsets;
+        if ($processed > 0 && \count($indexOffsets) > 0) {
+            array_pop($indexOffsets);
+        }
+
+        if ($plainDone >= $plainTotal) {
+            return $this->completeEncryptTick($plainSourcePath, $outputEncryptedPath, $plainTotal, $indexOffsets);
+        }
+
+        return [
+            'complete' => false,
+            'plain_total' => $plainTotal,
+            'state' => [
+                'plain_done' => $plainDone,
+                'cipher_offsets' => $indexOffsets,
+                'header_written' => $headerWritten,
+            ],
+        ];
+    }
+
+    /**
+     * @brief Write segment index and compute plaintext fingerprints after the last encrypt tick.
+     * @param string $plainSourcePath Plaintext path.
+     * @param string $outputEncryptedPath Cipher path.
+     * @param int $plainTotal Plain total.
+     * @param list<int> $cipherOffsets Segment start offsets.
+     * @return array{complete: bool, plain_total: int, state: array{plain_done: int, cipher_offsets: list<int>, header_written: bool}, fingerprints: array{plain_total: int, content_crc32: int, content_sha256: string}}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function completeEncryptTick(
+        string $plainSourcePath,
+        string $outputEncryptedPath,
+        int $plainTotal,
+        array $cipherOffsets,
+    ): array {
+        $this->writeV2SegmentIndexSidecar($outputEncryptedPath, $plainTotal, $cipherOffsets);
+        $fingerprints = $this->computePlainFileFingerprints($plainSourcePath, $plainTotal);
+
+        return [
+            'complete' => true,
+            'plain_total' => $plainTotal,
+            'state' => [
+                'plain_done' => $plainTotal,
+                'cipher_offsets' => $cipherOffsets,
+                'header_written' => true,
+            ],
+            'fingerprints' => $fingerprints,
+        ];
+    }
+
+    /**
+     * @brief Stream-hash a plaintext file for CRC-32 and SHA-256.
+     * @param string $plainSourcePath Plain path.
+     * @param int $plainTotal Expected size.
+     * @return array{plain_total: int, content_crc32: int, content_sha256: string}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function computePlainFileFingerprints(string $plainSourcePath, int $plainTotal): array
+    {
+        $in = fopen($plainSourcePath, 'rb');
+        if ($in === false) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+        $crcContext = hash_init('crc32b');
+        $shaContext = hash_init('sha256');
+        try {
+            while (!feof($in)) {
+                $chunk = fread($in, self::PLAIN_CHUNK_BYTES);
+                if ($chunk === false || $chunk === '') {
+                    break;
+                }
+                hash_update($crcContext, $chunk);
+                hash_update($shaContext, $chunk);
+            }
+        } finally {
+            fclose($in);
+        }
         $crcHex = hash_final($crcContext);
-        $crc32 = (int) hexdec($crcHex);
 
         return [
             'plain_total' => $plainTotal,
-            'content_crc32' => $crc32 & 0xFFFFFFFF,
+            'content_crc32' => ((int) hexdec($crcHex)) & 0xFFFFFFFF,
             'content_sha256' => hash_final($shaContext),
         ];
     }

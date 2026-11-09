@@ -18,6 +18,13 @@
     data-msg-resume-opfs-info="{{ 'files.download_progress.resume_opfs_info'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
     data-msg-checkpoint-invalid="{{ 'files.download_progress.checkpoint_invalid'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
     data-msg-parallel-tab="{{ 'files.download_progress.parallel_tab'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-calculating="{{ 'files.download_progress.eta_calculating'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-remaining="{{ 'files.download_progress.eta_remaining'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-speed="{{ 'files.download_progress.eta_speed'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-line="{{ 'files.download_progress.eta_line'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-unit-s="{{ 'files.download_progress.eta_unit_s'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-unit-m="{{ 'files.download_progress.eta_unit_m'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-eta-unit-h="{{ 'files.download_progress.eta_unit_h'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
 >
     <div class="col-12 col-lg-8">
         <div class="card shadow-sm border-0">
@@ -37,7 +44,8 @@
                 <div class="progress mb-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <div id="files-download-progress-bar" class="progress-bar" style="width: 0%"></div>
                 </div>
-                <p class="small text-muted mb-3" id="files-download-progress-count" aria-live="polite"></p>
+                <p class="small text-muted mb-1" id="files-download-progress-count" aria-live="polite"></p>
+                <p class="small text-muted mb-3" id="files-download-progress-eta" aria-live="polite"></p>
                 <button type="button" class="btn btn-outline-secondary" id="files-download-progress-cancel">{{ 'files.download_progress.cancel'|trans({}, 'messages', currentLocale) }}</button>
             </div>
         </div>
@@ -45,8 +53,9 @@
 </div>
 {% endblock %}
 {% block extra_scripts %}
+    <script src="{{ asset('js/transfer-eta.js') }}?v=20261109c" defer></script>
     <script src="{{ asset('js/files-download-checkpoint.js') }}?v=20260707" defer></script>
     <script src="{{ asset('js/files-download-sinks.js') }}?v=20260707" defer></script>
     <script src="{{ asset('js/files-download-manager.js') }}?v=20260707" defer></script>
-    <script src="{{ asset('js/files-download-progress-page.js') }}?v=20260707" defer></script>
+    <script src="{{ asset('js/files-download-progress-page.js') }}?v=20261109" defer></script>
 {% endblock %}

@@ -123,11 +123,51 @@
 
         var modal = document.getElementById('filesArchiveProgressModal');
         var statusEl = document.getElementById('files-archive-progress-status');
+        var etaEl = document.getElementById('files-archive-progress-eta');
         var barEl = document.getElementById('files-archive-progress-bar');
+        var prepareEta = window.TransferEta && typeof window.TransferEta.createEstimator === 'function'
+            ? window.TransferEta.createEstimator()
+            : null;
+        if (prepareEta) {
+            prepareEta.reset();
+        }
+        if (etaEl) {
+            etaEl.textContent = '';
+        }
         if (modal && window.bootstrap && window.bootstrap.Modal) {
             window.bootstrap.Modal.getOrCreateInstance(modal).show();
         }
 
+        /**
+         * @brief ETA templates from the archive progress modal datasets.
+         * @return {object}
+         * @date 2026-11-09
+         * @author Stephane H.
+         */
+        function etaTemplates() {
+            if (!modal) {
+                return {};
+            }
+            return {
+                calculating: modal.getAttribute('data-msg-eta-calculating') || '',
+                remaining: modal.getAttribute('data-msg-eta-remaining') || '',
+                speed: modal.getAttribute('data-msg-eta-speed') || '',
+                line: modal.getAttribute('data-msg-eta-line') || '',
+                units: {
+                    s: modal.getAttribute('data-msg-eta-unit-s') || 's',
+                    m: modal.getAttribute('data-msg-eta-unit-m') || 'min',
+                    h: modal.getAttribute('data-msg-eta-unit-h') || 'h'
+                }
+            };
+        }
+
+        /**
+         * @brief Refresh prepare progress bar, status, and ETA.
+         * @param {object} payload Archive tick/create payload.
+         * @return {void}
+         * @date 2026-11-09
+         * @author Stephane H.
+         */
         function updateUi(payload) {
             var prepared = Number(payload.preparedBytes) || 0;
             var total = Number(payload.totalBytes) || 0;
@@ -138,6 +178,12 @@
             }
             if (statusEl) {
                 statusEl.textContent = (payload.fileName || '') + ' — ' + percent + '%';
+            }
+            if (etaEl && prepareEta && window.TransferEta) {
+                var snap = prepareEta.update(prepared, total);
+                if (snap.shouldRefreshUi || prepared >= total) {
+                    etaEl.textContent = window.TransferEta.formatLine(snap, etaTemplates());
+                }
             }
         }
 
@@ -155,17 +201,24 @@
             if (!window.FilesDownloadLauncher) {
                 throw new Error('download.launcher_missing');
             }
+            // Native browser download has no JS byte events → no in-page ETA after this point.
             window.FilesDownloadLauncher.startNativeDownload(
                 payload.download_url || '',
                 payload.download_grant || '',
                 payload.fileName || 'archive.zip'
             );
+            if (etaEl) {
+                etaEl.textContent = '';
+            }
             if (modal && window.bootstrap && window.bootstrap.Modal) {
                 window.bootstrap.Modal.getOrCreateInstance(modal).hide();
             }
         }).catch(function (error) {
             if (statusEl) {
                 statusEl.textContent = (error && error.message) || 'error';
+            }
+            if (etaEl) {
+                etaEl.textContent = '';
             }
             throw error;
         });

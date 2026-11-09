@@ -23,6 +23,8 @@
 !/var/chunk_upload/.gitkeep
 /var/download_prepare/*
 !/var/download_prepare/.gitkeep
+/var/tasks/*
+!/var/tasks/.gitkeep
 
 ### Local / test artefacts ###
 /var/test/
@@ -36,7 +38,10 @@ composer.json.bak
 **/*~
 
 ### IDE / local tooling ###
-/.cursor/
+# Keep shared Cursor rules versioned; ignore the rest of .cursor/
+/.cursor/*
+!/.cursor/rules/
+!/.cursor/rules/**
 /.idea/
 /.vscode/
 
