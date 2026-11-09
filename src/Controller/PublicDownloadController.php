@@ -8,6 +8,10 @@ use App\Repository\FolderRepository;
 use App\Repository\SharedFileRepository;
 use App\Service\Audit\DownloadAuditService;
 use App\Service\Audit\DownloadDiagnosticLogger;
+use App\Service\Download\DownloadGrantService;
+use App\Service\Download\EncryptedRangeReader;
+use App\Service\Download\FileDownloadResource;
+use App\Service\Download\RangeStreamResponder;
 use App\Service\File\EncryptedStreamDeliveryService;
 use App\Service\File\FileEncryptionService;
 use App\Service\Share\PublicDownloadTotpService;
@@ -51,6 +55,9 @@ class PublicDownloadController
         private readonly TranslatorInterface $translator,
         private readonly DownloadDiagnosticLogger $downloadDiagnosticLogger,
         private readonly EncryptedStreamDeliveryService $encryptedStreamDeliveryService,
+        private readonly DownloadGrantService $downloadGrantService,
+        private readonly EncryptedRangeReader $encryptedRangeReader,
+        private readonly RangeStreamResponder $rangeStreamResponder,
         private readonly int $publicDownloadInlineMaxBytes = 3145728,
         private readonly int $publicDownloadTicketTtlSeconds = 7200,
         private readonly int $downloadDirectMaxBytes = 209715200,
@@ -346,11 +353,23 @@ class PublicDownloadController
 
         $this->downloadAuditService->create($challenge->getEmail(), $ip, $resourceToken);
 
+        $storageChallengeId = $challenge->getId() !== null && $challenge->getId() > 0
+            ? (int) $challenge->getId() : $challengeId;
+        $byteLen = (int) $sharedFile->getByteSize();
+        $fileId = (int) ($sharedFile->getId() ?? 0);
+        $resource = new FileDownloadResource($sharedFile, $this->encryptedRangeReader);
+        $grant = $this->downloadGrantService->mint(
+            DownloadGrantService::KIND_PUBLIC_FILE,
+            (string) $fileId,
+            DownloadGrantService::ACTOR_PUBLIC_CHALLENGE,
+            (string) $storageChallengeId,
+            $resource->getStrongEtag(),
+        );
+
+        // Keep a legacy one-time key for older clients / small inline payloads.
         $downloadKey = bin2hex(random_bytes(32));
         $cacheKey = $this->ticketCacheKey($downloadKey);
         $item = $this->publicDownloadTicketCache->getItem($cacheKey);
-        $storageChallengeId = $challenge->getId() !== null && $challenge->getId() > 0
-            ? (int) $challenge->getId() : $challengeId;
         $item->set([
             'challengeId' => $storageChallengeId,
             'publicToken' => $token,
@@ -359,9 +378,7 @@ class PublicDownloadController
         $item->expiresAfter($this->publicDownloadTicketTtlSeconds);
         $this->publicDownloadTicketCache->save($item);
 
-        $byteLen = (int) $sharedFile->getByteSize();
-        $useManager = $byteLen > $this->downloadManagerUiThresholdBytes;
-
+        $useNative = $byteLen > $this->downloadManagerUiThresholdBytes;
         $body = [
             'status' => 'ok',
             'message' => 'download.authorized',
@@ -370,9 +387,11 @@ class PublicDownloadController
             'bytes' => $byteLen,
             'fileName' => $sharedFile->getOriginalFileName(),
             'downloadKey' => $downloadKey,
+            'download_grant' => $grant,
             'prepareRequired' => false,
-            'useManager' => $useManager,
-            'downloadUrl' => '/download/public/file?key='.rawurlencode($downloadKey),
+            'useManager' => false,
+            'useNative' => $useNative,
+            'downloadUrl' => '/dl/file/'.$fileId.'?g='.rawurlencode($grant),
         ];
 
         if ($byteLen <= $this->publicDownloadInlineMaxBytes) {

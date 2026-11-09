@@ -7,6 +7,7 @@
     }
 
     var publicToken = root.getAttribute('data-public-token') || '';
+    var fileBytes = parseInt(root.getAttribute('data-file-bytes') || '0', 10);
     var endpointChallenge = root.getAttribute('data-endpoint-challenge') || '';
     var endpointVerify = root.getAttribute('data-endpoint-verify') || '';
     var endpointVerifyPassword = root.getAttribute('data-endpoint-verify-password') || '';
@@ -31,14 +32,28 @@
     var progressBar = document.getElementById('public-landing-download-progress-bar');
     var progressCount = document.getElementById('public-landing-download-progress-count');
     var progressWrap = document.getElementById('public-landing-download-progress-wrap');
+    var resumePrompt = document.getElementById('public-landing-download-resume-prompt');
+    var resumeMessage = document.getElementById('public-landing-download-resume-message');
+    var resumePickerHint = document.getElementById('public-landing-download-resume-picker-hint');
+    var resumeBtn = document.getElementById('public-landing-download-resume-btn');
+    var restartBtn = document.getElementById('public-landing-download-restart-btn');
 
     var challengeId = 0;
     var preAuthToken = '';
     var downloadKey = '';
     var downloadAbortController = null;
+    var pendingDownloadData = null;
+    var pendingCheckpoint = null;
 
     function msg(key, fallback) {
         return apiMsgs[key] || fallback || key;
+    }
+
+    function jobKey(bytes) {
+        if (!window.FilesDownloadCheckpoint) {
+            return 'public:' + publicToken + ':' + String(bytes);
+        }
+        return window.FilesDownloadCheckpoint.buildJobKey('public', publicToken, bytes);
     }
 
     function showAlert(text, isError) {
@@ -79,13 +94,37 @@
         }
     }
 
-    function startManagedDownload(data) {
-        if (typeof window.FilesDownloadManager === 'undefined') {
-            if (downloadLink) {
-                downloadLink.href = data.downloadUrl || (endpointFile + '?key=' + encodeURIComponent(downloadKey));
-                downloadLink.classList.remove('d-none');
+    function formatResumePrompt(checkpoint, totalBytes) {
+        var template = root.getAttribute('data-msg-resume-prompt') || '';
+        var received = Number(checkpoint.receivedBytes) || 0;
+        var total = Number(checkpoint.totalBytes) || totalBytes;
+        var percent = total > 0 ? Math.floor((received / total) * 100) : 0;
+        return template
+            .replace('%percent%', String(percent))
+            .replace('%received%', window.FilesDownloadManager.formatBytes(received))
+            .replace('%total%', window.FilesDownloadManager.formatBytes(total));
+    }
+
+    function showResumePrompt(checkpoint, data) {
+        pendingCheckpoint = checkpoint;
+        pendingDownloadData = data;
+        var totalBytes = Number(data.bytes) || fileBytes;
+        updateProgress(Number(checkpoint.receivedBytes) || 0, Number(checkpoint.totalBytes) || totalBytes);
+        if (resumeMessage) {
+            resumeMessage.textContent = formatResumePrompt(checkpoint, totalBytes);
+        }
+        if (resumePickerHint) {
+            var hint = '';
+            if (checkpoint.sinkType === 'fsAccess') {
+                hint = root.getAttribute('data-msg-resume-picker-hint') || '';
+            } else if (checkpoint.sinkType === 'opfs') {
+                hint = root.getAttribute('data-msg-resume-opfs-info') || '';
             }
-            return;
+            resumePickerHint.textContent = hint;
+            resumePickerHint.classList.toggle('d-none', hint === '');
+        }
+        if (resumePrompt) {
+            resumePrompt.classList.remove('d-none');
         }
         if (progressWrap) {
             progressWrap.classList.remove('d-none');
@@ -93,26 +132,123 @@
         if (downloadLink) {
             downloadLink.classList.add('d-none');
         }
+    }
+
+    function hideResumePrompt() {
+        if (resumePrompt) {
+            resumePrompt.classList.add('d-none');
+        }
+    }
+
+    function resolveDownloadError(error) {
+        if (!error || !error.message) {
+            return msg('download.resource.unreadable', '');
+        }
+        if (error.message === 'download.manager.checkpoint_invalid') {
+            return root.getAttribute('data-msg-checkpoint-invalid') || msg('download.resource.unreadable', '');
+        }
+        if (error.message === 'download.manager.parallel_tab') {
+            return root.getAttribute('data-msg-parallel-tab') || msg('download.resource.unreadable', '');
+        }
+        return msg('download.resource.unreadable', '');
+    }
+
+    function runManagedDownload(data, resumeCheckpoint) {
+        if (typeof window.FilesDownloadManager === 'undefined') {
+            if (downloadLink) {
+                downloadLink.href = data.downloadUrl || (endpointFile + '?key=' + encodeURIComponent(downloadKey));
+                downloadLink.classList.remove('d-none');
+            }
+            return Promise.resolve();
+        }
+
+        hideResumePrompt();
+        if (progressWrap) {
+            progressWrap.classList.remove('d-none');
+        }
+        if (downloadLink) {
+            downloadLink.classList.add('d-none');
+        }
+
+        var totalBytes = Number(data.bytes) || fileBytes;
         downloadAbortController = new AbortController();
-        window.FilesDownloadManager.download({
+        return window.FilesDownloadManager.download({
             url: data.downloadUrl || (endpointFile + '?key=' + encodeURIComponent(downloadKey)),
             fileName: data.fileName || 'download.bin',
+            jobKey: jobKey(totalBytes),
+            context: 'public',
+            fileId: null,
+            publicToken: publicToken,
             signal: downloadAbortController.signal,
+            resumeCheckpoint: resumeCheckpoint || null,
             onProgress: updateProgress,
+            onCheckpointSaved: updateProgress,
             onError: function () {}
         }).then(function () {
+            pendingCheckpoint = null;
+            pendingDownloadData = null;
             showAlert(msg('download.authorized', ''), false);
         }).catch(function (error) {
             if (error && error.name === 'AbortError') {
+                if (resumeCheckpoint) {
+                    showResumePrompt(resumeCheckpoint, data);
+                }
                 return;
             }
+            showAlert(resolveDownloadError(error), true);
+            if (!window.FilesDownloadCheckpoint) {
+                return;
+            }
+            return window.FilesDownloadCheckpoint.find(jobKey(totalBytes)).then(function (checkpoint) {
+                if (window.FilesDownloadCheckpoint.isResumable(checkpoint)) {
+                    showResumePrompt(checkpoint, data);
+                }
+            });
+        });
+    }
+
+    function startManagedDownload(data) {
+        var totalBytes = Number(data.bytes) || fileBytes;
+        if (!window.FilesDownloadCheckpoint) {
+            return runManagedDownload(data, null);
+        }
+        return window.FilesDownloadCheckpoint.find(jobKey(totalBytes)).then(function (checkpoint) {
+            if (window.FilesDownloadCheckpoint.isResumable(checkpoint)) {
+                showResumePrompt(checkpoint, data);
+                return;
+            }
+            return runManagedDownload(data, null);
+        }).catch(function () {
+            return runManagedDownload(data, null);
+        });
+    }
+
+    function restartManagedDownload() {
+        if (!pendingDownloadData) {
+            return;
+        }
+        var data = pendingDownloadData;
+        var checkpoint = pendingCheckpoint;
+        var totalBytes = Number(data.bytes) || fileBytes;
+        var clearPromise = window.FilesDownloadCheckpoint
+            ? window.FilesDownloadCheckpoint.clear(jobKey(totalBytes))
+            : Promise.resolve();
+        var destroyPromise = Promise.resolve();
+        if (checkpoint && checkpoint.opfsPath && window.FilesDownloadSinks) {
+            destroyPromise = window.FilesDownloadSinks.destroyOpfsArtifact(checkpoint.opfsPath);
+        }
+        Promise.all([clearPromise, destroyPromise]).then(function () {
+            pendingCheckpoint = null;
+            updateProgress(0, totalBytes);
+            return runManagedDownload(data, null);
+        }).catch(function () {
             showAlert(msg('download.resource.unreadable', ''), true);
         });
     }
 
     function revealDownload(data) {
         downloadKey = String(data.downloadKey || '');
-        var useManager = !!data.useManager || ((Number(data.bytes) || 0) > managerThreshold);
+        var useNative = !!data.useNative || !!data.useManager || ((Number(data.bytes) || 0) > managerThreshold);
         if (downloadLink) {
             if (data.contentBase64) {
                 var mime = data.mimeType || 'application/octet-stream';
@@ -126,8 +262,16 @@
                 downloadLink.href = URL.createObjectURL(blob);
                 downloadLink.download = data.fileName || 'download.bin';
                 downloadLink.classList.remove('d-none');
-            } else if (useManager) {
-                startManagedDownload(data);
+            } else if (useNative && window.FilesDownloadLauncher) {
+                var grant = data.download_grant || '';
+                var url = data.downloadUrl || '';
+                if (grant && url.indexOf('g=') < 0) {
+                    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'g=' + encodeURIComponent(grant);
+                }
+                downloadLink.href = url;
+                downloadLink.setAttribute('download', data.fileName || 'download.bin');
+                downloadLink.classList.remove('d-none');
+                window.FilesDownloadLauncher.startNativeDownload(data.downloadUrl || '', grant, data.fileName || 'download.bin');
             } else {
                 downloadLink.href = data.downloadUrl || (endpointFile + '?key=' + encodeURIComponent(downloadKey));
                 downloadLink.classList.remove('d-none');
@@ -209,6 +353,19 @@
                 showAlert(root.getAttribute('data-msg-api-fallback') || '', true);
             });
         });
+    }
+
+    if (resumeBtn) {
+        resumeBtn.addEventListener('click', function () {
+            if (!pendingDownloadData || !pendingCheckpoint) {
+                return;
+            }
+            runManagedDownload(pendingDownloadData, pendingCheckpoint);
+        });
+    }
+
+    if (restartBtn) {
+        restartBtn.addEventListener('click', restartManagedDownload);
     }
 
     var cancelBtn = document.getElementById('public-landing-download-cancel');

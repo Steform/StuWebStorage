@@ -90,7 +90,8 @@ final class SharedFileContentUpdateService
                 throw new RuntimeException(self::EXCEPTION_STORAGE_FAILED);
             }
 
-            $plainLen = $this->fileEncryptionService->encryptPlainFileToV2Storage($tmpPlain, $tmpEncrypted);
+            $encrypted = $this->fileEncryptionService->encryptPlainFileToV2Storage($tmpPlain, $tmpEncrypted);
+            $plainLen = (int) $encrypted['plain_total'];
             if ($plainLen !== $newByteSize) {
                 throw new RuntimeException(self::EXCEPTION_STORAGE_FAILED);
             }
@@ -100,6 +101,7 @@ final class SharedFileContentUpdateService
             }
 
             $sharedFile->setByteSize($newByteSize);
+            $sharedFile->applyContentFingerprints($encrypted);
             $sharedFile->touchUpdatedAt();
         } finally {
             if (is_file($tmpPlain)) {

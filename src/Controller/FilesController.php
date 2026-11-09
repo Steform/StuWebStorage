@@ -18,8 +18,13 @@ use App\Repository\UserRepository;
 use App\Service\Admin\AdminGodviewSessionStateService;
 use App\Service\Audit\DownloadDiagnosticLogger;
 use App\Service\Audit\DownloadAuditService;
+use App\Entity\DownloadArchive;
+use App\Service\Download\DownloadArchiveService;
+use App\Service\Download\DownloadGrantService;
+use App\Service\Download\EncryptedRangeReader;
+use App\Service\Download\FileDownloadResource;
+use App\Service\Download\RangeStreamResponder;
 use App\Service\File\ChunkedUploadService;
-use App\Service\File\DownloadTokenService;
 use App\Service\File\EncryptedStreamDeliveryService;
 use App\Service\File\FilesQueryScopeResolver;
 use App\Service\File\FilesUiPreferenceService;
@@ -170,7 +175,10 @@ class FilesController extends AbstractController
         private readonly AdminGodviewSessionStateService $adminGodviewSessionStateService,
         private readonly DownloadDiagnosticLogger $downloadDiagnosticLogger,
         private readonly EncryptedStreamDeliveryService $encryptedStreamDeliveryService,
-        private readonly DownloadTokenService $downloadTokenService,
+        private readonly DownloadGrantService $downloadGrantService,
+        private readonly EncryptedRangeReader $encryptedRangeReader,
+        private readonly RangeStreamResponder $rangeStreamResponder,
+        private readonly DownloadArchiveService $downloadArchiveService,
         private readonly string $projectDir,
         private readonly int $downloadDirectMaxBytes,
         private readonly int $downloadManagerUiThresholdBytes,
@@ -1412,7 +1420,8 @@ class FilesController extends AbstractController
         $absolutePath = $absoluteDir.'/'.$storageName;
 
         try {
-            $plainLen = $this->fileEncryptionService->encryptPlainFileToV2Storage($plainPath, $absolutePath);
+            $encrypted = $this->fileEncryptionService->encryptPlainFileToV2Storage($plainPath, $absolutePath);
+            $plainLen = (int) $encrypted['plain_total'];
         } catch (\RuntimeException) {
             return $this->uploadJsonErrorOrRedirect($request, $translator, 'files.flash.storage_failed');
         }
@@ -1427,6 +1436,7 @@ class FilesController extends AbstractController
             null,
             null
         );
+        $sharedFile->applyContentFingerprints($encrypted);
         $sharedFile->setFolder($targetFolder);
 
         $this->entityManager->persist($sharedFile);
@@ -3452,17 +3462,6 @@ class FilesController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        if (!$this->downloadTokenService->isValidForRequest(
-            $request,
-            (int) ($sharedFile->getId() ?? 0),
-            (string) $user->getId(),
-            'user',
-        )) {
-            throw $this->createAccessDeniedException();
-        }
-
-        $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', $sharedFile->getOriginalFileName()) ?: 'download.bin';
-
         $storagePath = $sharedFile->getStoragePath();
         if ($storagePath === '' || !is_readable($storagePath)) {
             $this->addFlash('danger', 'files.flash.download_failed');
@@ -3474,50 +3473,25 @@ class FilesController extends AbstractController
 
         $downloadId = $this->downloadDiagnosticLogger->newDownloadId();
         $byteSize = (int) $sharedFile->getByteSize();
-        $hasRange = $request->headers->has('Range');
-        $this->downloadDiagnosticLogger->log($downloadId, $hasRange ? 'stream_range' : 'stream_start', 'ok', [
+        $resource = new FileDownloadResource($sharedFile, $this->encryptedRangeReader);
+        $response = $this->rangeStreamResponder->respond($request, $resource, [
+            'downloadId' => $downloadId,
             'ownerUserId' => (int) $user->getId(),
             'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
             'actorType' => 'user',
             'bytesTotal' => $byteSize,
+            'extra' => ['resource_kind' => 'file', 'via' => 'session'],
         ]);
 
-        $response = $this->encryptedStreamDeliveryService->buildEncryptedStreamResponse(
-            $request,
-            $storagePath,
-            $byteSize,
-            'application/octet-stream',
-            EncryptedStreamDeliveryService::DISPOSITION_ATTACHMENT,
-            $safeName,
-            true,
-            true,
-        );
-
         if ($response->getStatusCode() >= 400) {
-            $this->downloadDiagnosticLogger->log($downloadId, 'stream_end', 'error', [
-                'ownerUserId' => (int) $user->getId(),
-                'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
-                'actorType' => 'user',
-                'httpStatus' => $response->getStatusCode(),
-            ]);
-
             return $response;
         }
 
-        if (!$hasRange && !$request->isMethod('HEAD')) {
+        if (!$request->headers->has('Range') && !$request->isMethod('HEAD')) {
             $ip = (string) ($request->getClientIp() ?? '0.0.0.0');
             $actor = (string) $user->getUserIdentifier();
             $this->downloadAuditService->create($actor, $ip, $sharedFile->getPublicToken());
         }
-
-        $this->downloadDiagnosticLogger->log($downloadId, 'stream_end', 'ok', [
-            'ownerUserId' => (int) $user->getId(),
-            'sharedFileId' => (int) ($sharedFile->getId() ?? 0),
-            'actorType' => 'user',
-            'httpStatus' => $response->getStatusCode(),
-            'bytesTotal' => $byteSize,
-            'bytesSent' => (int) ($response->headers->get('Content-Length') ?? $byteSize),
-        ]);
 
         return $response;
     }
@@ -3549,19 +3523,26 @@ class FilesController extends AbstractController
             return $this->extractJsonOrRedirect($request, $this->translator, 'files.flash.not_found', 403);
         }
 
-        $token = $this->downloadTokenService->mint(
-            (int) ($sharedFile->getId() ?? 0),
+        $fileId = (int) ($sharedFile->getId() ?? 0);
+        $resource = new FileDownloadResource($sharedFile, $this->encryptedRangeReader);
+        $grant = $this->downloadGrantService->mint(
+            DownloadGrantService::KIND_FILE,
+            (string) $fileId,
+            DownloadGrantService::ACTOR_USER,
             (string) $user->getId(),
-            'user',
+            $resource->getStrongEtag(),
         );
 
         return new JsonResponse([
             'status' => 'ok',
-            'download_token' => $token,
-            'download_url' => $this->generateUrl('files_download', ['id' => $id]),
+            'download_grant' => $grant,
+            'download_token' => $grant,
+            'download_url' => $this->generateUrl('download_delivery_file', ['id' => $fileId]),
             'bytes' => (int) $sharedFile->getByteSize(),
             'file_name' => $sharedFile->getOriginalFileName(),
-            'use_manager' => (int) $sharedFile->getByteSize() > $this->downloadManagerUiThresholdBytes,
+            'use_native' => true,
+            'use_manager' => false,
+            'expires_in' => $this->downloadGrantService->getTtlSeconds(),
         ]);
     }
 
@@ -3735,94 +3716,44 @@ class FilesController extends AbstractController
 
             return $this->redirectToFilesIndex($request);
         }
-        $zip = new \ZipArchive();
-        $zipName = 'files-selection-'.(new \DateTimeImmutable())->format('Ymd-Hi').'.zip';
-        $zipPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'storage_'.$zipName;
-        if (is_file($zipPath)) {
-            @unlink($zipPath);
-        }
-        $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-        $added = 0;
-        $selectedFolderRoots = [];
-        $candidateFileContexts = [];
-        foreach ($ids as $id) {
-            $candidateFileContexts[$id] = [
-                'fileId' => $id,
-                'selectedFolderId' => null,
-            ];
-        }
-        $acceptedFolderIds = [];
-        if ($this->isGranted('ROLE_SHARE_SEND')) {
-            foreach ($folderIds as $folderId) {
-                $folder = $this->folderRepository->find($folderId);
-                if (!$folder instanceof Folder || (int) $folder->getOwnerUserId() !== $effectiveOwnerId) {
-                    continue;
-                }
-                $acceptedFolderIds[] = (int) $folder->getId();
-                $selectedFolderRoots[(int) $folder->getId()] = $folder;
-                foreach ($this->folderTreeService->collectSubtreeFolders($effectiveOwnerId, $folder) as $subFolder) {
-                    $rows = $this->sharedFileRepository->findBy([
-                        'ownerUserId' => $effectiveOwnerId,
-                        'folder' => $subFolder,
-                    ]);
-                    foreach ($rows as $row) {
-                        if ($row instanceof SharedFile && $row->getId() !== null) {
-                            $fileId = (int) $row->getId();
-                            if (!isset($candidateFileContexts[$fileId])) {
-                                $candidateFileContexts[$fileId] = [
-                                    'fileId' => $fileId,
-                                    'selectedFolderId' => (int) $folder->getId(),
-                                ];
-                                continue;
-                            }
-                            if ($candidateFileContexts[$fileId]['selectedFolderId'] === null) {
-                                $candidateFileContexts[$fileId]['selectedFolderId'] = (int) $folder->getId();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        $usedEntryNames = [];
-        foreach (array_values($candidateFileContexts) as $fileContext) {
-            $id = (int) ($fileContext['fileId'] ?? 0);
-            if ($id < 1) {
-                continue;
-            }
-            $sharedFile = $this->sharedFileRepository->find($id);
-            if (!$sharedFile instanceof SharedFile) {
-                continue;
-            }
-            if (!$this->canUserDownloadSharedFile($user, $sharedFile)) {
-                continue;
-            }
-            try {
-                $plain = $this->fileEncryptionService->decryptFromStorage($sharedFile->getStoragePath());
-            } catch (\RuntimeException) {
-                continue;
-            }
-            $rawEntryName = (string) $sharedFile->getOriginalFileName();
-            $selectedFolderId = (int) ($fileContext['selectedFolderId'] ?? 0);
-            if ($selectedFolderId > 0 && isset($selectedFolderRoots[$selectedFolderId])) {
-                $selectedRoot = $selectedFolderRoots[$selectedFolderId];
-                $fileFolder = $sharedFile->getFolder();
-                if ($fileFolder instanceof Folder) {
-                    $relativePrefix = $this->folderZipService->buildRelativeFolderPathFromRoot($selectedRoot, $fileFolder);
-                    $rawEntryName = ltrim($relativePrefix.'/'.$sharedFile->getOriginalFileName(), '/');
-                }
-            }
-            $entryName = $this->buildUniqueZipEntryName($rawEntryName, $id, $usedEntryNames);
-            $zip->addFromString($entryName, $plain);
-            $added++;
-        }
-        $zip->close();
-        if ($added < 1) {
-            $this->addFlash('danger', 'files.flash.not_found');
+
+        try {
+            $archive = $this->downloadArchiveService->createFromSelection(
+                $user,
+                fn (User $actor, SharedFile $file): bool => $this->canUserDownloadSharedFile($actor, $file),
+                $ids,
+                $this->isGranted('ROLE_SHARE_SEND') ? $folderIds : [],
+                $effectiveOwnerId,
+            );
+        } catch (\RuntimeException $e) {
+            $this->addFlash('danger', $e->getMessage());
 
             return $this->redirectToFilesIndex($request);
         }
 
-        return $this->file($zipPath, $zipName);
+        $deadline = microtime(true) + 25;
+        while (!$archive->isReady() && $archive->getStatus() === DownloadArchive::STATUS_PREPARING && microtime(true) < $deadline) {
+            $this->downloadArchiveService->tickPrepare($archive);
+        }
+
+        if (!$archive->isReady()) {
+            $this->addFlash('warning', 'files.archive.create_failed');
+
+            return $this->redirectToFilesIndex($request);
+        }
+
+        $grant = $this->downloadGrantService->mint(
+            DownloadGrantService::KIND_ARCHIVE,
+            $archive->getToken(),
+            DownloadGrantService::ACTOR_USER,
+            (string) $user->getId(),
+            (string) ($archive->getEtag() ?? ''),
+        );
+
+        return $this->redirectToRoute('download_delivery_archive', [
+            'token' => $archive->getToken(),
+            'g' => $grant,
+        ]);
     }
 
     /**
@@ -4393,9 +4324,41 @@ class FilesController extends AbstractController
 
             return $this->redirectToFilesIndex($request);
         }
-        $zip = $this->folderZipService->buildFolderZip($ownerId, $folder);
+        try {
+            $archive = $this->downloadArchiveService->createFromSelection(
+                $user,
+                fn (User $actor, SharedFile $file): bool => $this->canUserDownloadSharedFile($actor, $file),
+                [],
+                [$id],
+                $ownerId,
+                DownloadArchive::KIND_FOLDER,
+            );
+        } catch (\RuntimeException $e) {
+            $this->addFlash('danger', $e->getMessage());
 
-        return $this->file($zip['zip_path'], $zip['zip_name']);
+            return $this->redirectToFilesIndex($request);
+        }
+        $deadline = microtime(true) + 25;
+        while (!$archive->isReady() && $archive->getStatus() === DownloadArchive::STATUS_PREPARING && microtime(true) < $deadline) {
+            $this->downloadArchiveService->tickPrepare($archive);
+        }
+        if (!$archive->isReady()) {
+            $this->addFlash('warning', 'files.archive.create_failed');
+
+            return $this->redirectToFilesIndex($request);
+        }
+        $grant = $this->downloadGrantService->mint(
+            DownloadGrantService::KIND_ARCHIVE,
+            $archive->getToken(),
+            DownloadGrantService::ACTOR_USER,
+            (string) $user->getId(),
+            (string) ($archive->getEtag() ?? ''),
+        );
+
+        return $this->redirectToRoute('download_delivery_archive', [
+            'token' => $archive->getToken(),
+            'g' => $grant,
+        ]);
     }
 
     /**
@@ -4500,9 +4463,37 @@ class FilesController extends AbstractController
         if ($ctx === null) {
             throw $this->createNotFoundException();
         }
-        $zip = $this->folderZipService->buildFolderZipFromFiles($ctx['folder'], $ctx['files']);
+        /** @var User $user */
+        $user = $this->getUser();
+        try {
+            $archive = $this->downloadArchiveService->createFromFiles(
+                $user,
+                $ctx['folder'],
+                $ctx['files'],
+                DownloadArchive::KIND_SHARED_FOLDER,
+            );
+        } catch (\RuntimeException $e) {
+            throw $this->createNotFoundException($e->getMessage());
+        }
+        $deadline = microtime(true) + 25;
+        while (!$archive->isReady() && $archive->getStatus() === DownloadArchive::STATUS_PREPARING && microtime(true) < $deadline) {
+            $this->downloadArchiveService->tickPrepare($archive);
+        }
+        if (!$archive->isReady()) {
+            throw $this->createNotFoundException('files.archive.create_failed');
+        }
+        $grant = $this->downloadGrantService->mint(
+            DownloadGrantService::KIND_ARCHIVE,
+            $archive->getToken(),
+            DownloadGrantService::ACTOR_USER,
+            (string) $user->getId(),
+            (string) ($archive->getEtag() ?? ''),
+        );
 
-        return $this->file($zip['zip_path'], $zip['zip_name']);
+        return $this->redirectToRoute('download_delivery_archive', [
+            'token' => $archive->getToken(),
+            'g' => $grant,
+        ]);
     }
 
     /**

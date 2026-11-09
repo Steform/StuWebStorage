@@ -78,6 +78,18 @@ class SharedFile
     private ?string $publicPasswordSecret = null;
 
     /**
+     * @brief CRC-32 (IEEE / crc32b) of plaintext content; null until computed.
+     */
+    #[ORM\Column(name: 'content_crc32', type: 'integer', nullable: true, options: ['unsigned' => true])]
+    private ?int $contentCrc32 = null;
+
+    /**
+     * @brief Lowercase hex SHA-256 of plaintext content; null until computed.
+     */
+    #[ORM\Column(name: 'content_sha256', length: 64, nullable: true)]
+    private ?string $contentSha256 = null;
+
+    /**
      * @brief Build shared file aggregate.
      * @param int $ownerUserId Owner user identifier.
      * @param string $storagePath Storage path.
@@ -549,6 +561,83 @@ class SharedFile
     public function setByteSize(int $byteSize): void
     {
         $this->byteSize = (string) $byteSize;
+    }
+
+    /**
+     * @brief Get plaintext CRC-32 when known.
+     * @return int|null
+     * @date 2026-11-02
+     * @author Stephane H.
+     */
+    public function getContentCrc32(): ?int
+    {
+        return $this->contentCrc32;
+    }
+
+    /**
+     * @brief Persist plaintext CRC-32 (unsigned 32-bit).
+     * @param int|null $contentCrc32 CRC value or null to clear.
+     * @return void
+     * @date 2026-11-02
+     * @author Stephane H.
+     */
+    public function setContentCrc32(?int $contentCrc32): void
+    {
+        if ($contentCrc32 === null) {
+            $this->contentCrc32 = null;
+
+            return;
+        }
+        $this->contentCrc32 = $contentCrc32 & 0xFFFFFFFF;
+    }
+
+    /**
+     * @brief Get lowercase hex SHA-256 of plaintext when known.
+     * @return string|null
+     * @date 2026-11-02
+     * @author Stephane H.
+     */
+    public function getContentSha256(): ?string
+    {
+        return $this->contentSha256;
+    }
+
+    /**
+     * @brief Persist lowercase hex SHA-256 of plaintext.
+     * @param string|null $contentSha256 64-char hex digest or null.
+     * @return void
+     * @date 2026-11-02
+     * @author Stephane H.
+     */
+    public function setContentSha256(?string $contentSha256): void
+    {
+        if ($contentSha256 === null || $contentSha256 === '') {
+            $this->contentSha256 = null;
+
+            return;
+        }
+        $normalized = strtolower(trim($contentSha256));
+        if (!preg_match('/^[0-9a-f]{64}$/', $normalized)) {
+            throw new \InvalidArgumentException('shared_file.content_sha256_invalid');
+        }
+        $this->contentSha256 = $normalized;
+    }
+
+    /**
+     * @brief Apply both fingerprints from an encryption result payload.
+     * @param array{plain_total?: int, content_crc32?: int, content_sha256?: string} $fingerprints Encryption result.
+     * @return void
+     * @date 2026-11-02
+     * @author Stephane H.
+     */
+    public function applyContentFingerprints(array $fingerprints): void
+    {
+        if (isset($fingerprints['content_crc32'])) {
+            $this->setContentCrc32((int) $fingerprints['content_crc32']);
+        }
+        if (isset($fingerprints['content_sha256']) && is_string($fingerprints['content_sha256'])) {
+            $this->setContentSha256($fingerprints['content_sha256']);
+        }
     }
 
     /**

@@ -58,11 +58,11 @@ class FileEncryptionService
      * @brief Encrypt a plaintext file on disk into v2 binary storage without loading whole file in RAM.
      * @param string $plainSourcePath Readable plaintext path.
      * @param string $outputEncryptedPath Writable destination path.
-     * @return int Plaintext byte length written into header.
-     * @date 2026-05-03
+     * @return array{plain_total: int, content_crc32: int, content_sha256: string} Size and fingerprints.
+     * @date 2026-11-02
      * @author Stephane H.
      */
-    public function encryptPlainFileToV2Storage(string $plainSourcePath, string $outputEncryptedPath): int
+    public function encryptPlainFileToV2Storage(string $plainSourcePath, string $outputEncryptedPath): array
     {
         if ($this->encryptionKey === '') {
             throw new RuntimeException('file.encryption.key_missing');
@@ -93,6 +93,9 @@ class FileEncryptionService
             throw new RuntimeException('file.encryption.storage_failed');
         }
 
+        $crcContext = hash_init('crc32b');
+        $shaContext = hash_init('sha256');
+
         try {
             fwrite($out, self::STORAGE_MAGIC_V2);
             fwrite($out, chr(1));
@@ -108,6 +111,8 @@ class FileEncryptionService
                     throw new RuntimeException('file.encryption.storage_unreadable');
                 }
                 $remaining -= strlen($plainChunk);
+                hash_update($crcContext, $plainChunk);
+                hash_update($shaContext, $plainChunk);
                 $iv = random_bytes($ivLength);
                 $cipherText = openssl_encrypt($plainChunk, self::CIPHER, $this->encryptionKey, OPENSSL_RAW_DATA, $iv);
                 if (!is_string($cipherText)) {
@@ -123,7 +128,100 @@ class FileEncryptionService
             fclose($out);
         }
 
-        return $plainTotal;
+        $crcHex = hash_final($crcContext);
+        $crc32 = (int) hexdec($crcHex);
+
+        return [
+            'plain_total' => $plainTotal,
+            'content_crc32' => $crc32 & 0xFFFFFFFF,
+            'content_sha256' => hash_final($shaContext),
+        ];
+    }
+
+    /**
+     * @brief Compute plaintext CRC-32 and SHA-256 by streaming decrypt without buffering the whole file.
+     * @param string $storagePath Encrypted storage path.
+     * @return array{content_crc32: int, content_sha256: string, plain_total: int}
+     * @date 2026-11-02
+     * @author Stephane H.
+     */
+    public function computeFingerprintsFromStorage(string $storagePath): array
+    {
+        $crcContext = hash_init('crc32b');
+        $shaContext = hash_init('sha256');
+        $written = $this->streamDecryptStorageIntoHashContexts($storagePath, $crcContext, $shaContext);
+        $crcHex = hash_final($crcContext);
+
+        return [
+            'content_crc32' => ((int) hexdec($crcHex)) & 0xFFFFFFFF,
+            'content_sha256' => hash_final($shaContext),
+            'plain_total' => $written,
+        ];
+    }
+
+    /**
+     * @brief Stream-decrypt storage into fingerprint hash contexts without buffering plaintext.
+     * @param string $storagePath Encrypted storage path.
+     * @param \HashContext $crcContext Initialized crc32b context.
+     * @param \HashContext $shaContext Initialized sha256 context.
+     * @return int Plaintext bytes hashed.
+     * @date 2026-11-02
+     * @author Stephane H.
+     */
+    public function streamDecryptStorageIntoHashContexts(string $storagePath, \HashContext $crcContext, \HashContext $shaContext): int
+    {
+        $fh = fopen($storagePath, 'rb');
+        if ($fh === false) {
+            throw new RuntimeException('file.encryption.storage_unreadable');
+        }
+
+        $written = 0;
+        try {
+            $magic = fread($fh, 4);
+            if ($magic === self::STORAGE_MAGIC_V2) {
+                $expectedTotal = $this->readV2PlainTotalFromHandleAfterMagic($fh);
+                if ($this->encryptionKey === '') {
+                    throw new RuntimeException('file.encryption.key_missing');
+                }
+                while (!feof($fh)) {
+                    $segment = $this->readV2CipherSegment($fh);
+                    if ($segment === null) {
+                        break;
+                    }
+                    $plainChunk = openssl_decrypt(
+                        $segment['cipherText'],
+                        self::CIPHER,
+                        $this->encryptionKey,
+                        OPENSSL_RAW_DATA,
+                        $segment['iv'],
+                    );
+                    if (!is_string($plainChunk)) {
+                        throw new RuntimeException('file.encryption.failed');
+                    }
+                    hash_update($crcContext, $plainChunk);
+                    hash_update($shaContext, $plainChunk);
+                    $written += strlen($plainChunk);
+                }
+                if ($expectedTotal > 0 && $written !== $expectedTotal) {
+                    throw new RuntimeException('file.encryption.invalid_payload');
+                }
+
+                return $written;
+            }
+
+            rewind($fh);
+            $encryptedContent = stream_get_contents($fh);
+            if (!is_string($encryptedContent) || $encryptedContent === '') {
+                throw new RuntimeException('file.encryption.storage_empty');
+            }
+            $plain = $this->decrypt($encryptedContent);
+            hash_update($crcContext, $plain);
+            hash_update($shaContext, $plain);
+
+            return strlen($plain);
+        } finally {
+            fclose($fh);
+        }
     }
 
     /**

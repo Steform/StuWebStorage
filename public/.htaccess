@@ -25,3 +25,14 @@
     php_value max_execution_time 3600
     php_value memory_limit 1024M
 </IfModule>
+
+# Large download delivery: never compress / transform binary streams.
+<IfModule mod_headers.c>
+    <If "%{REQUEST_URI} =~ m#^/dl/#">
+        Header set Cache-Control "private, no-transform, no-store"
+        Header unset Content-Encoding
+    </If>
+</IfModule>
+<IfModule mod_setenvif.c>
+    SetEnvIf Request_URI ^/dl/ no-gzip dont-vary
+</IfModule>

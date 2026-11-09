@@ -247,7 +247,8 @@ final class ChunkedUploadService
         $storageName = bin2hex(random_bytes(16)).'.dat';
         $absolutePath = $absoluteDir.'/'.$storageName;
 
-        $plainSize = $this->fileEncryptionService->encryptPlainFileToV2Storage($partPath, $absolutePath);
+        $encrypted = $this->fileEncryptionService->encryptPlainFileToV2Storage($partPath, $absolutePath);
+        $plainSize = (int) $encrypted['plain_total'];
 
         @unlink($partPath);
         @unlink($this->metaPath($ownerId, $uploadId));
@@ -262,6 +263,7 @@ final class ChunkedUploadService
             null,
             null
         );
+        $sharedFile->applyContentFingerprints($encrypted);
         $sharedFile->setFolder($targetFolder);
 
         $this->entityManager->persist($sharedFile);

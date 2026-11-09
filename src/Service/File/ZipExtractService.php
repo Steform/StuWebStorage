@@ -689,10 +689,15 @@ final class ZipExtractService
         $storageName = bin2hex(random_bytes(16)).'.dat';
         $absolutePath = $absoluteDir.'/'.$storageName;
 
+        $encrypted = null;
         try {
-            $plainSize = $this->fileEncryptionService->encryptPlainFileToV2Storage($tempExtract, $absolutePath);
+            $encrypted = $this->fileEncryptionService->encryptPlainFileToV2Storage($tempExtract, $absolutePath);
+            $plainSize = (int) $encrypted['plain_total'];
         } finally {
             @unlink($tempExtract);
+        }
+        if (!is_array($encrypted)) {
+            throw new \RuntimeException('zip_extract.storage_failed');
         }
 
         $sharedFile = new SharedFile(
@@ -705,6 +710,7 @@ final class ZipExtractService
             null,
             null
         );
+        $sharedFile->applyContentFingerprints($encrypted);
         $sharedFile->setFolder($parentFolder);
         $this->entityManager->persist($sharedFile);
         $this->entityManager->flush();

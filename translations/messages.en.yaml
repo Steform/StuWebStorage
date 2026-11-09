@@ -387,6 +387,17 @@ files:
     hint: 'The file is downloaded in chunks with automatic resume on interruption.'
     cancel: Cancel
     error_generic: 'Download failed. Please try again.'
+    resume_prompt: 'Download interrupted at %percent%% (%received% / %total%). Resume?'
+    resume_btn: Resume
+    restart_btn: Start over
+    resume_picker_hint: 'Select the partially downloaded file on your disk.'
+    resume_opfs_info: 'Resume will use the browser temporary file (no action required).'
+    checkpoint_invalid: 'The file changed on the server. The download will start from the beginning.'
+    parallel_tab: 'Another tab is already downloading this file. Close it or wait for completion.'
+  archive:
+    progress_title: 'Preparing archive'
+    progress_hint: 'Computing fingerprints, then downloading the ZIP with the browser native resume.'
+    create_failed: 'Unable to prepare the ZIP archive.'
   download_prepare:
     page_title: 'Download preparation'
     modal:

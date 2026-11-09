@@ -387,6 +387,17 @@ files:
     hint: 'Le fichier est telecharge par morceaux avec reprise automatique en cas d''interruption.'
     cancel: Annuler
     error_generic: 'Le telechargement a echoue. Reessayez.'
+    resume_prompt: 'Telechargement interrompu a %percent%% (%received% / %total%). Reprendre ?'
+    resume_btn: Reprendre
+    restart_btn: Recommencer
+    resume_picker_hint: 'Selectionnez le fichier partiel deja telecharge sur votre disque.'
+    resume_opfs_info: 'La reprise utilisera le fichier temporaire du navigateur (aucune action requise).'
+    checkpoint_invalid: 'Le fichier a change cote serveur. Le telechargement repartira depuis le debut.'
+    parallel_tab: 'Un autre onglet telecharge deja ce fichier. Fermez-le ou attendez la fin.'
+  archive:
+    progress_title: 'Preparation de l''archive'
+    progress_hint: 'Calcul des empreintes puis telechargement de l''archive ZIP (reprise native du navigateur).'
+    create_failed: 'Impossible de preparer l''archive ZIP.'
   download_prepare:
     page_title: 'Preparation du telechargement'
     modal:

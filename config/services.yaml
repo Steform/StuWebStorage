@@ -23,6 +23,18 @@ parameters:
   app.download_direct_max_bytes: '%env(int:APP_DOWNLOAD_DIRECT_MAX_BYTES)%'
   app.download_manager_ui_threshold_bytes: '%env(int:APP_DOWNLOAD_DIRECT_MAX_BYTES)%'
   app.download_token_ttl_seconds: 7200
+  env(APP_DOWNLOAD_GRANT_TTL_SECONDS): '604800'
+  env(APP_DOWNLOAD_ARCHIVE_TTL_SECONDS): '604800'
+  env(APP_DOWNLOAD_ARCHIVE_MAX_TOTAL_BYTES): '0'
+  env(APP_DOWNLOAD_ARCHIVE_MAX_ENTRIES): '10000'
+  env(APP_DOWNLOAD_ARCHIVE_TICK_SECONDS): '20'
+  env(APP_DOWNLOAD_LAZY_INDEX_MAX_BYTES): '1073741824'
+  app.download_grant_ttl_seconds: '%env(int:APP_DOWNLOAD_GRANT_TTL_SECONDS)%'
+  app.download_archive_ttl_seconds: '%env(int:APP_DOWNLOAD_ARCHIVE_TTL_SECONDS)%'
+  app.download_archive_max_total_bytes: '%env(int:APP_DOWNLOAD_ARCHIVE_MAX_TOTAL_BYTES)%'
+  app.download_archive_max_entries: '%env(int:APP_DOWNLOAD_ARCHIVE_MAX_ENTRIES)%'
+  app.download_archive_tick_seconds: '%env(int:APP_DOWNLOAD_ARCHIVE_TICK_SECONDS)%'
+  app.download_lazy_index_max_bytes: '%env(int:APP_DOWNLOAD_LAZY_INDEX_MAX_BYTES)%'
   app.version: ''
   app.site_title: 'StuWebStorage'
   app.antibot_threshold: 50
@@ -161,16 +173,27 @@ services:
       $chunkBytesDefault: '%app.upload_chunk_bytes%'
       $projectDir: '%kernel.project_dir%'
 
-  App\Service\File\DownloadTokenService:
+  App\Service\Download\DownloadGrantService:
     arguments:
       $appSecret: '%kernel.secret%'
-      $ttlSeconds: '%app.download_token_ttl_seconds%'
+      $ttlSeconds: '%app.download_grant_ttl_seconds%'
+
+  App\Service\Download\EncryptedRangeReader:
+    arguments:
+      $lazyIndexMaxBytes: '%app.download_lazy_index_max_bytes%'
+
+  App\Service\Download\DownloadArchiveService:
+    arguments:
+      $archiveTtlSeconds: '%app.download_archive_ttl_seconds%'
+      $maxTotalBytes: '%app.download_archive_max_total_bytes%'
+      $maxEntries: '%app.download_archive_max_entries%'
+      $tickSeconds: '%app.download_archive_tick_seconds%'
 
   App\Controller\PublicDownloadController:
     arguments:
       $publicDownloadTicketCache: '@cache.app'
       $publicDownloadInlineMaxBytes: '%app.public_download_inline_max_bytes%'
-      $publicDownloadTicketTtlSeconds: '%app.download_token_ttl_seconds%'
+      $publicDownloadTicketTtlSeconds: '%app.download_grant_ttl_seconds%'
       $downloadDirectMaxBytes: '%app.download_direct_max_bytes%'
       $downloadManagerUiThresholdBytes: '%app.download_manager_ui_threshold_bytes%'
 

@@ -6,11 +6,18 @@
 <div
     id="files-download-progress-page"
     class="row justify-content-center"
+    data-file-id="{{ sharedFile.id }}"
+    data-file-bytes="{{ sharedFile.byteSize }}"
     data-file-name="{{ sharedFile.originalFileName|e('html_attr') }}"
     data-token-url="{{ tokenUrl|e('html_attr') }}"
     data-download-url="{{ downloadUrl|e('html_attr') }}"
     data-csrf-token="{{ csrf_token(csrfDownloadToken)|e('html_attr') }}"
     data-msg-error="{{ 'files.download_progress.error_generic'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-resume-prompt="{{ 'files.download_progress.resume_prompt'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-resume-picker-hint="{{ 'files.download_progress.resume_picker_hint'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-resume-opfs-info="{{ 'files.download_progress.resume_opfs_info'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-checkpoint-invalid="{{ 'files.download_progress.checkpoint_invalid'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-parallel-tab="{{ 'files.download_progress.parallel_tab'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
 >
     <div class="col-12 col-lg-8">
         <div class="card shadow-sm border-0">
@@ -19,6 +26,14 @@
                 <p class="mb-2"><strong>{{ sharedFile.originalFileName }}</strong></p>
                 <p class="text-body-secondary small mb-4">{{ 'files.download_progress.hint'|trans({}, 'messages', currentLocale) }}</p>
                 <div id="files-download-progress-error" class="alert alert-danger d-none" role="alert"></div>
+                <div id="files-download-resume-prompt" class="alert alert-warning d-none" role="region" aria-live="polite">
+                    <p class="mb-2" id="files-download-resume-message"></p>
+                    <p class="small mb-3 d-none" id="files-download-resume-picker-hint"></p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-primary" id="files-download-resume-btn">{{ 'files.download_progress.resume_btn'|trans({}, 'messages', currentLocale) }}</button>
+                        <button type="button" class="btn btn-outline-secondary" id="files-download-restart-btn">{{ 'files.download_progress.restart_btn'|trans({}, 'messages', currentLocale) }}</button>
+                    </div>
+                </div>
                 <div class="progress mb-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <div id="files-download-progress-bar" class="progress-bar" style="width: 0%"></div>
                 </div>
@@ -30,6 +45,8 @@
 </div>
 {% endblock %}
 {% block extra_scripts %}
+    <script src="{{ asset('js/files-download-checkpoint.js') }}?v=20260707" defer></script>
+    <script src="{{ asset('js/files-download-sinks.js') }}?v=20260707" defer></script>
     <script src="{{ asset('js/files-download-manager.js') }}?v=20260707" defer></script>
     <script src="{{ asset('js/files-download-progress-page.js') }}?v=20260707" defer></script>
 {% endblock %}

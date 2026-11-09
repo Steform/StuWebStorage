@@ -35,8 +35,9 @@ final class FileEncryptionServiceV2Test extends TestCase
             $payload = "hello-v2-".random_int(0, 1000000);
             file_put_contents($plain, $payload);
 
-            $n = $svc->encryptPlainFileToV2Storage($plain, $enc);
-            self::assertSame(strlen($payload), $n);
+            $encrypted = $svc->encryptPlainFileToV2Storage($plain, $enc);
+            self::assertSame(strlen($payload), $encrypted['plain_total']);
+            self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $encrypted['content_sha256']);
             self::assertTrue($svc->isV2StorageFormat($enc));
 
             $h = fopen($out, 'wb');

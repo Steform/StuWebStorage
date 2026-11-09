@@ -5759,12 +5759,12 @@
     });
 
     /**
-     * @brief Trigger a zip download for selected files and owned folders.
+     * @brief Trigger a zip download for selected files and owned folders via virtual archive API.
      * @param {number[]} ids Selected file ids.
      * @param {number[]} folderIds Selected owned folder ids.
      * @param {{adminContext?: boolean, adminViewScope?: string, subjectUserId?: string}|null} selectionContext Active selection context.
      * @return {void}
-     * @date 2026-05-08
+     * @date 2026-11-02
      * @author Stephane H.
      */
     function downloadSharedSelection(ids, folderIds, selectionContext) {
@@ -5773,28 +5773,16 @@
         if (fileIds.length < 1 && selectedFolderIds.length < 1) {
             return;
         }
-        var liveRegionNode = document.getElementById('files-live-region');
-        var zipUrl = liveRegionNode ? (liveRegionNode.getAttribute('data-files-download-zip-url') || '') : '';
-        if (zipUrl === '') {
+        if (!window.FilesArchiveFlow || typeof window.FilesArchiveFlow.downloadSelectionAsZip !== 'function') {
             return;
         }
-        var params = new URLSearchParams();
-        fileIds.forEach(function (id) {
-            params.append('ids[]', String(id));
-        });
-        selectedFolderIds.forEach(function (id) {
-            params.append('folder_ids[]', String(id));
-        });
-        var ctx = selectionContext && typeof selectionContext === 'object' ? selectionContext : null;
-        if (ctx && ctx.adminContext === true && String(ctx.adminViewScope || '') === 'all') {
-            params.set('admin_context', '1');
-            params.set('admin_view_scope', 'all');
-            if (typeof ctx.subjectUserId === 'string' && ctx.subjectUserId.trim() !== '') {
-                params.set('subject_user', ctx.subjectUserId.trim());
+        window.FilesArchiveFlow.downloadSelectionAsZip(fileIds, selectedFolderIds, selectionContext).catch(function (error) {
+            var liveRegionNode = document.getElementById('files-live-region');
+            var msg = (error && error.message) || (liveRegionNode ? liveRegionNode.getAttribute('data-files-msg-archive-failed') || '' : '');
+            if (msg !== '' && typeof pushFilesToast === 'function') {
+                pushFilesToast(msg, 'danger');
             }
-        }
-        var href = zipUrl + (zipUrl.indexOf('?') >= 0 ? '&' : '?') + params.toString();
-        window.location.href = href;
+        });
     }
 
     document.addEventListener('click', function (event) {
@@ -7590,26 +7578,41 @@
         });
     }
 
-    var downloadManagerThreshold = 0;
-    var downloadProgressUrlTemplate = '';
-
     document.addEventListener('click', function (event) {
         var link = event.target.closest('[data-files-download-link]');
         if (!link) {
             return;
         }
         var liveRegionNode = document.getElementById('files-live-region');
-        if (liveRegionNode) {
-            downloadManagerThreshold = parseInt(liveRegionNode.getAttribute('data-download-manager-threshold-bytes') || '0', 10);
-            downloadProgressUrlTemplate = liveRegionNode.getAttribute('data-files-download-progress-url-template') || '';
-        }
         var fileBytes = parseInt(link.getAttribute('data-files-byte-size') || '0', 10);
         var fileId = parseInt(link.getAttribute('data-files-download-id') || '0', 10);
-        if (downloadManagerThreshold < 1 || fileBytes <= downloadManagerThreshold || fileId < 1 || downloadProgressUrlTemplate === '') {
+        var threshold = liveRegionNode
+            ? parseInt(liveRegionNode.getAttribute('data-download-manager-threshold-bytes') || '0', 10)
+            : 0;
+        var grantUrlTemplate = liveRegionNode
+            ? (liveRegionNode.getAttribute('data-files-download-grant-url-template') || '')
+            : '';
+        var csrfToken = liveRegionNode
+            ? (liveRegionNode.getAttribute('data-files-download-grant-csrf') || '')
+            : '';
+        if (threshold < 1 || fileBytes <= threshold || fileId < 1 || grantUrlTemplate === '') {
+            return;
+        }
+        if (!window.FilesDownloadLauncher) {
             return;
         }
         event.preventDefault();
-        window.location.href = downloadProgressUrlTemplate.replace('999999', String(fileId));
+        var tokenUrl = grantUrlTemplate.replace('999999', String(fileId));
+        window.FilesDownloadLauncher.requestGrantAndDownload({
+            tokenUrl: tokenUrl,
+            csrfToken: csrfToken,
+            fileName: link.getAttribute('data-files-download-name') || ''
+        }).catch(function (error) {
+            var msg = (error && error.message) || (liveRegionNode ? liveRegionNode.getAttribute('data-files-msg-download-failed') || '' : '');
+            if (msg !== '' && typeof pushFilesToast === 'function') {
+                pushFilesToast(msg, 'danger');
+            }
+        });
     });
 
 }());

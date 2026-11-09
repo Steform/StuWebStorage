@@ -10,6 +10,7 @@
     id="public-landing-root"
     class="public-landing__root"
     data-public-token="{{ publicToken|e('html_attr') }}"
+    data-file-bytes="{{ sharedFile.byteSize }}"
     data-endpoint-challenge="{{ path('download_public_challenge')|e('html_attr') }}"
     data-endpoint-verify="{{ path('download_public_verify')|e('html_attr') }}"
     data-endpoint-verify-password="{{ path('download_public_verify_share_password')|e('html_attr') }}"
@@ -17,6 +18,11 @@
     data-download-manager-threshold-bytes="{{ downloadManagerUiThresholdBytes }}"
     data-share-password-prefill="{{ sharePasswordPrefill|default('')|e('html_attr') }}"
     data-msg-api-fallback="{{ 'files.public_landing.api_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-resume-prompt="{{ 'files.download_progress.resume_prompt'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-resume-picker-hint="{{ 'files.download_progress.resume_picker_hint'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-resume-opfs-info="{{ 'files.download_progress.resume_opfs_info'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-checkpoint-invalid="{{ 'files.download_progress.checkpoint_invalid'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-parallel-tab="{{ 'files.download_progress.parallel_tab'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
     data-api-msgs="{{ {
         'download.challenge.invalid_payload': 'download.challenge.invalid_payload'|trans({}, 'messages', currentLocale),
         'download.challenge.resource_not_found': 'download.challenge.resource_not_found'|trans({}, 'messages', currentLocale),
@@ -88,6 +94,14 @@
                             <button type="button" class="btn btn-outline-secondary d-none" id="public-landing-download-cancel">{{ 'files.download_progress.cancel'|trans({}, 'messages', currentLocale) }}</button>
                         </div>
                         <div class="col-12 d-none" id="public-landing-download-progress-wrap">
+                            <div id="public-landing-download-resume-prompt" class="alert alert-warning d-none mb-3" role="region" aria-live="polite">
+                                <p class="mb-2" id="public-landing-download-resume-message"></p>
+                                <p class="small mb-3 d-none" id="public-landing-download-resume-picker-hint"></p>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-primary btn-sm" id="public-landing-download-resume-btn">{{ 'files.download_progress.resume_btn'|trans({}, 'messages', currentLocale) }}</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="public-landing-download-restart-btn">{{ 'files.download_progress.restart_btn'|trans({}, 'messages', currentLocale) }}</button>
+                                </div>
+                            </div>
                             <div class="progress mb-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                                 <div id="public-landing-download-progress-bar" class="progress-bar" style="width: 0%"></div>
                             </div>
@@ -107,6 +121,6 @@
 </div>
 {% endblock %}
 {% block extra_scripts %}
-    <script src="{{ asset('js/files-download-manager.js') }}?v=20260707" defer></script>
-    <script src="{{ asset('js/public-file-landing.js') }}?v=20260707" defer></script>
+    <script src="{{ asset('js/files-download-launcher.js') }}?v=20261102" defer></script>
+    <script src="{{ asset('js/public-file-landing.js') }}?v=20261102" defer></script>
 {% endblock %}
