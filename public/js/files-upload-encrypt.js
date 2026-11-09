@@ -9,6 +9,7 @@
 
     var TASK_ID_PLACEHOLDER = '00000000000000000000000000000000';
     var POLL_DELAY_MS = 400;
+    var TICK_MAX_ATTEMPTS = 4;
 
     /**
      * @brief Build a task URL from a Twig template that embeds the placeholder id.
@@ -60,8 +61,25 @@
         return {
             permission: (modal && modal.getAttribute('data-msg-xhr-permission-error')) || '',
             server: (modal && modal.getAttribute('data-msg-xhr-server-error')) || '',
+            gatewayTimeout: (modal && modal.getAttribute('data-msg-xhr-gateway-timeout')) || '',
             network: typeof networkError === 'function' ? networkError() : ''
         };
+    }
+
+    /**
+     * @brief Whether a tick HTTP status is a transient gateway failure.
+     * @param {number} status HTTP status.
+     * @return {boolean}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function isTransientGatewayStatus(status) {
+        if (window.FilesHttpError && typeof window.FilesHttpError.isTransientGatewayStatus === 'function') {
+            return window.FilesHttpError.isTransientGatewayStatus(status);
+        }
+        var code = Number(status) || 0;
+
+        return code === 502 || code === 503 || code === 504;
     }
 
     /**
@@ -212,20 +230,37 @@
             }
 
             var tickUrl = buildTaskUrl(tickTemplate, current.taskId, 'tick');
-            var fd = new FormData();
-            fd.append('_csrf_token', csrf);
-            if (typeof opts.appendRetainFields === 'function') {
-                opts.appendRetainFields(fd);
-            }
 
-            return postForm(tickUrl, fd).then(function (pack) {
-                if (!pack.ok || !pack.json || pack.json.status !== 'ok' || !pack.json.task) {
-                    throw new Error(diagnosePack(pack, networkError));
+            /**
+             * @param {number} attempt Zero-based retry attempt.
+             * @return {Promise<object>}
+             */
+            function tickOnce(attempt) {
+                var fd = new FormData();
+                fd.append('_csrf_token', csrf);
+                if (typeof opts.appendRetainFields === 'function') {
+                    opts.appendRetainFields(fd);
                 }
 
+                return postForm(tickUrl, fd).then(function (pack) {
+                    if (pack.ok && pack.json && pack.json.status === 'ok' && pack.json.task) {
+                        return pack.json.task;
+                    }
+                    if (isTransientGatewayStatus(pack.status) && attempt + 1 < TICK_MAX_ATTEMPTS) {
+                        return new Promise(function (resolve, reject) {
+                            window.setTimeout(function () {
+                                tickOnce(attempt + 1).then(resolve, reject);
+                            }, 500 * (attempt + 1));
+                        });
+                    }
+                    throw new Error(diagnosePack(pack, networkError));
+                });
+            }
+
+            return tickOnce(0).then(function (task) {
                 return new Promise(function (resolve) {
                     window.setTimeout(function () {
-                        resolve(step(pack.json.task));
+                        resolve(step(task));
                     }, POLL_DELAY_MS);
                 });
             });

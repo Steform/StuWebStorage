@@ -324,7 +324,8 @@ files:
     progress_processing: 'Verschluesselung auf dem Server'
     progress_bar_aria: 'Fortschritt des Datei-Uploads'
     xhr_network_error: 'Server nicht erreichbar. Verbindung pruefen und erneut versuchen.'
-    xhr_server_error: 'Der Server hat einen Fehler zurueckgegeben (HTTP %status%). Das ist kein Verbindungsproblem.'
+    xhr_server_error: 'Serverfehler (HTTP %status%).'
+    xhr_gateway_timeout: 'Zeitueberschreitung (HTTP 504). Der Server hat zu lange gebraucht; bitte erneut versuchen.'
     selected_byte_size_label: 'Groesse:'
     multi:
       modal_title: 'Dateien hochladen'

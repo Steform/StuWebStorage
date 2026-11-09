@@ -69,14 +69,17 @@ final class JsonApiPermissionErrorContractTest extends TestCase
         $index = $this->readSource('templates/files/index.html.twig');
         self::assertStringContainsString('data-msg-xhr-permission-error', $index);
         self::assertStringContainsString('data-msg-xhr-server-error', $index);
+        self::assertStringContainsString('data-msg-xhr-gateway-timeout', $index);
 
         $fr = $this->readSource('translations/messages.fr.yaml');
         self::assertStringContainsString('runtime_permission_denied:', $fr);
-        self::assertStringContainsString('xhr_server_error:', $fr);
+        self::assertStringContainsString("xhr_server_error: 'Erreur serveur (HTTP %status%).'", $fr);
+        self::assertStringContainsString('xhr_gateway_timeout:', $fr);
         self::assertStringContainsString('fix-runtime-permissions.sh', $fr);
 
         $en = $this->readSource('translations/messages.en.yaml');
         self::assertStringContainsString('runtime_permission_denied:', $en);
-        self::assertStringContainsString('xhr_server_error:', $en);
+        self::assertStringContainsString("xhr_server_error: 'Server error (HTTP %status%).'", $en);
+        self::assertStringContainsString('xhr_gateway_timeout:', $en);
     }
 }

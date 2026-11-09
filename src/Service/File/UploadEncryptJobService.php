@@ -37,8 +37,8 @@ final class UploadEncryptJobService
 
     private const TERMINAL_RETENTION_SECONDS = 86400;
 
-    /** @brief Plaintext bytes processed per HTTP tick (~64 MiB). */
-    private const TICK_PLAIN_BUDGET = 67108864;
+    /** @brief Plaintext bytes processed per HTTP tick (~8 MiB) — stays under proxy/PHP timeouts. */
+    private const TICK_PLAIN_BUDGET = 8388608;
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,

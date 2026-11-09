@@ -331,7 +331,8 @@ files:
     progress_processing: 'Encrypting on the server'
     progress_bar_aria: 'File upload progress'
     xhr_network_error: 'The server could not be reached. Check your connection and try again.'
-    xhr_server_error: 'The server returned an error (HTTP %status%). This is not a connection problem.'
+    xhr_server_error: 'Server error (HTTP %status%).'
+    xhr_gateway_timeout: 'Timed out (HTTP 504). The server took too long to respond; try again.'
     selected_byte_size_label: 'Size:'
     multi:
       modal_title: 'Upload files'

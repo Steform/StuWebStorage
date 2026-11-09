@@ -38,6 +38,7 @@
         var messages = {
             permission: typeof msg === 'function' ? msg('msgXhrPermissionError') : '',
             server: typeof msg === 'function' ? msg('msgXhrServerError') : '',
+            gatewayTimeout: typeof msg === 'function' ? msg('msgXhrGatewayTimeout') : '',
             network: typeof msg === 'function' ? msg('msgXhrNetworkError') : ''
         };
         if (window.FilesHttpError && typeof window.FilesHttpError.diagnose === 'function') {
@@ -48,6 +49,22 @@
         }
 
         return messages.network;
+    }
+
+    /**
+     * @brief Whether a chunk/tick HTTP status should be retried (gateway timeout).
+     * @param {number} status HTTP status.
+     * @return {boolean}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function isUploadTransientStatus(status) {
+        if (window.FilesHttpError && typeof window.FilesHttpError.isTransientGatewayStatus === 'function') {
+            return window.FilesHttpError.isTransientGatewayStatus(status);
+        }
+        var code = Number(status) || 0;
+
+        return code === 502 || code === 503 || code === 504;
     }
 
     var DEBOUNCE_MS = 300;
@@ -436,22 +453,21 @@
             })
             .then(function (sess) {
                 var uploadId = sess.upload_id;
-                var chunkSz = sess.chunk_size_bytes ? parseInt(sess.chunk_size_bytes, 10) : 8388608;
+                var chunkSz = sess.chunk_size_bytes ? parseInt(sess.chunk_size_bytes, 10) : 2097152;
                 if (!chunkSz || chunkSz < 1024) {
-                    chunkSz = 8388608;
+                    chunkSz = 2097152;
                 }
                 var offset = 0;
                 var idx = 0;
+                var CHUNK_MAX_ATTEMPTS = 4;
 
                 /**
+                 * @param {number} attempt Zero-based retry attempt.
                  * @return {Promise<void>}
                  */
-                function nextChunk() {
+                function postChunkOnce(attempt) {
                     if (context.isCancelled()) {
                         return Promise.reject(new Error('__upload_cancelled__'));
-                    }
-                    if (offset >= file.size) {
-                        return Promise.resolve();
                     }
                     var end = Math.min(offset + chunkSz, file.size);
                     var blob = file.slice(offset, end);
@@ -482,17 +498,29 @@
                                 offset = end;
                                 idx += 1;
                                 resolve();
-                            } else {
-                                reject(new Error(diagnoseUploadHttpError({
-                                    ok: false,
-                                    json: pj,
-                                    status: xhr.status,
-                                    raw: raw
-                                }, msg)));
+                                return;
                             }
+                            if (isUploadTransientStatus(xhr.status) && attempt + 1 < CHUNK_MAX_ATTEMPTS) {
+                                window.setTimeout(function () {
+                                    postChunkOnce(attempt + 1).then(resolve, reject);
+                                }, 500 * (attempt + 1));
+                                return;
+                            }
+                            reject(new Error(diagnoseUploadHttpError({
+                                ok: false,
+                                json: pj,
+                                status: xhr.status,
+                                raw: raw
+                            }, msg)));
                         };
                         xhr.onerror = function () {
                             context.setActiveXhr(null);
+                            if (attempt + 1 < CHUNK_MAX_ATTEMPTS) {
+                                window.setTimeout(function () {
+                                    postChunkOnce(attempt + 1).then(resolve, reject);
+                                }, 500 * (attempt + 1));
+                                return;
+                            }
                             reject(new Error(diagnoseUploadHttpError({
                                 ok: false,
                                 json: null,
@@ -507,7 +535,21 @@
                         fdC.append('chunk', blob, 'chunk.bin');
                         appendRetainFields(fdC, true);
                         xhr.send(fdC);
-                    }).then(function () {
+                    });
+                }
+
+                /**
+                 * @return {Promise<void>}
+                 */
+                function nextChunk() {
+                    if (context.isCancelled()) {
+                        return Promise.reject(new Error('__upload_cancelled__'));
+                    }
+                    if (offset >= file.size) {
+                        return Promise.resolve();
+                    }
+
+                    return postChunkOnce(0).then(function () {
                         return nextChunk();
                     });
                 }

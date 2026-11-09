@@ -1644,9 +1644,8 @@ class FilesController extends AbstractController
         $maxUploadBytes = $this->resolveAppMaxUploadBytes();
 
         try {
+            // Create only: first encrypt tick is client-driven so finalize cannot hit a gateway 504.
             $task = $this->uploadEncryptJobService->createFromUploadSession($ownerId, $uploadId, $maxUploadBytes);
-            // First tick so tiny files finish without an extra round-trip.
-            $task = $this->uploadEncryptJobService->tick($ownerId, (string) $task['taskId']);
         } catch (\RuntimeException $e) {
             $this->logUploadHttpFailure('upload.finalize.failed', $e, $request, $ownerId, [
                 'upload_id' => $uploadId,

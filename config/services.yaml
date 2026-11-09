@@ -19,7 +19,8 @@ parameters:
   app.public_folder_zip_max_total_bytes: 524288000
   app.public_folder_zip_max_file_count: 2000
   app.public_folder_zip_max_build_seconds: 120
-  app.upload_chunk_bytes: 8388608
+  # Keep each chunk request well under typical reverse-proxy / PHP gateway timeouts on slow uplinks.
+  app.upload_chunk_bytes: 2097152
   app.download_direct_max_bytes: '%env(int:APP_DOWNLOAD_DIRECT_MAX_BYTES)%'
   app.download_manager_ui_threshold_bytes: '%env(int:APP_DOWNLOAD_DIRECT_MAX_BYTES)%'
   app.download_token_ttl_seconds: 7200

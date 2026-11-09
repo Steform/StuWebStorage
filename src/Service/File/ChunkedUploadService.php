@@ -114,11 +114,15 @@ final class ChunkedUploadService
             $this->throwLogged('upload.session.meta_write', RuntimePermissionFailure::EXCEPTION, $sessionCtx + ['path' => $metaPath]);
         }
 
-        $this->uploadDiagnosticLogger->info('upload.session.created', $sessionCtx + ['path' => $partPath]);
+        $chunkSize = $this->resolveAdvertisedChunkBytes();
+        $this->uploadDiagnosticLogger->info('upload.session.created', $sessionCtx + [
+            'path' => $partPath,
+            'chunk_size_bytes' => $chunkSize,
+        ]);
 
         return [
             'upload_id' => $uploadId,
-            'chunk_size_bytes' => max(1024, $this->chunkBytesDefault),
+            'chunk_size_bytes' => $chunkSize,
             'temp_max_bytes' => $expectedBytes,
         ];
     }
@@ -154,6 +158,15 @@ final class ChunkedUploadService
         }
 
         $expectedIndex = (int) ($meta['next_chunk_index'] ?? 0);
+        $received = (int) ($meta['received_bytes'] ?? 0);
+        $expectedTotal = (int) ($meta['expected_bytes'] ?? 0);
+        // Idempotent retry: gateway may return 504 after the chunk was already persisted.
+        if ($chunkIndex < $expectedIndex) {
+            return [
+                'received_bytes' => $received,
+                'complete' => $received >= $expectedTotal && $expectedTotal >= 0,
+            ];
+        }
         if ($chunkIndex !== $expectedIndex) {
             $this->throwLogged('upload.chunk.order', 'chunk_upload.chunk_order', $chunkCtx + [
                 'expected_index' => $expectedIndex,
@@ -169,8 +182,6 @@ final class ChunkedUploadService
         }
 
         $len = strlen($append);
-        $received = (int) ($meta['received_bytes'] ?? 0);
-        $expectedTotal = (int) ($meta['expected_bytes'] ?? 0);
         $chunkCtx['received_bytes'] = $received;
         $chunkCtx['expected_bytes'] = $expectedTotal;
         $chunkCtx['chunk_bytes'] = $len;
@@ -354,6 +365,55 @@ final class ChunkedUploadService
             $this->uploadDiagnosticLogger->fail('upload.mkdir', ['path' => $absoluteDir], $e);
             throw $e;
         }
+    }
+
+    /**
+     * @brief Chunk size advertised to the client, clamped under PHP upload/post caps.
+     * @return int
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function resolveAdvertisedChunkBytes(): int
+    {
+        $limits = [max(1024, $this->chunkBytesDefault)];
+        $uploadMax = $this->parseIniSizeToBytes((string) ini_get('upload_max_filesize'));
+        $postMax = $this->parseIniSizeToBytes((string) ini_get('post_max_size'));
+        // Leave headroom for multipart FormData fields around the binary part.
+        if ($uploadMax > 0) {
+            $limits[] = max(1024, $uploadMax - 65536);
+        }
+        if ($postMax > 0) {
+            $limits[] = max(1024, $postMax - 262144);
+        }
+
+        return max(1024, min($limits));
+    }
+
+    /**
+     * @brief Parse a PHP ini size string (e.g. 8M) into bytes.
+     * @param string $value Ini size value.
+     * @return int
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function parseIniSizeToBytes(string $value): int
+    {
+        $trimmed = trim($value);
+        if ($trimmed === '' || $trimmed === '0') {
+            return 0;
+        }
+        if (!preg_match('/^(\d+)([KMG]?)$/i', $trimmed, $matches)) {
+            return 0;
+        }
+        $n = (int) $matches[1];
+        $unit = strtoupper($matches[2] ?? '');
+
+        return match ($unit) {
+            'G' => $n * 1024 * 1024 * 1024,
+            'M' => $n * 1024 * 1024,
+            'K' => $n * 1024,
+            default => $n,
+        };
     }
 
     /**

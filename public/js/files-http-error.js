@@ -49,6 +49,14 @@
         if (jsonMessage !== '') {
             return jsonMessage;
         }
+        if (status === 504 || status === 502 || status === 503) {
+            var timeoutTpl = msgs.gatewayTimeout || msgs.server || '';
+            if (timeoutTpl.indexOf('%status%') >= 0) {
+                return timeoutTpl.split('%status%').join(String(status));
+            }
+
+            return timeoutTpl || msgs.network || '';
+        }
         if (status >= 400) {
             var serverTpl = msgs.server || '';
             if (serverTpl.indexOf('%status%') >= 0) {
@@ -64,8 +72,22 @@
         return msgs.network || jsonMessage || '';
     }
 
+    /**
+     * @brief Whether an HTTP status is a transient gateway/proxy failure worth retrying.
+     * @param {number} status HTTP status.
+     * @return {boolean}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function isTransientGatewayStatus(status) {
+        var code = Number(status) || 0;
+
+        return code === 502 || code === 503 || code === 504;
+    }
+
     window.FilesHttpError = {
         diagnose: diagnose,
-        looksLikePermission: looksLikePermission
+        looksLikePermission: looksLikePermission,
+        isTransientGatewayStatus: isTransientGatewayStatus
     };
 }());
