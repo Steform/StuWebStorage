@@ -393,6 +393,11 @@ files:
     stay: 'Hier bleiben'
     hide: Ausblenden
     cancel: 'Operation abbrechen'
+    purge_all: 'Alles stoppen und alles loeschen'
+    purge_all_abort: Abbrechen
+    purge_all_confirm_title: 'Alle Operationen stoppen?'
+    purge_all_confirm_body: 'Laufende, blockierte oder fehlgeschlagene Operationen werden gestoppt und aus der Zentrale entfernt. Bereits gestartete Browser-Downloads koennen hier nicht abgebrochen werden.'
+    purge_all_done: 'Operationen gestoppt und aus der Zentrale entfernt.'
     close_aria: 'Operationsfenster schliessen'
     dismiss_title: 'Operation laeuft'
     dismiss_body: 'Das Schliessen dieses Fensters stoppt „%operation%“ nicht. Minimieren, um im Hintergrund fortzufahren, oder abbrechen?'

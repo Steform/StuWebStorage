@@ -446,6 +446,11 @@ files:
     stay: 'Rester ici'
     hide: Masquer
     cancel: 'Annuler l''operation'
+    purge_all: 'Tout arreter et tout supprimer'
+    purge_all_abort: Annuler
+    purge_all_confirm_title: 'Arreter toutes les operations ?'
+    purge_all_confirm_body: 'Les operations en cours, bloquees ou echouees seront arretees et retirees du centre. Les telechargements deja demarres dans le navigateur ne peuvent pas etre stoppes ici.'
+    purge_all_done: 'Operations arretees et retirees du centre.'
     close_aria: 'Fermer la fenetre d''operation'
     dismiss_title: 'Operation en cours'
     dismiss_body: 'Fermer cette fenetre n''arrete pas « %operation% ». Reduire pour continuer en arriere-plan, ou annuler ?'

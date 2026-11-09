@@ -384,6 +384,69 @@ final class UploadEncryptJobService
     }
 
     /**
+     * @brief Cancel running encrypt jobs and delete every non-done meta for the owner.
+     * @param int $ownerUserId Owner id.
+     * @return array{cancelled: int, removed: int}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function purgeNonDoneForOwner(int $ownerUserId): array
+    {
+        $this->purgeExpiredForOwner($ownerUserId);
+        $dir = $this->jobsBaseDir($ownerUserId);
+        $cancelled = 0;
+        $removed = 0;
+        if (!is_dir($dir)) {
+            return ['cancelled' => 0, 'removed' => 0];
+        }
+        foreach (glob($dir.'/*'.self::META_SUFFIX) ?: [] as $metaFile) {
+            $raw = @file_get_contents($metaFile);
+            if (!is_string($raw)) {
+                continue;
+            }
+            try {
+                /** @var array<string, mixed> $meta */
+                $meta = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                @unlink($metaFile);
+                ++$removed;
+                continue;
+            }
+            $status = (string) ($meta['status'] ?? '');
+            if ($status === self::STATUS_DONE) {
+                continue;
+            }
+            $taskId = (string) ($meta['task_id'] ?? '');
+            if ($status === self::STATUS_RUNNING && $taskId !== '') {
+                try {
+                    $this->cancel($ownerUserId, $taskId);
+                    ++$cancelled;
+                } catch (\Throwable) {
+                    $this->cleanupCipherArtifacts((string) ($meta['cipher_path'] ?? ''));
+                    $uploadId = (string) ($meta['upload_id'] ?? '');
+                    if ($uploadId !== '') {
+                        $this->chunkedUploadService->abortSession($ownerUserId, $uploadId);
+                    }
+                    ++$cancelled;
+                }
+            } elseif ($status === self::STATUS_FAILED || $status === self::STATUS_CANCELLED) {
+                $this->cleanupCipherArtifacts((string) ($meta['cipher_path'] ?? ''));
+                $uploadId = (string) ($meta['upload_id'] ?? '');
+                if ($uploadId !== '') {
+                    $this->chunkedUploadService->abortSession($ownerUserId, $uploadId);
+                }
+            }
+            @unlink($metaFile);
+            if ($taskId !== '') {
+                @unlink($this->cancelPath($ownerUserId, $taskId));
+            }
+            ++$removed;
+        }
+
+        return ['cancelled' => $cancelled, 'removed' => $removed];
+    }
+
+    /**
      * @brief Mark terminal tasks as notified (toast consumed).
      * @param int $ownerUserId Owner id.
      * @param list<string> $taskIds Task ids.

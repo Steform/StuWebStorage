@@ -273,6 +273,9 @@
                 }
 
                 return next;
+            },
+            abortLocal: function () {
+                activeTask = null;
             }
         });
         window.FilesOperations.register('download_archive', {
@@ -283,6 +286,9 @@
                 }
 
                 return Object.assign({}, task, { status: 'cancelled', cancelSupported: false });
+            },
+            abortLocal: function () {
+                activeTask = null;
             }
         });
         window.FilesOperations.bindFamilyB(modalEl, {

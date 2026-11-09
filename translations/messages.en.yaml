@@ -446,6 +446,11 @@ files:
     stay: 'Stay here'
     hide: Hide
     cancel: 'Cancel operation'
+    purge_all: 'Stop all and delete all'
+    purge_all_abort: Cancel
+    purge_all_confirm_title: 'Stop all operations?'
+    purge_all_confirm_body: 'In-progress, stuck, or failed operations will be stopped and removed from the center. Downloads already started in the browser cannot be aborted here.'
+    purge_all_done: 'Operations stopped and removed from the center.'
     close_aria: 'Close operation window'
     dismiss_title: 'Operation in progress'
     dismiss_body: 'Closing this window does not stop “%operation%”. Reduce to continue in the background, or cancel?'

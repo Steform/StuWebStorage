@@ -393,6 +393,11 @@ files:
     stay: 'Likti cia'
     hide: Slėpti
     cancel: 'Atšaukti operacija'
+    purge_all: 'Viska sustabdyti ir viska istrinti'
+    purge_all_abort: Atsaukti
+    purge_all_confirm_title: 'Sustabdyti visas operacijas?'
+    purge_all_confirm_body: 'Vykstancios, uzstrigusios ar nepavykusios operacijos bus sustabdytos ir pasalintos is centro. Jau narsykleje pradetu atsisiuntimu cia nutraukti negalima.'
+    purge_all_done: 'Operacijos sustabdytos ir pasalintos is centro.'
     close_aria: 'Uždaryti operacijos langa'
     dismiss_title: 'Operacija vyksta'
     dismiss_body: 'Uždarius šį langa „%operation%“ nesustabdoma. Sumažinkite, kad testi fone, arba atšaukite.'

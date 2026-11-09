@@ -16,10 +16,12 @@
     var badgeEl = document.getElementById('files-operations-center-badge');
     var listUrl = root.getAttribute('data-ops-list-url') || '/files/operations';
     var ackUrl = root.getAttribute('data-ops-ack-url') || '/files/operations/ack';
+    var purgeUrl = root.getAttribute('data-ops-purge-url') || '/files/operations/purge';
     var csrf = root.getAttribute('data-ops-csrf') || '';
     var tasks = {};
     var lastBadge = 0;
     var pollTimer = 0;
+    var purgeInFlight = false;
 
     /**
      * @brief Localized type label for a task.
@@ -67,6 +69,127 @@
     }
 
     /**
+     * @brief Whether a task is eligible for purge-all (everything except successful done).
+     * @param {object} task Task payload.
+     * @return {boolean}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function isPurgeEligible(task) {
+        return String((task && task.status) || '') !== 'done';
+    }
+
+    /**
+     * @brief Count purge-eligible tasks currently listed.
+     * @return {number}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function purgeEligibleCount() {
+        var n = 0;
+        Object.keys(tasks).forEach(function (id) {
+            if (isPurgeEligible(tasks[id])) {
+                n += 1;
+            }
+        });
+
+        return n;
+    }
+
+    /**
+     * @brief Open the purge confirmation modal.
+     * @return {void}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function openPurgeConfirm() {
+        var modal = document.getElementById('opsPurgeConfirmModal');
+        if (!modal || !window.bootstrap || !window.bootstrap.Modal) {
+            return;
+        }
+        window.bootstrap.Modal.getOrCreateInstance(modal).show();
+        window.setTimeout(function () {
+            var confirmBtn = modal.querySelector('[data-ops-purge-confirm]');
+            if (confirmBtn) {
+                confirmBtn.focus();
+            }
+        }, 50);
+    }
+
+    /**
+     * @brief POST purge-all then refresh local OPS state.
+     * @return {void}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function runPurgeAll() {
+        if (purgeInFlight || !purgeUrl) {
+            return;
+        }
+        purgeInFlight = true;
+        var confirmModal = document.getElementById('opsPurgeConfirmModal');
+        var confirmBtn = confirmModal ? confirmModal.querySelector('[data-ops-purge-confirm]') : null;
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+        }
+        var fd = new FormData();
+        fd.append('_csrf_token', csrf);
+        fetch(purgeUrl, {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
+        }).then(function (response) {
+            return response.json().catch(function () {
+                return {};
+            }).then(function (json) {
+                return { ok: response.ok, json: json || {}, status: response.status };
+            });
+        }).then(function (pack) {
+            if (confirmModal && window.bootstrap && window.bootstrap.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(confirmModal).hide();
+            }
+            if (!pack.ok || !pack.json || pack.json.status !== 'ok') {
+                var msg = '';
+                if (window.FilesHttpError && typeof window.FilesHttpError.diagnose === 'function') {
+                    msg = window.FilesHttpError.diagnose(pack, {
+                        server: root.getAttribute('data-msg-toast-failed') || '',
+                        network: root.getAttribute('data-msg-toast-failed') || ''
+                    });
+                }
+                if (msg && window.AppFlashToasts && typeof window.AppFlashToasts.push === 'function') {
+                    window.AppFlashToasts.push('danger', msg);
+                }
+                return;
+            }
+            if (window.FilesOperations && typeof window.FilesOperations.abortAllLocal === 'function') {
+                window.FilesOperations.abortAllLocal();
+            }
+            tasks = {};
+            (pack.json.tasks || []).forEach(function (task) {
+                upsert(task);
+                if (window.FilesOperations) {
+                    window.FilesOperations.upsert(task);
+                }
+            });
+            render();
+            var doneMsg = root.getAttribute('data-msg-purge-done') || '';
+            if (doneMsg && window.AppFlashToasts && typeof window.AppFlashToasts.push === 'function') {
+                window.AppFlashToasts.push('success', doneMsg);
+            }
+        }).catch(function () {
+            if (confirmModal && window.bootstrap && window.bootstrap.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(confirmModal).hide();
+            }
+        }).then(function () {
+            purgeInFlight = false;
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+            }
+        });
+    }
+
+    /**
      * @brief Render the dropdown list from the in-memory map.
      * @return {void}
      * @date 2026-11-09
@@ -80,15 +203,35 @@
             return ((Number(tasks[b].updatedAt) || 0) - (Number(tasks[a].updatedAt) || 0));
         });
         menuEl.innerHTML = '';
+        var listWrap = document.createElement('div');
+        listWrap.className = 'ops-center-list';
         if (ids.length === 0) {
             var empty = document.createElement('div');
             empty.className = 'dropdown-item-text text-muted small';
             empty.textContent = root.getAttribute('data-msg-empty') || '';
-            menuEl.appendChild(empty);
+            listWrap.appendChild(empty);
         } else {
             ids.forEach(function (id) {
-                menuEl.appendChild(buildRow(tasks[id]));
+                listWrap.appendChild(buildRow(tasks[id]));
             });
+        }
+        menuEl.appendChild(listWrap);
+        if (purgeEligibleCount() > 0) {
+            var purgeWrap = document.createElement('div');
+            purgeWrap.className = 'ops-center-purge';
+            var purgeBtn = document.createElement('button');
+            purgeBtn.type = 'button';
+            purgeBtn.className = 'btn btn-sm btn-outline-danger';
+            purgeBtn.setAttribute('data-ops-purge-all', '1');
+            purgeBtn.textContent = root.getAttribute('data-msg-purge-all') || '';
+            purgeBtn.disabled = purgeInFlight;
+            purgeBtn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                openPurgeConfirm();
+            });
+            purgeWrap.appendChild(purgeBtn);
+            menuEl.appendChild(purgeWrap);
         }
         var count = runningCount();
         if (badgeEl) {
@@ -295,6 +438,20 @@
     });
     refresh();
 
+    document.addEventListener('DOMContentLoaded', function () {
+        var confirmModal = document.getElementById('opsPurgeConfirmModal');
+        if (!confirmModal || confirmModal.getAttribute('data-ops-purge-bound') === '1') {
+            return;
+        }
+        confirmModal.setAttribute('data-ops-purge-bound', '1');
+        var confirmBtn = confirmModal.querySelector('[data-ops-purge-confirm]');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function () {
+                runPurgeAll();
+            });
+        }
+    });
+
     window.addEventListener('pagehide', function () {
         if (pollTimer) {
             window.clearInterval(pollTimer);
@@ -304,7 +461,8 @@
     window.FilesOperationsCenter = {
         upsert: upsert,
         remove: remove,
-        refresh: refresh
+        refresh: refresh,
+        purgeAll: runPurgeAll
     };
     window.FilesBackgroundTasks = {
         upsertTask: upsert,

@@ -1393,6 +1393,18 @@
 
                     return Object.assign({}, task || {}, { status: 'cancelled', cancelSupported: false });
                 },
+                abortLocal: function () {
+                    uploadCancelRequested = true;
+                    encryptBackgroundPreferred = false;
+                    encryptPollActive = false;
+                    uploadBusy = false;
+                    activeEncryptTaskId = null;
+                    uploadOpsTask = null;
+                    if (activeXhr) {
+                        activeXhr.abort();
+                        activeXhr = null;
+                    }
+                },
                 isRunning: function () {
                     return uploadBusy || !!(activeEncryptTaskId && hasEncryptingEntry());
                 }
@@ -8037,6 +8049,12 @@
                     cancelExtractZipJob(extractZipModal, extractZipForm);
 
                     return Object.assign({}, task || {}, { status: 'cancelled', cancelSupported: false });
+                },
+                abortLocal: function () {
+                    stopExtractZipPolling();
+                    extractZipBusy = false;
+                    extractZipActiveJobId = '';
+                    extractZipTickInFlight = false;
                 },
                 isRunning: function () {
                     return extractZipBusy && extractZipActiveJobId !== '';

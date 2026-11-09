@@ -240,6 +240,40 @@ final class ChunkedUploadService
     }
 
     /**
+     * @brief Abort every chunk session for an owner (OPS purge-all).
+     * @param int $ownerUserId Owner id.
+     * @return int Number of sessions removed.
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function abortAllSessionsForOwner(int $ownerUserId): int
+    {
+        $dir = $this->sessionBaseDir($ownerUserId);
+        if (!is_dir($dir)) {
+            return 0;
+        }
+        $removed = 0;
+        $globbed = glob($dir.'/*.json');
+        $metaFiles = \is_array($globbed) ? $globbed : [];
+        foreach ($metaFiles as $metaFile) {
+            $uploadId = basename($metaFile, self::META_SUFFIX);
+            if ($uploadId === '' || $uploadId === basename($metaFile)) {
+                continue;
+            }
+            $this->abortSession($ownerUserId, $uploadId);
+            ++$removed;
+        }
+        $parts = glob($dir.'/*'.self::PART_SUFFIX);
+        if (\is_array($parts)) {
+            foreach ($parts as $partFile) {
+                @unlink($partFile);
+            }
+        }
+
+        return $removed;
+    }
+
+    /**
      * @param int $ownerUserId Owner id.
      * @return void
      * @date 2026-05-03

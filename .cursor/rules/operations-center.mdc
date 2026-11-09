@@ -28,6 +28,7 @@ A Famille B modal must have: title, Reduce (once `running`), close, cancel (when
 - Listing downloads always go through `filesDownloadOperationModal` + `FilesDownloadLauncher` (grant + `/dl/*` Range). Never `FilesDownloadManager` / `download_progress_page` from the listing.
 - Native download: `progressKnown=false`, no fake 0–100 bar, no in-page ETA.
 - Cancel semantics are per type (encrypt/extract POST cancel + cleanup; archive prepare fail; download cannot abort Chrome after `handed_to_browser`).
+- Purge all (`POST /files/operations/purge` + centre button): targets every non-`done` task; `handed_to_browser` is UI-only removal; never claim to abort Chrome downloads.
 - ETA only through `TransferEta` when JS knows bytes.
 
 ## Quick check

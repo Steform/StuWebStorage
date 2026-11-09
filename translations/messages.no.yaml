@@ -393,6 +393,11 @@ files:
     stay: 'Bli her'
     hide: Skjul
     cancel: 'Avbryt operasjon'
+    purge_all: 'Stopp alt og slett alt'
+    purge_all_abort: Avbryt
+    purge_all_confirm_title: 'Stoppe alle operasjoner?'
+    purge_all_confirm_body: 'Paagaaende, blokkerte eller mislykkede operasjoner stoppes og fjernes fra senteret. Nedlastinger som allerede er startet i nettleseren kan ikke avbrytes her.'
+    purge_all_done: 'Operasjoner stoppet og fjernet fra senteret.'
     close_aria: 'Lukk operasjonsvindu'
     dismiss_title: 'Operasjon pågår'
     dismiss_body: 'Å lukke dette vinduet stopper ikke «%operation%». Minimer for å fortsette i bakgrunnen, eller avbryt?'

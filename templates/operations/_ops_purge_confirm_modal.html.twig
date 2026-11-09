@@ -1,0 +1,20 @@
+{#
+  Confirm dialog for “Stop all and delete all” in the operations center.
+#}
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+<div class="modal fade" id="opsPurgeConfirmModal" tabindex="-1" aria-labelledby="opsPurgeConfirmModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="opsPurgeConfirmModalLabel">{{ 'files.ops.purge_all_confirm_title'|trans({}, 'messages', currentLocale) }}</h2>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">{{ 'files.ops.purge_all_confirm_body'|trans({}, 'messages', currentLocale) }}</p>
+            </div>
+            <div class="modal-footer flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-ops-purge-dismiss>{{ 'files.ops.purge_all_abort'|trans({}, 'messages', currentLocale) }}</button>
+                <button type="button" class="btn btn-danger" data-ops-purge-confirm>{{ 'files.ops.purge_all'|trans({}, 'messages', currentLocale) }}</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -423,6 +423,51 @@
     }
 
     /**
+     * @brief Stop local polls/modals and drop every non-done task after a server purge.
+     * @return {void}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function abortAllLocal() {
+        Object.keys(executors).forEach(function (type) {
+            var executor = executors[type] || {};
+            if (typeof executor.abortLocal === 'function') {
+                try {
+                    executor.abortLocal();
+                } catch (ignore) {
+                    return;
+                }
+            }
+        });
+        Object.keys(tasks).forEach(function (id) {
+            var task = tasks[id];
+            if (!task || String(task.status || '') === 'done') {
+                return;
+            }
+            var el = modalElFor(task);
+            markIdle(el);
+            reducingIds[String(id)] = true;
+            hideModal(el);
+            if (DOWNLOAD_TYPES[String(task.type || '')]) {
+                forgetLocalDownload(id);
+            } else {
+                delete tasks[id];
+                if (window.FilesOperationsCenter && typeof window.FilesOperationsCenter.remove === 'function') {
+                    window.FilesOperationsCenter.remove(id);
+                }
+            }
+        });
+        try {
+            if (window.sessionStorage) {
+                window.sessionStorage.removeItem(STORAGE_KEY);
+            }
+        } catch (ignore) {
+            return;
+        }
+        document.dispatchEvent(new CustomEvent('files:ops-purge-all'));
+    }
+
+    /**
      * @brief Hydrate client download tasks into the bus.
      * @return {object[]}
      * @date 2026-11-09
@@ -510,6 +555,7 @@
         bindFamilyB: bindFamilyB,
         loadLocalDownloads: loadLocalDownloads,
         forgetLocalDownload: forgetLocalDownload,
+        abortAllLocal: abortAllLocal,
         modalIds: MODAL_IDS
     };
 }());

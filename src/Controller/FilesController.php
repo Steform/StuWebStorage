@@ -29,6 +29,7 @@ use App\Service\File\ChunkedUploadService;
 use App\Service\File\EncryptedStreamDeliveryService;
 use App\Service\Infrastructure\RuntimePermissionFailure;
 use App\Service\File\OperationsListService;
+use App\Service\File\OperationsPurgeService;
 use App\Service\File\UploadEncryptJobService;
 use App\Service\File\FilesQueryScopeResolver;
 use App\Service\File\FilesUiPreferenceService;
@@ -171,6 +172,7 @@ class FilesController extends AbstractController
         private readonly ChunkedUploadService $chunkedUploadService,
         private readonly UploadEncryptJobService $uploadEncryptJobService,
         private readonly OperationsListService $operationsListService,
+        private readonly OperationsPurgeService $operationsPurgeService,
         private readonly ZipExtractService $zipExtractService,
         private readonly ZipExtractLimitsResolver $zipExtractLimitsResolver,
         private readonly UserStorageQuotaService $userStorageQuotaService,
@@ -1787,6 +1789,40 @@ class FilesController extends AbstractController
         $this->uploadEncryptJobService->acknowledge((int) $resolved['ownerId'], array_map('strval', $ids));
 
         return new JsonResponse(['status' => 'ok']);
+    }
+
+    /**
+     * @brief Cancel running ops and delete every non-done operation for the owner.
+     * @param Request $request HTTP request.
+     * @param TranslatorInterface $translator Translator.
+     * @return JsonResponse
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    #[Route('/files/operations/purge', name: 'files_operations_purge', methods: ['POST'])]
+    #[IsGranted('ROLE_SHARE')]
+    public function operationsPurge(Request $request, TranslatorInterface $translator): JsonResponse
+    {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            return new JsonResponse(['status' => 'error', 'message' => $translator->trans('files.flash.csrf_invalid')], 403);
+        }
+        /** @var User $user */
+        $user = $this->getUser();
+        $actorId = (int) $user->getId();
+        $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
+        if (isset($resolved['error'])) {
+            return new JsonResponse(['status' => 'error', 'message_key' => $resolved['error']], 400);
+        }
+        $result = $this->operationsPurgeService->purgeNonDone((int) $resolved['ownerId'], $actorId);
+
+        return new JsonResponse([
+            'status' => 'ok',
+            'purged' => [
+                'cancelled' => $result['cancelled'],
+                'removed' => $result['removed'],
+            ],
+            'tasks' => $result['tasks'],
+        ]);
     }
 
     /**

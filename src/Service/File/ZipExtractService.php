@@ -480,6 +480,60 @@ final class ZipExtractService
     }
 
     /**
+     * @brief Cancel running extract jobs and delete every non-done meta for the owner.
+     * @param int $ownerUserId Owner namespace.
+     * @return array{cancelled: int, removed: int}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function purgeNonDoneForOwner(int $ownerUserId): array
+    {
+        $this->purgeExpiredForOwner($ownerUserId);
+        $dir = $this->sessionBaseDir($ownerUserId);
+        $cancelled = 0;
+        $removed = 0;
+        if (!is_dir($dir)) {
+            return ['cancelled' => 0, 'removed' => 0];
+        }
+        $globbed = glob($dir.'/*'.self::META_SUFFIX);
+        $metaFiles = \is_array($globbed) ? $globbed : [];
+        foreach ($metaFiles as $metaFile) {
+            $raw = @file_get_contents($metaFile);
+            if (!is_string($raw)) {
+                continue;
+            }
+            try {
+                /** @var array<string, mixed> $meta */
+                $meta = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                @unlink($metaFile);
+                ++$removed;
+                continue;
+            }
+            $phase = (string) ($meta['phase'] ?? '');
+            if ($phase === 'done') {
+                continue;
+            }
+            $jobId = basename($metaFile, self::META_SUFFIX);
+            if ($phase !== 'failed' && $phase !== 'cancelled') {
+                try {
+                    $this->cancelJob($ownerUserId, $jobId);
+                    ++$cancelled;
+                } catch (\Throwable) {
+                    $this->rollbackJobArtifacts($ownerUserId, $meta);
+                    $this->cleanupJobFiles($ownerUserId, $jobId);
+                    ++$cancelled;
+                }
+            } else {
+                $this->cleanupJobFiles($ownerUserId, $jobId);
+            }
+            ++$removed;
+        }
+
+        return ['cancelled' => $cancelled, 'removed' => $removed];
+    }
+
+    /**
      * @brief List extract jobs for one owner as OPS task payloads.
      * @param int $ownerUserId Owner namespace.
      * @return list<array<string, mixed>>

@@ -43,6 +43,20 @@
     gap: 0.35rem;
 }
 
+.ops-center-list {
+    max-height: 18rem;
+    overflow: auto;
+}
+
+.ops-center-purge {
+    border-top: 1px solid var(--bs-border-color);
+    padding: 0.5rem 0.75rem 0.35rem;
+}
+
+.ops-center-purge [data-ops-purge-all] {
+    width: 100%;
+}
+
 .ops-modal-header {
     align-items: flex-start;
 }

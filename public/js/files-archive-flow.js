@@ -383,6 +383,11 @@
 
                 return cancelPrepare(token, (config && config.csrf) || csrfToken);
             },
+            abortLocal: function () {
+                cancelRequested = true;
+                tickInFlight = false;
+                activeToken = '';
+            },
             isRunning: function () {
                 return activeToken !== '' && !cancelRequested;
             }
