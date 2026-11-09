@@ -48,10 +48,46 @@
     }
 
     /**
-     * @brief POST form-urlencoded/FormData and parse JSON.
+     * @brief Localized upload HTTP error fallbacks from the upload modal.
+     * @param {Function} networkError Network-error getter.
+     * @return {{permission: string, server: string, network: string}}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function httpErrorMessages(networkError) {
+        var modal = document.getElementById('filesUploadModal');
+
+        return {
+            permission: (modal && modal.getAttribute('data-msg-xhr-permission-error')) || '',
+            server: (modal && modal.getAttribute('data-msg-xhr-server-error')) || '',
+            network: typeof networkError === 'function' ? networkError() : ''
+        };
+    }
+
+    /**
+     * @brief User-facing text for a failed encrypt tick/cancel HTTP pack.
+     * @param {{ok?: boolean, json?: object, status?: number, raw?: string}} pack Parsed response.
+     * @param {Function} networkError Network-error getter.
+     * @return {string}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function diagnosePack(pack, networkError) {
+        if (window.FilesHttpError && typeof window.FilesHttpError.diagnose === 'function') {
+            return window.FilesHttpError.diagnose(pack, httpErrorMessages(networkError));
+        }
+        if (pack && pack.json && typeof pack.json.message === 'string' && pack.json.message !== '') {
+            return pack.json.message;
+        }
+
+        return typeof networkError === 'function' ? networkError() : '';
+    }
+
+    /**
+     * @brief POST form-urlencoded/FormData and parse JSON (keeps HTTP status and raw body).
      * @param {string} url Endpoint.
      * @param {FormData} body Body.
-     * @return {Promise<{ok: boolean, json: object}>}
+     * @return {Promise<{ok: boolean, json: object, status: number, raw: string}>}
      * @date 2026-11-09
      * @author Stephane H.
      */
@@ -62,11 +98,18 @@
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
         }).then(function (response) {
-            return response.json().catch(function () {
-                return {};
-            }).then(function (json) {
-                return { ok: response.ok, json: json || {} };
+            return response.text().then(function (raw) {
+                var json = {};
+                try {
+                    json = raw ? JSON.parse(raw) : {};
+                } catch (ignore) {
+                    json = {};
+                }
+
+                return { ok: response.ok, json: json || {}, status: response.status, raw: raw || '' };
             });
+        }).catch(function () {
+            return { ok: false, json: {}, status: 0, raw: '' };
         });
     }
 
@@ -143,7 +186,9 @@
             if (typeof opts.onProgress === 'function') {
                 opts.onProgress(Number(current.doneBytes) || 0, Number(current.totalBytes) || 0, current);
             }
-            if (window.FilesBackgroundTasks && typeof window.FilesBackgroundTasks.upsertTask === 'function') {
+            if (window.FilesOperations && typeof window.FilesOperations.upsert === 'function') {
+                window.FilesOperations.upsert(current);
+            } else if (window.FilesBackgroundTasks && typeof window.FilesBackgroundTasks.upsertTask === 'function') {
                 window.FilesBackgroundTasks.upsertTask(current);
             }
 
@@ -157,7 +202,11 @@
             if (status === 'failed') {
                 return Promise.resolve({
                     ok: false,
-                    message: String(current.errorKey || networkError()),
+                    message: diagnosePack({
+                        json: { message_key: current.errorKey || '', message: '' },
+                        status: 500,
+                        raw: String(current.errorKey || '')
+                    }, networkError),
                     task: current
                 });
             }
@@ -171,7 +220,7 @@
 
             return postForm(tickUrl, fd).then(function (pack) {
                 if (!pack.ok || !pack.json || pack.json.status !== 'ok' || !pack.json.task) {
-                    throw new Error((pack.json && pack.json.message) || networkError());
+                    throw new Error(diagnosePack(pack, networkError));
                 }
 
                 return new Promise(function (resolve) {

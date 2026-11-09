@@ -324,6 +324,7 @@ files:
     progress_processing: 'Verschluesselung auf dem Server'
     progress_bar_aria: 'Fortschritt des Datei-Uploads'
     xhr_network_error: 'Server nicht erreichbar. Verbindung pruefen und erneut versuchen.'
+    xhr_server_error: 'Der Server hat einen Fehler zurueckgegeben (HTTP %status%). Das ist kein Verbindungsproblem.'
     selected_byte_size_label: 'Groesse:'
     multi:
       modal_title: 'Dateien hochladen'
@@ -382,6 +383,47 @@ files:
       limits_admin_tier: 'Erweiterte Limits (Administratorkonto).'
       phase_pending: 'Archiv wird entschluesselt…'
       phase_scanning: 'Archiv wird analysiert…'
+  ops:
+    nav_label: 'Operationszentrale'
+    nav_aria: 'Operationszentrale'
+    empty: 'Keine laufenden Operationen'
+    resume: Fortsetzen
+    reduce: Minimieren
+    stay: 'Hier bleiben'
+    hide: Ausblenden
+    cancel: 'Operation abbrechen'
+    close_aria: 'Operationsfenster schliessen'
+    dismiss_title: 'Operation laeuft'
+    dismiss_body: 'Das Schliessen dieses Fensters stoppt „%operation%“ nicht. Minimieren, um im Hintergrund fortzufahren, oder abbrechen?'
+    dismiss_cancel: 'Operation abbrechen'
+    toast_done: 'Operation abgeschlossen: %name%'
+    toast_failed: 'Operation fehlgeschlagen: %name%'
+    tab_warning: 'Der Netzwerk-Upload stoppt, wenn Sie den Tab schliessen; eine bereits gestartete Verschluesselung laeuft auf dem Server weiter.'
+    types:
+      upload_encrypt: Verschluesselung
+      zip_extract: Entpacken
+      archive_prepare: Archiv
+      download_file: Download
+      download_archive: 'Archiv-Download'
+    phase:
+      upload: Senden
+      encrypt: 'Verschluesselung…'
+      extract: 'Entpacken…'
+      archive: 'Archiv wird vorbereitet…'
+      download: Download
+    status:
+      browser: Browser
+    download:
+      start: Herunterladen
+      hint: 'Die Datei wird vom Browser gespeichert. HTTP-Range-Fortsetzung bleibt ueber den Link verfuegbar, wenn der Transfer unterbrochen wird.'
+      handed: 'Vom Browser gespeichert — setzen Sie ueber den Link fort. Abbrechen im Browser-Downloadfenster.'
+      copy_link: 'Fortsetzbaren Link kopieren'
+      copy_ok: 'Link in die Zwischenablage kopiert.'
+      copy_fail: 'Link konnte nicht kopiert werden.'
+      grant_fail: 'Download konnte nicht starten. Bitte erneut versuchen.'
+      hide: Ausblenden
+      native_cancel_hint: 'Abbrechen im Browser-Downloadfenster.'
+      progress_aria: 'Vom Browser verwalteter Download'
   table:
     name: Name
     extension: Typ
@@ -681,6 +723,7 @@ files:
     quota_exceeded: 'Speicherkontingent fuer diesen Benutzer erreicht.'
     public_not_allowed: 'Ihre Rollen erlauben keine oeffentliche Sichtbarkeit.'
     storage_failed: 'Verschluesselte Datei konnte nicht gespeichert werden.'
+    runtime_permission_denied: 'Der Server darf unter var/ nicht schreiben (Verschluesselung, Entpacken, Dateien). Das ist kein Verbindungsproblem. Als Admin: sudo ./fix-runtime-permissions.sh --web-user www-data'
     uploaded: 'Datei erfolgreich hochgeladen.'
     not_found: 'Datei nicht gefunden.'
     deleted: 'Datei geloescht.'

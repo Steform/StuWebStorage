@@ -1,0 +1,38 @@
+---
+description: Keep long-running file operations in the OPS modal family and operations center
+globs: src/Controller/FilesController.php,src/Controller/DownloadArchiveController.php,src/Service/File/**/*.php,src/Service/Download/**/*.php,public/js/files-*.js,templates/files/**/*.twig,templates/operations/**/*.twig,templates/components/_storage_nav.html.twig,translations/messages.*.yaml
+alwaysApply: false
+---
+
+# Operations center (Famille B)
+
+Epic: `docs/epics/EPIC-OPS-centre-operations.md`  
+Estimator: `public/js/transfer-eta.js` (never invent download ETA)
+
+## Famille A — dialogue (no Reduce, not in the center)
+
+Create folder, rename, delete, share, properties, filters, move, text editor, media preview, bug report.
+
+## Famille B — operation (OPS chrome required)
+
+Upload+encrypt, ZIP extract (after submit), archive prepare, file download, archive download.
+
+A Famille B modal must have: title, Reduce (once `running`), close, cancel (when `cancelSupported`), live resume via `taskId`.
+
+## Non-negotiable
+
+- Dismiss ≠ cancel. Esc / ✕ / backdrop while `running` opens `opsDismissModal` (Reduce / Stay / Cancel). Never `window.confirm()`.
+- Header **Reduce** skips the mini-dialog (user already chose).
+- Resume = `FilesOperations.resume(taskId)` → show the **same** modal + `executor.hydrate(task)`. Not an empty show.
+- One Famille B modal visible at a time (except `opsDismissModal`).
+- Listing downloads always go through `filesDownloadOperationModal` + `FilesDownloadLauncher` (grant + `/dl/*` Range). Never `FilesDownloadManager` / `download_progress_page` from the listing.
+- Native download: `progressKnown=false`, no fake 0–100 bar, no in-page ETA.
+- Cancel semantics are per type (encrypt/extract POST cancel + cleanup; archive prepare fail; download cannot abort Chrome after `handed_to_browser`).
+- ETA only through `TransferEta` when JS knows bytes.
+
+## Quick check
+
+- [ ] New long modal is Famille B + `FilesOperations.register`
+- [ ] Reduce / resume / cancel wired
+- [ ] No `window.confirm` on operation dismiss
+- [ ] Listing download does not bypass the OPS modal

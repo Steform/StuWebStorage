@@ -3,7 +3,7 @@
 | Champ | Valeur |
 |---|---|
 | Identifiant | EPIC-OPS |
-| Statut | Proposé — contrat UX / technique, pas encore implémenté |
+| Statut | Implémenté (v1) — chrome Famille B, centre nav, bus JS, encrypt/extract/archive/download |
 | Auteur | Stephane H. |
 | Date | 2026-11-09 |
 | Projet | StuWebStorage (Symfony 8.1 / PHP 8.4 / JS vanilla / Bootstrap 5) |

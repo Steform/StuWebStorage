@@ -12,14 +12,15 @@
     data-msg-progress="{{ 'files.extract.modal.progress'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
     data-msg-phase-pending="{{ 'files.extract.modal.phase_pending'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
     data-msg-phase-scanning="{{ 'files.extract.modal.phase_scanning'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
-    data-msg-cancel-confirm="{{ 'files.extract.modal.cancel_confirm'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
     data-msg-loading-preflight="{{ 'files.extract.modal.loading_preflight'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-ops-family="b"
+    data-ops-modal-key="files_extract_zip"
 >
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content ops-modal-content">
+            <div class="modal-header ops-modal-header">
                 <h2 class="modal-title h5" id="filesExtractZipModalTitle">{{ 'files.extract.modal.title'|trans({}, 'messages', currentLocale) }}</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" data-files-extract-dismiss aria-label="{{ 'files.extract.modal.close_aria'|trans({}, 'messages', currentLocale) }}"></button>
+                {% include 'operations/_operation_header_actions.html.twig' with { close_aria: 'files.extract.modal.close_aria'|trans({}, 'messages', currentLocale) } %}
             </div>
             <form id="files-extract-zip-form" method="post" action="">
                 <div class="modal-body">
@@ -80,7 +81,8 @@
                         <p class="small text-muted mb-0" id="files-extract-current" aria-live="polite"></p>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer ops-modal-footer">
+                    <button type="button" class="btn btn-outline-danger" data-ops-cancel>{{ 'files.ops.cancel'|trans({}, 'messages', currentLocale) }}</button>
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-files-extract-dismiss>{{ 'files.extract.modal.cancel'|trans({}, 'messages', currentLocale) }}</button>
                     <button type="submit" class="btn btn-primary" data-files-extract-submit>{{ 'files.extract.modal.submit'|trans({}, 'messages', currentLocale) }}</button>
                 </div>

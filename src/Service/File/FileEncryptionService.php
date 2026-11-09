@@ -2,6 +2,7 @@
 
 namespace App\Service\File;
 
+use App\Service\Infrastructure\RuntimePermissionFailure;
 use RuntimeException;
 
 /**
@@ -147,7 +148,7 @@ class FileEncryptionService
             if (!$headerWritten) {
                 $out = fopen($outputEncryptedPath, 'wb');
                 if ($out === false) {
-                    throw new RuntimeException('file.encryption.storage_failed');
+                    $this->throwStorageOpenFailed($outputEncryptedPath);
                 }
                 try {
                     fwrite($out, self::STORAGE_MAGIC_V2);
@@ -175,7 +176,7 @@ class FileEncryptionService
         $out = fopen($outputEncryptedPath, $mode);
         if ($out === false) {
             fclose($in);
-            throw new RuntimeException('file.encryption.storage_failed');
+            $this->throwStorageOpenFailed($outputEncryptedPath);
         }
 
         $budget = max(self::PLAIN_CHUNK_BYTES, $maxPlainBytesThisTick);
@@ -243,6 +244,23 @@ class FileEncryptionService
                 'header_written' => $headerWritten,
             ],
         ];
+    }
+
+    /**
+     * @brief Raise a permission exception when the cipher path cannot be created for write.
+     * @param string $outputEncryptedPath Target cipher path.
+     * @return never
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function throwStorageOpenFailed(string $outputEncryptedPath): never
+    {
+        $dir = dirname($outputEncryptedPath);
+        if (!is_writable($dir) || (is_file($outputEncryptedPath) && !is_writable($outputEncryptedPath))) {
+            throw new RuntimeException(RuntimePermissionFailure::EXCEPTION);
+        }
+
+        throw new RuntimeException('file.encryption.storage_failed');
     }
 
     /**

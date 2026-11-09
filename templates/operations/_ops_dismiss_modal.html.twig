@@ -1,0 +1,22 @@
+{#
+  Unique Famille B dismiss dialog: Reduce (primary) / Stay / Cancel.
+  Replaces the encrypt-only dismiss modal.
+#}
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+<div class="modal fade" id="opsDismissModal" tabindex="-1" aria-labelledby="opsDismissModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="opsDismissModalLabel">{{ 'files.ops.dismiss_title'|trans({}, 'messages', currentLocale) }}</h2>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" data-ops-dismiss-body data-ops-dismiss-template="{{ 'files.ops.dismiss_body'|trans({}, 'messages', currentLocale)|e('html_attr') }}">{{ 'files.ops.dismiss_body'|trans({ '%operation%': 'files.ops.types.upload_encrypt'|trans({}, 'messages', currentLocale) }, 'messages', currentLocale) }}</p>
+            </div>
+            <div class="modal-footer flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-ops-dismiss-stay>{{ 'files.ops.stay'|trans({}, 'messages', currentLocale) }}</button>
+                <button type="button" class="btn btn-outline-danger" data-ops-dismiss-cancel>{{ 'files.ops.dismiss_cancel'|trans({}, 'messages', currentLocale) }}</button>
+                <button type="button" class="btn btn-primary" data-ops-dismiss-reduce autofocus>{{ 'files.ops.reduce'|trans({}, 'messages', currentLocale) }}</button>
+            </div>
+        </div>
+    </div>
+</div>

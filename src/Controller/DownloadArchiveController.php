@@ -207,6 +207,30 @@ final class DownloadArchiveController extends AbstractController
     }
 
     /**
+     * @brief Cancel a preparing archive (marks failed, stops further ticks).
+     * @param Request $request HTTP request.
+     * @param string $token Archive token.
+     * @return JsonResponse
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    #[Route('/files/archives/{token}/cancel', name: 'files_archives_cancel', methods: ['POST'], requirements: ['token' => '[a-f0-9]{32}'])]
+    #[IsGranted('ROLE_USER')]
+    public function cancel(Request $request, string $token): JsonResponse
+    {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_ARCHIVE, (string) $request->request->get('_csrf_token', '')))) {
+            return new JsonResponse(['status' => 'error', 'message' => 'files.flash.csrf_invalid'], 403);
+        }
+        $archive = $this->requireOwnedArchive($token);
+        $progress = $this->downloadArchiveService->cancelPrepare($archive);
+        $payload = $this->downloadArchiveService->toPublicArray($archive);
+        $payload['status'] = 'ok';
+        $payload['archiveStatus'] = $progress['status'];
+
+        return new JsonResponse($payload);
+    }
+
+    /**
      * @brief Issue a download grant for a ready archive.
      * @param Request $request HTTP request.
      * @param string $token Archive token.

@@ -1,0 +1,38 @@
+{#
+  Shared Famille B chrome. Include this as the modal-content shell.
+
+  Required:
+    modal_id, title_id, title, close_aria
+  Optional:
+    subtitle, cancel_label, primary_label, footer_extra, body
+    dialog_class (default: modal-dialog-centered)
+    content_class
+#}
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+<div class="modal-dialog {{ dialog_class|default('modal-dialog-centered') }}">
+    <div class="modal-content ops-modal-content {{ content_class|default('') }}">
+        <div class="modal-header ops-modal-header">
+            <div class="ops-modal-heading min-w-0">
+                <h2 class="modal-title h5" id="{{ title_id }}">{{ title }}</h2>
+                {% if subtitle is defined and subtitle %}
+                    <p class="small text-muted mb-0 ops-modal-subtitle text-truncate">{{ subtitle }}</p>
+                {% endif %}
+            </div>
+            {% include 'operations/_operation_header_actions.html.twig' with { close_aria: close_aria } %}
+        </div>
+        <div class="modal-body ops-modal-body">
+            {% if body is defined %}{{ body|raw }}{% endif %}
+            {% block ops_body %}{% endblock %}
+        </div>
+        <div class="modal-footer ops-modal-footer flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-danger d-none" data-ops-cancel>
+                {{ cancel_label|default('files.ops.cancel'|trans({}, 'messages', currentLocale)) }}
+            </button>
+            {% if primary_label is defined and primary_label %}
+                <button type="button" class="btn btn-primary" data-ops-primary>{{ primary_label }}</button>
+            {% endif %}
+            {% if footer_extra is defined %}{{ footer_extra|raw }}{% endif %}
+            {% block ops_footer %}{% endblock %}
+        </div>
+    </div>
+</div>

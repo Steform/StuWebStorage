@@ -150,7 +150,7 @@ Deux notions distinctes :
 
 ---
 
-### US-06 — Centre de tâches (nav, à côté d’Accueil)
+### US-06 — Centre de tâches (nav, à côté d’Accueil) — **supersédé par EPIC-OPS**
 
 **En tant qu’** utilisateur connecté,  
 **je veux** un bouton tâches en haut à droite près d’Accueil,  
@@ -183,7 +183,7 @@ Deux notions distinctes :
 
 ---
 
-### US-08 — `taskId` + rouvrir la modal
+### US-08 — `taskId` + rouvrir la modal — **supersédé par EPIC-OPS** (chiffrement + `taskId` restent ; le centre ENC ne fait plus autorité)
 
 **En tant qu’** utilisateur,  
 **je veux** cliquer une tâche et retrouver la modal d’origine,  

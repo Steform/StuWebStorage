@@ -16,6 +16,7 @@
             <directory>tests/Functional/Site</directory>
             <directory>tests/Unit/Service/Site</directory>
             <directory>tests/Unit/Service/Admin</directory>
+            <directory>tests/Unit/Service/Infrastructure</directory>
             <directory>tests/Unit/Service/File</directory>
             <directory>tests/Unit/Service/Share</directory>
             <directory>tests/Unit/EventSubscriber</directory>

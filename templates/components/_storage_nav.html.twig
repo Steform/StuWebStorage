@@ -5,34 +5,17 @@
             <i class="bi bi-cloud-arrow-up-fill text-primary" aria-hidden="true"></i>
             <span>{{ storage_site_title() }}</span>
         </a>
+        {% if app.user and is_granted('ROLE_SHARE') %}
+        <ul class="navbar-nav flex-row align-items-center me-2 mb-0 ops-center-nav">
+            {% include 'components/_operations_center_nav.html.twig' %}
+        </ul>
+        {% endif %}
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#storageNavCollapse" aria-controls="storageNavCollapse" aria-expanded="false" aria-label="Menu">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="storageNavCollapse">
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                 {% if app.user %}
-                    {% if is_granted('ROLE_SHARE_SEND') %}
-                        <li class="nav-item dropdown" id="files-background-tasks"
-                            data-tasks-list-url="{{ path('files_tasks_list') }}"
-                            data-tasks-ack-url="{{ path('files_tasks_ack') }}"
-                            data-tasks-csrf="{{ csrf_token('files_upload') }}"
-                            data-encrypt-cancel-url-template="{{ path('files_upload_encrypt_cancel', {taskId: '00000000000000000000000000000000'}) }}"
-                            data-msg-empty="{{ 'files.tasks.empty'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
-                            data-msg-open="{{ 'files.tasks.open'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
-                            data-msg-cancel="{{ 'files.tasks.cancel'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
-                            data-msg-toast-done="{{ 'files.tasks.toast_done'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
-                            data-msg-toast-failed="{{ 'files.tasks.toast_failed'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
-                        >
-                            <a class="nav-link dropdown-toggle position-relative" href="#" id="filesBackgroundTasksToggle" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'files.tasks.nav_aria'|trans({}, 'messages', currentLocale) }}">
-                                <i class="bi bi-hourglass-split" aria-hidden="true"></i>
-                                <span class="d-none d-lg-inline">{{ 'files.tasks.nav_label'|trans({}, 'messages', currentLocale) }}</span>
-                                <span id="files-background-tasks-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-primary d-none">0</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end shadow" id="files-background-tasks-menu" style="min-width: 18rem; max-height: 24rem; overflow: auto;" aria-labelledby="filesBackgroundTasksToggle">
-                                <div class="dropdown-item-text text-muted small">{{ 'files.tasks.empty'|trans({}, 'messages', currentLocale) }}</div>
-                            </div>
-                        </li>
-                    {% endif %}
                     {% if is_granted('ROLE_SHARE') %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ path('files_index') }}">{{ 'app.nav.files_user'|trans({}, 'messages', currentLocale) }}</a>

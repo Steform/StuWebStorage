@@ -331,6 +331,7 @@ files:
     progress_processing: 'Encrypting on the server'
     progress_bar_aria: 'File upload progress'
     xhr_network_error: 'The server could not be reached. Check your connection and try again.'
+    xhr_server_error: 'The server returned an error (HTTP %status%). This is not a connection problem.'
     selected_byte_size_label: 'Size:'
     multi:
       modal_title: 'Upload files'
@@ -435,6 +436,47 @@ files:
     toast_done: 'Encryption finished: %name%'
     toast_failed: 'Encryption failed: %name%'
     type_upload_encrypt: Encryption
+  ops:
+    nav_label: 'Operations center'
+    nav_aria: 'Operations center'
+    empty: 'No operations in progress'
+    resume: Resume
+    reduce: Reduce
+    stay: 'Stay here'
+    hide: Hide
+    cancel: 'Cancel operation'
+    close_aria: 'Close operation window'
+    dismiss_title: 'Operation in progress'
+    dismiss_body: 'Closing this window does not stop “%operation%”. Reduce to continue in the background, or cancel?'
+    dismiss_cancel: 'Cancel operation'
+    toast_done: 'Operation finished: %name%'
+    toast_failed: 'Operation failed: %name%'
+    tab_warning: 'Network upload stops if you close the tab; encryption already started continues on the server.'
+    types:
+      upload_encrypt: Encryption
+      zip_extract: Extraction
+      archive_prepare: Archive
+      download_file: Download
+      download_archive: 'Archive download'
+    phase:
+      upload: Sending
+      encrypt: 'Encrypting…'
+      extract: 'Extracting…'
+      archive: 'Preparing archive…'
+      download: Download
+    status:
+      browser: Browser
+    download:
+      start: Download
+      hint: 'The file will be saved by the browser. HTTP Range resume remains available via the link if the transfer is interrupted.'
+      handed: 'Saved by the browser — resume via the link if needed. Cancel from the browser downloads window.'
+      copy_link: 'Copy resumable link'
+      copy_ok: 'Link copied to the clipboard.'
+      copy_fail: 'Could not copy the link.'
+      grant_fail: 'The download could not start. Try again.'
+      hide: Hide
+      native_cancel_hint: 'Cancel from the browser downloads window.'
+      progress_aria: 'Browser-handled download'
   download_prepare:
     page_title: 'Download preparation'
     modal:
@@ -746,6 +788,7 @@ files:
     disk_full: 'Not enough free disk space to upload and encrypt this file.'
     public_not_allowed: 'Your roles do not allow public visibility.'
     storage_failed: 'Could not store the encrypted file.'
+    runtime_permission_denied: 'The server cannot write under var/ (encryption, extract, files). This is not a connection problem. As admin: sudo ./fix-runtime-permissions.sh --web-user www-data'
     uploaded: 'File uploaded successfully.'
     not_found: 'File not found.'
     deleted: 'File deleted.'

@@ -26,6 +26,8 @@ use App\Service\Download\FileDownloadResource;
 use App\Service\Download\RangeStreamResponder;
 use App\Service\File\ChunkedUploadService;
 use App\Service\File\EncryptedStreamDeliveryService;
+use App\Service\Infrastructure\RuntimePermissionFailure;
+use App\Service\File\OperationsListService;
 use App\Service\File\UploadEncryptJobService;
 use App\Service\File\FilesQueryScopeResolver;
 use App\Service\File\FilesUiPreferenceService;
@@ -167,6 +169,7 @@ class FilesController extends AbstractController
         private readonly BinaryByteFormatter $binaryByteFormatter,
         private readonly ChunkedUploadService $chunkedUploadService,
         private readonly UploadEncryptJobService $uploadEncryptJobService,
+        private readonly OperationsListService $operationsListService,
         private readonly ZipExtractService $zipExtractService,
         private readonly ZipExtractLimitsResolver $zipExtractLimitsResolver,
         private readonly UserStorageQuotaService $userStorageQuotaService,
@@ -1621,7 +1624,7 @@ class FilesController extends AbstractController
         try {
             $task = $this->uploadEncryptJobService->tick((int) $resolved['ownerId'], $taskId);
         } catch (\RuntimeException $e) {
-            return new JsonResponse(['status' => 'error', 'message_key' => $this->mapChunkExceptionToFlashKey($e)], 400);
+            return $this->jsonApiError($translator, $this->mapChunkExceptionToFlashKey($e), 400);
         }
 
         return new JsonResponse(['status' => 'ok', 'task' => $task]);
@@ -1652,30 +1655,30 @@ class FilesController extends AbstractController
         try {
             $task = $this->uploadEncryptJobService->cancel((int) $resolved['ownerId'], $taskId);
         } catch (\RuntimeException $e) {
-            return new JsonResponse(['status' => 'error', 'message_key' => $this->mapChunkExceptionToFlashKey($e)], 400);
+            return $this->jsonApiError($translator, $this->mapChunkExceptionToFlashKey($e), 400);
         }
 
         return new JsonResponse(['status' => 'ok', 'task' => $task]);
     }
 
     /**
-     * @brief List background tasks for the effective owner (nav task center).
+     * @brief List Famille B operations for the operations center.
      * @param Request $request HTTP request.
      * @return JsonResponse
      * @date 2026-11-09
      * @author Stephane H.
      */
+    #[Route('/files/operations', name: 'files_operations_list', methods: ['GET'])]
     #[Route('/files/tasks', name: 'files_tasks_list', methods: ['GET'])]
-    #[IsGranted('ROLE_SHARE_SEND')]
-    public function tasksList(Request $request): JsonResponse
+    #[IsGranted('ROLE_SHARE')]
+    public function operationsList(Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
+        $actorId = (int) $user->getId();
         $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
-        if (isset($resolved['error'])) {
-            return new JsonResponse(['status' => 'error', 'message_key' => $resolved['error']], 400);
-        }
-        $tasks = $this->uploadEncryptJobService->listForOwner((int) $resolved['ownerId']);
+        $ownerId = isset($resolved['error']) ? $actorId : (int) $resolved['ownerId'];
+        $tasks = $this->operationsListService->listForOwner($ownerId, $actorId);
 
         return new JsonResponse(['status' => 'ok', 'tasks' => $tasks]);
     }
@@ -1688,8 +1691,9 @@ class FilesController extends AbstractController
      * @date 2026-11-09
      * @author Stephane H.
      */
+    #[Route('/files/operations/ack', name: 'files_operations_ack', methods: ['POST'])]
     #[Route('/files/tasks/ack', name: 'files_tasks_ack', methods: ['POST'])]
-    #[IsGranted('ROLE_SHARE_SEND')]
+    #[IsGranted('ROLE_SHARE')]
     public function tasksAck(Request $request, TranslatorInterface $translator): JsonResponse
     {
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
@@ -1905,10 +1909,7 @@ class FilesController extends AbstractController
     private function extractJsonOrRedirect(Request $request, TranslatorInterface $translator, string $messageKey, int $httpStatus): JsonResponse|Response
     {
         if ($this->expectsJson($request)) {
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => $translator->trans($messageKey, [], 'messages'),
-            ], $httpStatus);
+            return $this->jsonApiError($translator, $messageKey, $httpStatus);
         }
         $this->addFlash('danger', $messageKey);
 
@@ -1955,7 +1956,8 @@ class FilesController extends AbstractController
             'chunk_upload.path_invalid' => 'files.flash.upload_path_invalid',
             'chunk_upload.part_missing' => 'files.flash.upload_invalid',
             'upload_encrypt.not_found' => 'files.flash.upload_invalid',
-            'chunk_upload.storage_failed', 'chunk_upload.append_failed', 'chunk_upload.part_init_failed', 'chunk_upload.meta_write_failed', 'chunk_upload.mkdir_failed', 'upload_encrypt.mkdir_failed' => 'files.flash.storage_failed',
+            'chunk_upload.storage_failed', 'chunk_upload.append_failed', 'chunk_upload.part_init_failed', 'chunk_upload.meta_write_failed' => 'files.flash.storage_failed',
+            'chunk_upload.mkdir_failed', 'upload_encrypt.mkdir_failed', RuntimePermissionFailure::EXCEPTION => RuntimePermissionFailure::FLASH_KEY,
             default => 'files.flash.upload_invalid',
         };
     }
@@ -2009,14 +2011,29 @@ class FilesController extends AbstractController
     private function chunkUploadJsonOrRedirect(Request $request, TranslatorInterface $translator, string $messageKey, int $httpStatus): JsonResponse|Response
     {
         if ($this->expectsJson($request)) {
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => $translator->trans($messageKey, [], 'messages'),
-            ], $httpStatus);
+            return $this->jsonApiError($translator, $messageKey, $httpStatus);
         }
         $this->addFlash('danger', $messageKey);
 
         return $this->redirectToFilesIndex($request);
+    }
+
+    /**
+     * @brief JSON error payload with both translated message and message_key.
+     * @param TranslatorInterface $translator Translator.
+     * @param string $messageKey Translation key.
+     * @param int $httpStatus HTTP status.
+     * @return JsonResponse
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function jsonApiError(TranslatorInterface $translator, string $messageKey, int $httpStatus): JsonResponse
+    {
+        return new JsonResponse([
+            'status' => 'error',
+            'message_key' => $messageKey,
+            'message' => $translator->trans($messageKey, [], 'messages'),
+        ], $httpStatus);
     }
 
     /**
@@ -2846,11 +2863,7 @@ class FilesController extends AbstractController
     private function uploadJsonErrorOrRedirect(Request $request, TranslatorInterface $translator, string $messageKey, int $httpStatus = 400): Response
     {
         if ($this->expectsJson($request)) {
-            $locale = (string) $request->getLocale();
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => $translator->trans($messageKey, [], 'messages', $locale),
-            ], $httpStatus);
+            return $this->jsonApiError($translator, $messageKey, $httpStatus);
         }
         $this->addFlash('danger', $messageKey);
 

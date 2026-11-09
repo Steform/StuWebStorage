@@ -1,0 +1,44 @@
+{# Native download cockpit (DL100 grant + Range). No in-page byte ETA. #}
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+<div
+    class="modal fade"
+    id="filesDownloadOperationModal"
+    tabindex="-1"
+    aria-labelledby="filesDownloadOperationModalTitle"
+    aria-hidden="true"
+    data-ops-family="b"
+    data-ops-modal-key="files_download"
+    data-msg-handed="{{ 'files.ops.download.handed'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-hint="{{ 'files.ops.download.hint'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-copy-ok="{{ 'files.ops.download.copy_ok'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-copy-fail="{{ 'files.ops.download.copy_fail'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-grant-fail="{{ 'files.ops.download.grant_fail'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-native-cancel="{{ 'files.ops.download.native_cancel_hint'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ops-modal-content">
+            <div class="modal-header ops-modal-header">
+                <div class="ops-modal-heading min-w-0">
+                    <h2 class="modal-title h5" id="filesDownloadOperationModalTitle">{{ 'files.ops.types.download_file'|trans({}, 'messages', currentLocale) }}</h2>
+                    <p class="small text-muted mb-0 ops-modal-subtitle text-truncate" data-ops-download-name>—</p>
+                </div>
+                {% include 'operations/_operation_header_actions.html.twig' with { close_aria: 'files.ops.close_aria'|trans({}, 'messages', currentLocale) } %}
+            </div>
+            <div class="modal-body ops-modal-body">
+                <p class="small text-muted mb-2" data-ops-download-size></p>
+                <p class="small mb-3" data-ops-download-hint>{{ 'files.ops.download.hint'|trans({}, 'messages', currentLocale) }}</p>
+                <div class="progress mb-2 d-none" data-ops-download-indeterminate role="progressbar" aria-label="{{ 'files.ops.download.progress_aria'|trans({}, 'messages', currentLocale) }}">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div>
+                </div>
+                <p class="small text-muted mb-0" data-ops-download-status aria-live="polite"></p>
+                <div class="alert alert-danger d-none mt-3" role="alert" data-ops-download-error></div>
+            </div>
+            <div class="modal-footer ops-modal-footer flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-danger" data-ops-cancel data-ops-download-cancel>{{ 'files.ops.cancel'|trans({}, 'messages', currentLocale) }}</button>
+                <button type="button" class="btn btn-outline-secondary d-none" data-ops-download-copy>{{ 'files.ops.download.copy_link'|trans({}, 'messages', currentLocale) }}</button>
+                <button type="button" class="btn btn-outline-secondary d-none" data-ops-download-hide>{{ 'files.ops.download.hide'|trans({}, 'messages', currentLocale) }}</button>
+                <button type="button" class="btn btn-primary" data-ops-primary data-ops-download-start>{{ 'files.ops.download.start'|trans({}, 'messages', currentLocale) }}</button>
+            </div>
+        </div>
+    </div>
+</div>

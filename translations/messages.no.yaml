@@ -324,6 +324,7 @@ files:
     progress_processing: 'Kryptering pa serveren'
     progress_bar_aria: 'Fremdrift for filopplasting'
     xhr_network_error: 'Kunne ikke na serveren. Sjekk tilkoblingen og proev igjen.'
+    xhr_server_error: 'Serveren returnerte en feil (HTTP %status%). Dette er ikke et tilkoblingsproblem.'
     selected_byte_size_label: 'Storrelse:'
     multi:
       modal_title: 'Last opp filer'
@@ -382,6 +383,47 @@ files:
       limits_admin_tier: 'Forhoeyede grenser (administratorkonto).'
       phase_pending: 'Dekrypterer arkiv…'
       phase_scanning: 'Analyserer arkiv…'
+  ops:
+    nav_label: 'Driftssenter'
+    nav_aria: 'Driftssenter'
+    empty: 'Ingen operasjoner pågår'
+    resume: Fortsett
+    reduce: Minimer
+    stay: 'Bli her'
+    hide: Skjul
+    cancel: 'Avbryt operasjon'
+    close_aria: 'Lukk operasjonsvindu'
+    dismiss_title: 'Operasjon pågår'
+    dismiss_body: 'Å lukke dette vinduet stopper ikke «%operation%». Minimer for å fortsette i bakgrunnen, eller avbryt?'
+    dismiss_cancel: 'Avbryt operasjon'
+    toast_done: 'Operasjon fullført: %name%'
+    toast_failed: 'Operasjon mislyktes: %name%'
+    tab_warning: 'Nettverksopplasting stopper hvis du lukker fanen; kryptering som allerede er startet fortsetter på serveren.'
+    types:
+      upload_encrypt: Kryptering
+      zip_extract: Utpakking
+      archive_prepare: Arkiv
+      download_file: Nedlasting
+      download_archive: 'Arkivnedlasting'
+    phase:
+      upload: Sending
+      encrypt: 'Krypterer…'
+      extract: 'Pakker ut…'
+      archive: 'Forbereder arkiv…'
+      download: Nedlasting
+    status:
+      browser: Nettleser
+    download:
+      start: Last ned
+      hint: 'Filen lagres av nettleseren. HTTP Range-gjenopptak er tilgjengelig via lenken hvis overføringen avbrytes.'
+      handed: 'Lagret av nettleseren — gjenoppta via lenken. Avbryt fra nettleserens nedlastingsvindu.'
+      copy_link: 'Kopier gjenoppta-lenke'
+      copy_ok: 'Lenke kopiert til utklippstavlen.'
+      copy_fail: 'Kunne ikke kopiere lenken.'
+      grant_fail: 'Nedlastingen kunne ikke starte. Prøv igjen.'
+      hide: Skjul
+      native_cancel_hint: 'Avbryt fra nettleserens nedlastingsvindu.'
+      progress_aria: 'Nettleserstyrt nedlasting'
   table:
     name: Navn
     extension: Type
@@ -681,6 +723,7 @@ files:
     quota_exceeded: 'Lagringskvote nådd for denne brukeren.'
     public_not_allowed: 'Rollene dine tillater ikke offentlig synlighet.'
     storage_failed: 'Kunne ikke lagre den krypterte filen.'
+    runtime_permission_denied: 'Serveren kan ikke skrive under var/ (kryptering, utpakking, filer). Dette er ikke et tilkoblingsproblem. Som admin: sudo ./fix-runtime-permissions.sh --web-user www-data'
     uploaded: 'Filen er lastet opp.'
     not_found: 'Filen finnes ikke.'
     deleted: 'Filen er slettet.'

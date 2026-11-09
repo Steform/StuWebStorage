@@ -1,0 +1,64 @@
+/* Famille B operation chrome + operations-center dropdown. */
+.ops-center-item {
+    list-style: none;
+}
+
+.ops-center-menu {
+    min-width: 22rem;
+    max-width: min(28rem, 92vw);
+    max-height: 24rem;
+    overflow: auto;
+}
+
+.ops-center-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    white-space: normal;
+}
+
+.ops-center-row__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.ops-center-row__label {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.ops-center-row__meta {
+    font-size: 0.8rem;
+    color: var(--bs-secondary-color);
+}
+
+.ops-center-row__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.ops-modal-header {
+    align-items: flex-start;
+}
+
+.ops-modal-heading {
+    flex: 1 1 auto;
+}
+
+.ops-modal-header-actions {
+    flex-shrink: 0;
+}
+
+.ops-modal-footer [data-ops-cancel] {
+    margin-right: auto;
+}
+
+[data-ops-family="b"]:not(.ops-modal--running) [data-ops-cancel] {
+    display: none !important;
+}

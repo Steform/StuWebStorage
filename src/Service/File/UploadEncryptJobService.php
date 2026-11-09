@@ -7,6 +7,7 @@ namespace App\Service\File;
 use App\Entity\Folder;
 use App\Entity\SharedFile;
 use App\Service\Admin\ServerDiskSpaceService;
+use App\Service\Infrastructure\RuntimePermissionFailure;
 use App\Service\Share\FolderTreeService;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -187,6 +188,9 @@ final class UploadEncryptJobService
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'file.encryption.cancelled') {
                 return $this->cancel($ownerUserId, $taskId);
+            }
+            if (RuntimePermissionFailure::matches($e)) {
+                return $this->fail($ownerUserId, $meta, RuntimePermissionFailure::FLASH_KEY);
             }
 
             return $this->fail($ownerUserId, $meta, 'files.flash.storage_failed');
@@ -582,10 +586,13 @@ final class UploadEncryptJobService
     private function saveMeta(int $ownerUserId, string $taskId, array $meta): void
     {
         $this->ensureWritableDirectory($this->jobsBaseDir($ownerUserId));
-        file_put_contents(
+        $written = @file_put_contents(
             $this->metaPath($ownerUserId, $taskId),
             json_encode($meta, JSON_THROW_ON_ERROR),
         );
+        if ($written === false) {
+            throw new \RuntimeException(RuntimePermissionFailure::EXCEPTION);
+        }
     }
 
     /**
@@ -631,11 +638,6 @@ final class UploadEncryptJobService
      */
     private function ensureWritableDirectory(string $dir): void
     {
-        if (is_dir($dir)) {
-            return;
-        }
-        if (!@mkdir($dir, 0775, true) && !is_dir($dir)) {
-            throw new \RuntimeException('upload_encrypt.mkdir_failed');
-        }
+        RuntimePermissionFailure::ensureWritableDirectory($dir);
     }
 }

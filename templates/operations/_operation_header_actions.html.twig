@@ -1,0 +1,14 @@
+{#
+  Famille B header actions: Reduce (shown once running) + close.
+  Parameters: close_aria (string, already translated).
+#}
+{% set closeAria = close_aria|default('app.close'|trans({}, 'messages', currentLocale|default(app.request.locale|default('fr')))) %}
+<div class="ops-modal-header-actions d-flex align-items-center gap-2 ms-auto">
+    <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary d-none"
+        data-ops-reduce
+        aria-label="{{ 'files.ops.reduce'|trans({}, 'messages', currentLocale|default(app.request.locale|default('fr'))) }}"
+    >{{ 'files.ops.reduce'|trans({}, 'messages', currentLocale|default(app.request.locale|default('fr'))) }}</button>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" data-ops-close aria-label="{{ closeAria }}"></button>
+</div>

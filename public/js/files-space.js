@@ -22,8 +22,32 @@
                     parsed = null;
                 }
             }
-            return { ok: res.ok, json: parsed };
+            return { ok: res.ok, json: parsed, status: res.status, raw: raw || '' };
         });
+    }
+
+    /**
+     * @brief User-facing upload error: permission and HTTP 5xx must not look like a network outage.
+     * @param {{ok?: boolean, json?: object|null, status?: number, raw?: string}|null} pack Parsed response.
+     * @param {Function} msg Modal i18n getter (camelCase dataset keys).
+     * @return {string}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function diagnoseUploadHttpError(pack, msg) {
+        var messages = {
+            permission: typeof msg === 'function' ? msg('msgXhrPermissionError') : '',
+            server: typeof msg === 'function' ? msg('msgXhrServerError') : '',
+            network: typeof msg === 'function' ? msg('msgXhrNetworkError') : ''
+        };
+        if (window.FilesHttpError && typeof window.FilesHttpError.diagnose === 'function') {
+            return window.FilesHttpError.diagnose(pack, messages);
+        }
+        if (pack && pack.json && typeof pack.json.message === 'string' && pack.json.message !== '') {
+            return pack.json.message;
+        }
+
+        return messages.network;
     }
 
     var DEBOUNCE_MS = 300;
@@ -406,8 +430,7 @@
             })
             .then(function (pack) {
                 if (!pack.ok || !pack.json || pack.json.status !== 'ok' || typeof pack.json.upload_id !== 'string') {
-                    var m0 = pack.json && pack.json.message ? pack.json.message : msg('msgXhrNetworkError');
-                    throw new Error(typeof m0 === 'string' ? m0 : msg('msgXhrNetworkError'));
+                    throw new Error(diagnoseUploadHttpError(pack, msg));
                 }
                 return pack.json;
             })
@@ -460,13 +483,22 @@
                                 idx += 1;
                                 resolve();
                             } else {
-                                var em = (pj && pj.message) || msg('msgXhrNetworkError');
-                                reject(new Error(em));
+                                reject(new Error(diagnoseUploadHttpError({
+                                    ok: false,
+                                    json: pj,
+                                    status: xhr.status,
+                                    raw: raw
+                                }, msg)));
                             }
                         };
                         xhr.onerror = function () {
                             context.setActiveXhr(null);
-                            reject(new Error(msg('msgXhrNetworkError')));
+                            reject(new Error(diagnoseUploadHttpError({
+                                ok: false,
+                                json: null,
+                                status: 0,
+                                raw: ''
+                            }, msg)));
                         };
                         var fdC = new FormData();
                         fdC.append('upload_id', uploadId);
@@ -500,10 +532,7 @@
                         return parseFetchJsonResponse(res);
                     }).then(function (pack) {
                         if (!pack.json || pack.json.status !== 'ok' || !pack.json.task) {
-                            if (pack.json && typeof pack.json.message === 'string' && pack.json.message !== '') {
-                                throw new Error(pack.json.message);
-                            }
-                            throw new Error(msg('msgXhrNetworkError'));
+                            throw new Error(diagnoseUploadHttpError(pack, msg));
                         }
                         if (!window.FilesUploadEncrypt || typeof window.FilesUploadEncrypt.pollUntilTerminal !== 'function') {
                             throw new Error(msg('msgXhrNetworkError'));
@@ -741,11 +770,12 @@
             } else {
                 modalEl.removeAttribute('aria-busy');
             }
-            formEl.querySelectorAll('[data-files-upload-submit]').forEach(function (btn) {
+                    formEl.querySelectorAll('[data-files-upload-submit]').forEach(function (btn) {
                 btn.disabled = !!active;
+                btn.classList.toggle('d-none', !!active);
             });
-            formEl.querySelectorAll('[data-files-upload-dismiss]').forEach(function (btn) {
-                btn.disabled = !!active;
+            formEl.querySelectorAll('[data-ops-cancel]').forEach(function (btn) {
+                btn.classList.toggle('d-none', !active);
             });
             formEl.querySelectorAll('[data-files-target-owner-search]').forEach(function (inp) {
                 inp.disabled = !!active;
@@ -1168,12 +1198,10 @@
             refreshSelectionMeta();
         };
 
-        var dismissModalEl = document.getElementById('filesUploadEncryptDismissModal');
-        var dismissModalApi = dismissModalEl && window.bootstrap && window.bootstrap.Modal
-            ? window.bootstrap.Modal.getOrCreateInstance(dismissModalEl)
-            : null;
-        var allowUploadModalHide = false;
         var csrfInputEl = formEl.querySelector('[name="_csrf_token"]');
+        var uploadOpsTask = null;
+        var encryptPollActive = false;
+        var encryptProgressHandler = null;
 
         /**
          * @brief CSRF token for upload / encrypt endpoints.
@@ -1211,42 +1239,75 @@
         }
 
         /**
-         * @brief Hide the upload modal after an explicit allow (background continue).
+         * @brief Build the current upload/encrypt OPS task snapshot.
+         * @return {object|null}
+         * @date 2026-11-09
+         * @author Stephane H.
+         */
+        function currentUploadOpsTask() {
+            var processing = queueEntries.find(function (entry) {
+                return entry && (entry.state === 'processing' || entry.state === 'uploading');
+            });
+            var label = processing && processing.name
+                ? String(processing.name)
+                : (queueEntries[0] && queueEntries[0].name ? String(queueEntries[0].name) : 'upload');
+            var taskId = activeEncryptTaskId || (uploadOpsTask && uploadOpsTask.taskId) || '';
+            if (taskId === '') {
+                return null;
+            }
+
+            return {
+                taskId: taskId,
+                type: 'upload_encrypt',
+                status: 'running',
+                label: label,
+                phaseKey: processing && processing.state === 'processing'
+                    ? 'files.ops.phase.encrypt'
+                    : 'files.ops.phase.upload',
+                progressKnown: true,
+                cancelSupported: true,
+                modalKey: 'files_upload',
+                percent: 0
+            };
+        }
+
+        /**
+         * @brief Reattach encrypt polling after resume or F5 hydrate.
+         * @param {object} task Encrypt task payload.
          * @return {void}
          * @date 2026-11-09
          * @author Stephane H.
          */
-        function hideUploadModalAllowed() {
-            allowUploadModalHide = true;
-            if (window.bootstrap && window.bootstrap.Modal) {
-                window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        function resumeEncryptPoll(task) {
+            if (!task || !task.taskId || encryptPollActive || !window.FilesUploadEncrypt) {
+                return;
             }
+            if (String(task.taskId).indexOf('upload-local-') === 0) {
+                return;
+            }
+            encryptPollActive = true;
+            activeEncryptTaskId = String(task.taskId);
+            window.FilesUploadEncrypt.pollUntilTerminal(task, {
+                csrf: readUploadCsrf(),
+                isCancelled: function () {
+                    return uploadCancelRequested;
+                },
+                onProgress: function (done, total, liveTask) {
+                    if (typeof encryptProgressHandler === 'function') {
+                        encryptProgressHandler(done, total, liveTask);
+                    } else if (window.FilesOperations) {
+                        window.FilesOperations.upsert(liveTask);
+                    }
+                }
+            }).then(function () {
+                encryptPollActive = false;
+            }).catch(function () {
+                encryptPollActive = false;
+            });
         }
 
-        modalEl.addEventListener('hide.bs.modal', function (ev) {
-            if (allowUploadModalHide || encryptBackgroundPreferred) {
-                allowUploadModalHide = false;
-                return;
-            }
-            if (activeEncryptTaskId && hasEncryptingEntry() && dismissModalApi) {
-                ev.preventDefault();
-                dismissModalApi.show();
-                return;
-            }
-            if (uploadBusy) {
-                uploadCancelRequested = true;
-                if (activeXhr) {
-                    activeXhr.abort();
-                }
-                requestActiveEncryptCancel();
-                ev.preventDefault();
-            }
-        });
-
         modalEl.addEventListener('hidden.bs.modal', function () {
-            if (encryptBackgroundPreferred) {
-                encryptBackgroundPreferred = false;
-                uploadBatchActive = false;
+            if (uploadBusy || (activeEncryptTaskId && hasEncryptingEntry())) {
                 return;
             }
             uploadCancelRequested = false;
@@ -1254,54 +1315,60 @@
             queueListExpanded = false;
             postBatchReview = false;
             activeEncryptTaskId = null;
-            if (!uploadBusy) {
-                if (errorEl) {
-                    errorEl.classList.add('d-none');
-                    errorEl.textContent = '';
-                }
-                pendingEntriesOverride = null;
+            uploadOpsTask = null;
+            encryptBackgroundPreferred = false;
+            if (errorEl) {
+                errorEl.classList.add('d-none');
+                errorEl.textContent = '';
+            }
+            pendingEntriesOverride = null;
+            if (window.FilesOperations) {
+                window.FilesOperations.markIdle(modalEl);
             }
         });
 
-        if (dismissModalEl) {
-            var stayBtn = dismissModalEl.querySelector('[data-files-encrypt-dismiss-stay]');
-            var continueBtn = dismissModalEl.querySelector('[data-files-encrypt-dismiss-continue]');
-            var cancelEncryptBtn = dismissModalEl.querySelector('[data-files-encrypt-dismiss-cancel]');
-            if (stayBtn) {
-                stayBtn.addEventListener('click', function () {
-                    if (dismissModalApi) {
-                        dismissModalApi.hide();
+        if (window.FilesOperations) {
+            window.FilesOperations.register('upload_encrypt', {
+                hydrate: function (task) {
+                    if (task && task.taskId) {
+                        activeEncryptTaskId = String(task.taskId);
+                        uploadOpsTask = task;
                     }
-                });
-            }
-            if (continueBtn) {
-                continueBtn.addEventListener('click', function () {
-                    encryptBackgroundPreferred = true;
-                    if (dismissModalApi) {
-                        dismissModalApi.hide();
+                    encryptBackgroundPreferred = false;
+                    if (task && task.status === 'running') {
+                        resumeEncryptPoll(task);
                     }
-                    hideUploadModalAllowed();
-                    if (window.FilesBackgroundTasks && typeof window.FilesBackgroundTasks.refresh === 'function') {
-                        window.FilesBackgroundTasks.refresh();
-                    }
-                });
-            }
-            if (cancelEncryptBtn) {
-                cancelEncryptBtn.addEventListener('click', function () {
+                },
+                cancel: function (task) {
                     uploadCancelRequested = true;
                     encryptBackgroundPreferred = false;
-                    requestActiveEncryptCancel();
-                    if (dismissModalApi) {
-                        dismissModalApi.hide();
+                    if (activeXhr) {
+                        activeXhr.abort();
                     }
-                });
-            }
+                    if (task && task.taskId && String(task.taskId).indexOf('upload-local-') !== 0 && window.FilesUploadEncrypt) {
+                        return window.FilesUploadEncrypt.cancelTask(task.taskId, readUploadCsrf(), null, null);
+                    }
+
+                    return Object.assign({}, task || {}, { status: 'cancelled', cancelSupported: false });
+                },
+                isRunning: function () {
+                    return uploadBusy || !!(activeEncryptTaskId && hasEncryptingEntry());
+                }
+            });
+            window.FilesOperations.bindFamilyB(modalEl, {
+                isRunning: function () {
+                    return uploadBusy || !!(activeEncryptTaskId && hasEncryptingEntry());
+                },
+                getTask: function () {
+                    return currentUploadOpsTask();
+                }
+            });
         }
 
         document.addEventListener('files:open-upload-task', function (ev) {
             var detail = ev && ev.detail ? ev.detail : {};
-            if (detail.taskId) {
-                activeEncryptTaskId = String(detail.taskId);
+            if (detail.taskId && window.FilesOperations) {
+                window.FilesOperations.resume(String(detail.taskId));
             }
         });
 
@@ -1405,6 +1472,20 @@
             }
             renderQueueUi();
             setSubmittingUi(true);
+            uploadOpsTask = {
+                taskId: 'upload-local-' + String(Date.now()),
+                type: 'upload_encrypt',
+                status: 'running',
+                label: entries[0] && entries[0].name ? String(entries[0].name) : 'upload',
+                phaseKey: 'files.ops.phase.upload',
+                progressKnown: true,
+                cancelSupported: true,
+                modalKey: 'files_upload',
+                percent: 0
+            };
+            if (window.FilesOperations) {
+                window.FilesOperations.markRunning(modalEl, uploadOpsTask);
+            }
             if (queueWrap) {
                 queueWrap.classList.remove('d-none');
             }
@@ -1444,7 +1525,7 @@
                 appendRetainFields: appendRetainFields,
                 msg: msg,
                 isCancelled: function () {
-                    return uploadCancelRequested && !encryptBackgroundPreferred;
+                    return uploadCancelRequested;
                 },
                 setActiveXhr: function (xhr) {
                     activeXhr = xhr;
@@ -1466,6 +1547,9 @@
                 },
                 onEncryptProgress: function (done, total, task) {
                     activeEncryptTaskId = task && task.taskId ? String(task.taskId) : activeEncryptTaskId;
+                    if (window.FilesOperations && task) {
+                        window.FilesOperations.markRunning(modalEl, task);
+                    }
                     if (encryptEta && globalEtaEl) {
                         var snap = encryptEta.update(done, total);
                         if (snap.shouldRefreshUi || done >= total) {
@@ -1491,12 +1575,17 @@
                     updateGlobalProgress(completedBytes, totalBytes, currentIndex, totalCount);
                 }
             };
+            encryptProgressHandler = context.onEncryptProgress;
 
             uploadFileQueue(queueEntries, context).then(function (summary) {
                 setSubmittingUi(false);
                 uploadCancelRequested = false;
                 uploadBatchActive = false;
                 activeXhr = null;
+                encryptPollActive = false;
+                if (window.FilesOperations) {
+                    window.FilesOperations.markIdle(modalEl);
+                }
 
                 var listingShell = document.getElementById('files-live-region');
                 var toastMsg = '';
@@ -7530,6 +7619,47 @@
     }
 
     /**
+     * @brief Map an extract tick payload to an OPS task.
+     * @param {object} payload Tick JSON.
+     * @param {string} jobId Job id.
+     * @return {object}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    function extractTaskFromPayload(payload, jobId) {
+        var phase = String((payload && payload.phase) || 'pending');
+        var status = 'running';
+        if (phase === 'done') {
+            status = 'done';
+        } else if (phase === 'failed') {
+            status = 'failed';
+        } else if (phase === 'cancelled' || (payload && payload.done && phase !== 'done')) {
+            status = phase === 'cancelled' ? 'cancelled' : status;
+        }
+        var nameEl = document.querySelector('#filesExtractZipModal [data-files-extract-target-name]');
+
+        return {
+            taskId: String(jobId || ''),
+            type: 'zip_extract',
+            status: status,
+            label: nameEl && nameEl.textContent ? String(nameEl.textContent).trim() : 'ZIP',
+            phaseKey: 'files.ops.phase.extract',
+            percent: Number((payload && payload.percent) || 0),
+            progressKnown: true,
+            cancelSupported: status === 'running',
+            modalKey: 'files_extract_zip',
+            payload: {
+                extractJobId: String(jobId || ''),
+                phase: phase,
+                extracted: Number((payload && payload.extracted) || 0),
+                skipped: Number((payload && payload.skipped) || 0),
+                total: Number((payload && payload.total) || 0),
+                current_entry: String((payload && payload.current_entry) || '')
+            }
+        };
+    }
+
+    /**
      * @brief Update extraction progress UI from tick payload.
      * @param {HTMLElement} modalEl Modal root.
      * @param {object} payload Tick JSON payload.
@@ -7626,10 +7756,16 @@
             var payload = pack.json || {};
             if (pack.ok && payload.status === 'ok') {
                 updateExtractZipProgressUi(modalEl, payload);
+                if (window.FilesOperations) {
+                    window.FilesOperations.upsert(extractTaskFromPayload(payload, jobId));
+                }
                 if (payload.done) {
                     extractZipBusy = false;
                     extractZipActiveJobId = '';
                     stopExtractZipPolling();
+                    if (window.FilesOperations) {
+                        window.FilesOperations.markIdle(modalEl);
+                    }
                     if (payload.phase === 'done') {
                         if (window.bootstrap && window.bootstrap.Modal) {
                             window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
@@ -7792,6 +7928,22 @@
                     total: pack.json.total_entries || 0,
                     current_entry: ''
                 });
+                if (window.FilesOperations) {
+                    var started = extractTaskFromPayload({
+                        phase: pack.json.phase || 'pending',
+                        percent: 0,
+                        extracted: 0,
+                        skipped: 0,
+                        total: pack.json.total_entries || 0,
+                        current_entry: '',
+                        done: false
+                    }, extractZipActiveJobId);
+                    var nameEl = extractZipModal.querySelector('[data-files-extract-target-name]');
+                    if (nameEl && nameEl.textContent) {
+                        started.label = String(nameEl.textContent).trim() || started.label;
+                    }
+                    window.FilesOperations.markRunning(extractZipModal, started);
+                }
                 postExtractZipTick(extractZipModal, extractZipForm);
             }).catch(function () {
                 extractZipBusy = false;
@@ -7805,18 +7957,69 @@
             });
         });
 
-        extractZipModal.addEventListener('hide.bs.modal', function (event) {
-            if (extractZipActiveJobId === '' || !extractZipBusy) {
-                return;
-            }
-            var confirmMsg = extractZipModal.getAttribute('data-msg-cancel-confirm') || '';
-            if (confirmMsg !== '' && !window.confirm(confirmMsg)) {
-                event.preventDefault();
-                return;
-            }
-            stopExtractZipPolling();
-            cancelExtractZipJob(extractZipModal, extractZipForm);
-        });
+        if (window.FilesOperations) {
+            window.FilesOperations.register('zip_extract', {
+                hydrate: function (task) {
+                    var jobId = String((task && task.payload && task.payload.extractJobId) || (task && task.taskId) || '');
+                    if (jobId === '') {
+                        return;
+                    }
+                    extractZipActiveJobId = jobId;
+                    extractZipBusy = task.status === 'running';
+                    var optionsEl = extractZipModal.querySelector('[data-files-extract-options]');
+                    var preflightEl = extractZipModal.querySelector('[data-files-extract-preflight]');
+                    if (optionsEl) {
+                        optionsEl.classList.add('d-none');
+                    }
+                    if (preflightEl) {
+                        preflightEl.classList.add('d-none');
+                    }
+                    updateExtractZipProgressUi(extractZipModal, {
+                        phase: (task.payload && task.payload.phase) || 'extracting',
+                        percent: Number(task.percent) || 0,
+                        extracted: (task.payload && task.payload.extracted) || 0,
+                        skipped: (task.payload && task.payload.skipped) || 0,
+                        total: (task.payload && task.payload.total) || 0,
+                        current_entry: (task.payload && task.payload.current_entry) || ''
+                    });
+                    if (extractZipBusy && !extractZipTickInFlight) {
+                        postExtractZipTick(extractZipModal, extractZipForm);
+                    }
+                },
+                cancel: function (task) {
+                    var jobId = String((task && task.payload && task.payload.extractJobId) || (task && task.taskId) || extractZipActiveJobId);
+                    if (jobId !== '') {
+                        extractZipActiveJobId = jobId;
+                    }
+                    stopExtractZipPolling();
+                    cancelExtractZipJob(extractZipModal, extractZipForm);
+
+                    return Object.assign({}, task || {}, { status: 'cancelled', cancelSupported: false });
+                },
+                isRunning: function () {
+                    return extractZipBusy && extractZipActiveJobId !== '';
+                }
+            });
+            window.FilesOperations.bindFamilyB(extractZipModal, {
+                isRunning: function () {
+                    return extractZipBusy && extractZipActiveJobId !== '';
+                },
+                getTask: function () {
+                    if (extractZipActiveJobId === '') {
+                        return null;
+                    }
+
+                    return extractTaskFromPayload({
+                        phase: 'extracting',
+                        percent: 0,
+                        extracted: 0,
+                        skipped: 0,
+                        total: 0,
+                        current_entry: ''
+                    }, extractZipActiveJobId);
+                }
+            });
+        }
     }
 
     document.addEventListener('click', function (event) {
@@ -7827,27 +8030,36 @@
         var liveRegionNode = document.getElementById('files-live-region');
         var fileBytes = parseInt(link.getAttribute('data-files-byte-size') || '0', 10);
         var fileId = parseInt(link.getAttribute('data-files-download-id') || '0', 10);
-        var threshold = liveRegionNode
-            ? parseInt(liveRegionNode.getAttribute('data-download-manager-threshold-bytes') || '0', 10)
-            : 0;
         var grantUrlTemplate = liveRegionNode
             ? (liveRegionNode.getAttribute('data-files-download-grant-url-template') || '')
             : '';
         var csrfToken = liveRegionNode
             ? (liveRegionNode.getAttribute('data-files-download-grant-csrf') || '')
             : '';
-        if (threshold < 1 || fileBytes <= threshold || fileId < 1 || grantUrlTemplate === '') {
+        if (fileId < 1 || grantUrlTemplate === '') {
+            return;
+        }
+        event.preventDefault();
+        var tokenUrl = grantUrlTemplate.replace('999999', String(fileId));
+        var fileName = link.getAttribute('data-files-download-name') || '';
+        if (window.FilesDownloadOperation && typeof window.FilesDownloadOperation.open === 'function') {
+            window.FilesDownloadOperation.open({
+                type: 'download_file',
+                fileId: fileId,
+                fileName: fileName,
+                byteSize: fileBytes,
+                tokenUrl: tokenUrl,
+                csrfToken: csrfToken
+            });
             return;
         }
         if (!window.FilesDownloadLauncher) {
             return;
         }
-        event.preventDefault();
-        var tokenUrl = grantUrlTemplate.replace('999999', String(fileId));
         window.FilesDownloadLauncher.requestGrantAndDownload({
             tokenUrl: tokenUrl,
             csrfToken: csrfToken,
-            fileName: link.getAttribute('data-files-download-name') || ''
+            fileName: fileName
         }).catch(function (error) {
             var msg = (error && error.message) || (liveRegionNode ? liveRegionNode.getAttribute('data-files-msg-download-failed') || '' : '');
             if (msg !== '' && typeof pushFilesToast === 'function') {

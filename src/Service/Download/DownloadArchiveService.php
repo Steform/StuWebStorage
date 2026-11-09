@@ -310,6 +310,25 @@ final class DownloadArchiveService
     }
 
     /**
+     * @brief Stop a preparing archive so further ticks see a terminal failed status.
+     * @param DownloadArchive $archive Archive row.
+     * @return array{status: string, preparedBytes: int, totalBytes: int, errorCode: ?string}
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function cancelPrepare(DownloadArchive $archive): array
+    {
+        if ($archive->getStatus() === DownloadArchive::STATUS_PREPARING) {
+            $archive->setStatus(DownloadArchive::STATUS_FAILED);
+            $archive->setErrorCode('archive.cancelled');
+            $archive->setPreparingUntil(null);
+            $this->archiveRepository->save($archive);
+        }
+
+        return $this->progressPayload($archive);
+    }
+
+    /**
      * @brief Public progress/status array for JSON APIs.
      * @param DownloadArchive $archive Archive.
      * @return array{token: string, status: string, totalBytes: int, preparedBytes: int, entryCount: int, skippedCount: int, fileName: string, errorCode: ?string, expiresAt: string}

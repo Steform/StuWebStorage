@@ -331,6 +331,7 @@ files:
     progress_processing: 'Chiffrement sur le serveur'
     progress_bar_aria: 'Progression de l''envoi du fichier'
     xhr_network_error: 'Le serveur est injoignable. Verifiez votre connexion et reessayez.'
+    xhr_server_error: 'Le serveur a renvoye une erreur (HTTP %status%). Ce n''est pas un probleme de connexion.'
     selected_byte_size_label: 'Taille :'
     multi:
       modal_title: 'Envoyer des fichiers'
@@ -435,6 +436,47 @@ files:
     toast_done: 'Chiffrement termine : %name%'
     toast_failed: 'Chiffrement echoue : %name%'
     type_upload_encrypt: Chiffrement
+  ops:
+    nav_label: 'Centre des operations'
+    nav_aria: 'Centre des operations'
+    empty: 'Aucune operation en cours'
+    resume: Reprendre
+    reduce: Reduire
+    stay: 'Rester ici'
+    hide: Masquer
+    cancel: 'Annuler l''operation'
+    close_aria: 'Fermer la fenetre d''operation'
+    dismiss_title: 'Operation en cours'
+    dismiss_body: 'Fermer cette fenetre n''arrete pas « %operation% ». Reduire pour continuer en arriere-plan, ou annuler ?'
+    dismiss_cancel: 'Annuler l''operation'
+    toast_done: 'Operation terminee : %name%'
+    toast_failed: 'Operation echouee : %name%'
+    tab_warning: 'L''envoi reseau s''arrete si vous fermez l''onglet ; le chiffrement deja lance continue sur le serveur.'
+    types:
+      upload_encrypt: Chiffrement
+      zip_extract: Extraction
+      archive_prepare: Archive
+      download_file: Telechargement
+      download_archive: 'Telechargement archive'
+    phase:
+      upload: Envoi
+      encrypt: 'Chiffrement…'
+      extract: 'Extraction…'
+      archive: 'Preparation de l''archive…'
+      download: Telechargement
+    status:
+      browser: Navigateur
+    download:
+      start: Telecharger
+      hint: 'Le fichier sera enregistre par le navigateur. La reprise HTTP (Range) reste disponible via le lien si le transfert est interrompu.'
+      handed: 'Enregistre par le navigateur — reprenez via le lien si besoin. Annulez depuis la fenetre de telechargements du navigateur.'
+      copy_link: 'Copier le lien reprisable'
+      copy_ok: 'Lien copie dans le presse-papiers.'
+      copy_fail: 'Impossible de copier le lien.'
+      grant_fail: 'Le telechargement n''a pas pu demarrer. Reessayez.'
+      hide: Masquer
+      native_cancel_hint: 'Annulez depuis la fenetre de telechargements du navigateur.'
+      progress_aria: 'Telechargement pris en charge par le navigateur'
   download_prepare:
     page_title: 'Preparation du telechargement'
     modal:
@@ -746,6 +788,7 @@ files:
     disk_full: 'Espace disque insuffisant pour telecharger et chiffrer ce fichier.'
     public_not_allowed: 'Vos roles ne permettent pas la visibilite publique.'
     storage_failed: 'Impossible d''enregistrer le fichier chiffre.'
+    runtime_permission_denied: 'Le serveur n''a pas le droit d''ecrire sous var/ (chiffrement, extraction, fichiers). Ce n''est pas un probleme de connexion. En administrateur : sudo ./fix-runtime-permissions.sh --web-user www-data'
     uploaded: 'Fichier envoye avec succes.'
     not_found: 'Fichier introuvable.'
     deleted: 'Fichier supprime.'

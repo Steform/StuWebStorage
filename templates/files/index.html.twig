@@ -20,6 +20,7 @@
     {% if adminContext|default(false) %}
         {% include 'components/_storage_admin_nav.html.twig' %}
     {% endif %}
+    {% include 'components/_storage_nav.html.twig' %}
     <nav class="navbar navbar-expand bg-body-tertiary border-bottom files-top-nav shadow-sm">
         <div class="container-fluid px-3 py-2">
             <div class="d-flex flex-column align-items-stretch gap-2 gap-md-3 w-100 files-top-nav__stack">
@@ -360,12 +361,16 @@
         tabindex="-1"
         aria-labelledby="filesUploadModalTitle"
         aria-hidden="true"
+        data-ops-family="b"
+        data-ops-modal-key="files_upload"
         data-require-target-owner="{{ requireAdminTargetOwner|default(false) ? '1' : '0' }}"
         data-files-admin-owner-suggest-url="{{ path('admin_files_owner_suggest') }}"
         data-msg-progress-sending="{{ 'files.upload.progress_sending'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-progress-processing="{{ 'files.upload.progress_processing'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-progress-bar-aria="{{ 'files.upload.progress_bar_aria'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-xhr-network-error="{{ 'files.upload.xhr_network_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-xhr-server-error="{{ 'files.upload.xhr_server_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-xhr-permission-error="{{ 'files.flash.runtime_permission_denied'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-global-label="{{ 'files.upload.multi.global_label'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-global-bytes="{{ 'files.upload.multi.global_bytes'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-eta-calculating="{{ 'files.upload.multi.eta_calculating'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
@@ -400,9 +405,9 @@
     >
         <div class="modal-dialog modal-lg modal-dialog-scrollable files-upload-modal-dialog">
             <div class="modal-content files-upload-modal-content">
-                <div class="modal-header">
+                <div class="modal-header ops-modal-header">
                     <h2 class="modal-title h5" id="filesUploadModalTitle">{{ 'files.upload.multi.modal_title'|trans({}, 'messages', currentLocale) }}</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" data-files-upload-dismiss aria-label="{{ 'files.upload.modal_close'|trans({}, 'messages', currentLocale) }}"></button>
+                    {% include 'operations/_operation_header_actions.html.twig' with { close_aria: 'files.upload.modal_close'|trans({}, 'messages', currentLocale) } %}
                 </div>
                 <form id="files-upload-form" action="{{ path('files_upload') }}" method="post" enctype="multipart/form-data">
                     <div class="modal-body">
@@ -466,7 +471,8 @@
                             <p class="small text-muted mb-0 mt-1 d-none" id="files-upload-percent" aria-hidden="true"></p>
                         </div>
                     </div>
-                    <div class="modal-footer files-upload-modal-footer">
+                    <div class="modal-footer files-upload-modal-footer ops-modal-footer">
+                        <button type="button" class="btn btn-outline-danger" data-ops-cancel>{{ 'files.ops.cancel'|trans({}, 'messages', currentLocale) }}</button>
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-files-upload-dismiss data-files-upload-cancel>{{ 'files.upload.modal_cancel'|trans({}, 'messages', currentLocale) }}</button>
                         <button type="submit" class="btn btn-primary" data-files-upload-submit{% if adminContext|default(false) %} data-files-target-owner-submit{% endif %}{% if requireAdminTargetOwner|default(false) %} disabled{% endif %}>{{ 'files.upload.submit'|trans({}, 'messages', currentLocale) }}</button>
                     </div>
@@ -538,8 +544,8 @@
             </div>
         </div>
     </div>
-    {% include 'files/_upload_encrypt_dismiss_modal.html.twig' %}
     {% endif %}
+    {% include 'files/_download_operation_modal.html.twig' %}
 
     <div id="files-target-owner-i18n" class="d-none" aria-hidden="true"
         data-msg-target-owner-ambiguous="{{ 'files.flash.target_owner_ambiguous'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
@@ -615,7 +621,8 @@
         <script src="{{ asset('js/text-file-editor.js') }}?v=20260626" defer></script>
         <script src="{{ asset('js/transfer-eta.js') }}?v=20261109c" defer></script>
         <script src="{{ asset('js/files-download-launcher.js') }}?v=20261109" defer></script>
-        <script src="{{ asset('js/files-archive-flow.js') }}?v=20261109" defer></script>
+        <script src="{{ asset('js/files-download-operation.js') }}?v=20261109" defer></script>
+        <script src="{{ asset('js/files-archive-flow.js') }}?v=20261109b" defer></script>
         <script src="{{ asset('js/files-space.js') }}?v={{ 'now'|date('U') }}" defer></script>
         <script src="{{ asset('js/files-ui-preferences.js') }}?v=20260630-mobile-prefs" defer></script>
 {% endblock %}

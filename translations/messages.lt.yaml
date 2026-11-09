@@ -324,6 +324,7 @@ files:
     progress_processing: 'Sifravimas serveryje'
     progress_bar_aria: 'Failo įkėlimo eiga'
     xhr_network_error: 'Serveris nepasiekiamas. Patikrinkite ryšį ir bandykite dar kartą.'
+    xhr_server_error: 'Serveris grazino klaida (HTTP %status%). Tai ne rysio problema.'
     selected_byte_size_label: 'Dydis:'
     multi:
       modal_title: 'Įkelti failus'
@@ -382,6 +383,47 @@ files:
       limits_admin_tier: 'Padidintos ribos (administratoriaus paskyra).'
       phase_pending: 'Iššifruojamas archyvas…'
       phase_scanning: 'Analizuojamas archyvas…'
+  ops:
+    nav_label: 'Operaciju centras'
+    nav_aria: 'Operaciju centras'
+    empty: 'Nera vykdomu operaciju'
+    resume: Testi
+    reduce: Sumažinti
+    stay: 'Likti cia'
+    hide: Slėpti
+    cancel: 'Atšaukti operacija'
+    close_aria: 'Uždaryti operacijos langa'
+    dismiss_title: 'Operacija vyksta'
+    dismiss_body: 'Uždarius šį langa „%operation%“ nesustabdoma. Sumažinkite, kad testi fone, arba atšaukite.'
+    dismiss_cancel: 'Atšaukti operacija'
+    toast_done: 'Operacija baigta: %name%'
+    toast_failed: 'Operacija nepavyko: %name%'
+    tab_warning: 'Tinklo ikelimas nutruksta uždarius kortele; jau pradetas šifravimas testi serveryje.'
+    types:
+      upload_encrypt: Šifravimas
+      zip_extract: Išskleidimas
+      archive_prepare: Archyvas
+      download_file: Atsisiuntimas
+      download_archive: 'Archyvo atsisiuntimas'
+    phase:
+      upload: Siuntimas
+      encrypt: 'Šifruojama…'
+      extract: 'Išskleidžiama…'
+      archive: 'Ruošiamas archyvas…'
+      download: Atsisiuntimas
+    status:
+      browser: Narsykle
+    download:
+      start: Atsisiusti
+      hint: 'Faila išsaugos narsykle. HTTP Range testi galima per nuoroda, jei perdavimas nutruks.'
+      handed: 'Išsaugojo narsykle — testi per nuoroda. Atšaukite narsykles atsisiuntimu lange.'
+      copy_link: 'Kopijuoti testi nuoroda'
+      copy_ok: 'Nuoroda nukopijuota.'
+      copy_fail: 'Nepavyko nukopijuoti nuorodos.'
+      grant_fail: 'Nepavyko pradeti atsisiuntimo. Bandykite dar karta.'
+      hide: Slėpti
+      native_cancel_hint: 'Atšaukite narsykles atsisiuntimu lange.'
+      progress_aria: 'Narsykles valdomas atsisiuntimas'
   table:
     name: Pavadinimas
     extension: Tipas
@@ -681,6 +723,7 @@ files:
     quota_exceeded: 'Saugyklos kvota šiam naudotojui pasiekta.'
     public_not_allowed: 'Jūsų rolės neleidžia viešo matomumo.'
     storage_failed: 'Nepavyko išsaugoti užšifruoto failo.'
+    runtime_permission_denied: 'Serveris negali rasyti i var/ (sifravimas, isskleidimas, failai). Tai ne rysio problema. Admin: sudo ./fix-runtime-permissions.sh --web-user www-data'
     uploaded: 'Failas sėkmingai įkeltas.'
     not_found: 'Failas nerastas.'
     deleted: 'Failas pašalintas.'

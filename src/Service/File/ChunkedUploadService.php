@@ -6,6 +6,7 @@ namespace App\Service\File;
 
 use App\Entity\Folder;
 use App\Service\Admin\ServerDiskSpaceService;
+use App\Service\Infrastructure\RuntimePermissionFailure;
 use App\Service\Share\FolderTreeService;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -284,7 +285,10 @@ final class ChunkedUploadService
     private function saveMeta(int $ownerUserId, string $uploadId, array $meta): void
     {
         $path = $this->metaPath($ownerUserId, $uploadId);
-        file_put_contents($path, json_encode($meta, JSON_THROW_ON_ERROR));
+        $written = @file_put_contents($path, json_encode($meta, JSON_THROW_ON_ERROR));
+        if ($written === false) {
+            throw new \RuntimeException(RuntimePermissionFailure::EXCEPTION);
+        }
     }
 
     private function chunkUploadRootDir(): string
@@ -302,12 +306,7 @@ final class ChunkedUploadService
      */
     private function ensureWritableDirectory(string $absoluteDir): void
     {
-        if (!is_dir($absoluteDir) && !@mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
-            throw new \RuntimeException('chunk_upload.mkdir_failed');
-        }
-        if (!is_writable($absoluteDir)) {
-            throw new \RuntimeException('chunk_upload.mkdir_failed');
-        }
+        RuntimePermissionFailure::ensureWritableDirectory($absoluteDir);
     }
 
     private function sessionBaseDir(int $ownerUserId): string

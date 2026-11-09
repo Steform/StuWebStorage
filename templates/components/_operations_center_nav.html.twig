@@ -1,0 +1,35 @@
+{# Centre des opérations — immediately after the Accueil brand. #}
+{% set currentLocale = currentLocale|default(app.request.locale|default('fr')) %}
+{% if app.user and is_granted('ROLE_SHARE') %}
+<li class="nav-item dropdown ops-center-item" id="files-operations-center"
+    data-ops-list-url="{{ path('files_operations_list') }}"
+    data-ops-ack-url="{{ path('files_operations_ack') }}"
+    data-ops-csrf="{{ csrf_token('files_upload') }}"
+    data-encrypt-cancel-url-template="{{ path('files_upload_encrypt_cancel', {taskId: '00000000000000000000000000000000'}) }}"
+    data-extract-cancel-url-template="{{ path('files_extract_zip_cancel', {jobId: '00000000000000000000000000000000'}) }}"
+    data-archive-cancel-url-template="{{ path('files_archives_cancel', {token: '00000000000000000000000000000000'}) }}"
+    data-extract-csrf="{{ csrf_token('files_extract') }}"
+    data-archive-csrf="{{ csrf_token('files_download_archive') }}"
+    data-msg-empty="{{ 'files.ops.empty'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-resume="{{ 'files.ops.resume'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-hide="{{ 'files.ops.hide'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-cancel="{{ 'files.ops.cancel'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-browser="{{ 'files.ops.status.browser'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-toast-done="{{ 'files.ops.toast_done'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-msg-toast-failed="{{ 'files.ops.toast_failed'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-type-upload_encrypt="{{ 'files.ops.types.upload_encrypt'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-type-zip_extract="{{ 'files.ops.types.zip_extract'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-type-archive_prepare="{{ 'files.ops.types.archive_prepare'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-type-download_file="{{ 'files.ops.types.download_file'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+    data-type-download_archive="{{ 'files.ops.types.download_archive'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+>
+    <a class="nav-link dropdown-toggle position-relative" href="#" id="filesOperationsCenterToggle" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'files.ops.nav_aria'|trans({}, 'messages', currentLocale) }}">
+        <i class="bi bi-hdd-stack" aria-hidden="true"></i>
+        <span class="d-none d-lg-inline">{{ 'files.ops.nav_label'|trans({}, 'messages', currentLocale) }}</span>
+        <span id="files-operations-center-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-primary d-none" aria-live="polite">0</span>
+    </a>
+    <div class="dropdown-menu dropdown-menu-start shadow ops-center-menu" id="files-operations-center-menu" aria-labelledby="filesOperationsCenterToggle">
+        <div class="dropdown-item-text text-muted small">{{ 'files.ops.empty'|trans({}, 'messages', currentLocale) }}</div>
+    </div>
+</li>
+{% endif %}

@@ -7,7 +7,7 @@ namespace App\Tests\Functional\Files;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @brief Contract checks for EPIC-ENC upload encrypt progress and task center.
+ * @brief Contract checks for EPIC-ENC upload encrypt progress (OPS hosts the center).
  * @date 2026-11-09
  * @author Stephane H.
  */
@@ -39,8 +39,8 @@ final class UploadEncryptProgressContractTest extends TestCase
         $root = dirname(__DIR__, 3);
         self::assertFileExists($root.'/src/Service/File/UploadEncryptJobService.php');
         self::assertFileExists($root.'/public/js/files-upload-encrypt.js');
-        self::assertFileExists($root.'/public/js/files-background-tasks.js');
-        self::assertFileExists($root.'/templates/files/_upload_encrypt_dismiss_modal.html.twig');
+        self::assertFileExists($root.'/public/js/files-operations-center.js');
+        self::assertFileExists($root.'/templates/operations/_ops_dismiss_modal.html.twig');
         self::assertFileExists($root.'/.cursor/rules/crypto-progress-eta.mdc');
 
         $enc = $this->readSource('src/Service/File/FileEncryptionService.php');
@@ -55,39 +55,38 @@ final class UploadEncryptProgressContractTest extends TestCase
         $space = $this->readSource('public/js/files-space.js');
         self::assertStringContainsString('FilesUploadEncrypt.pollUntilTerminal', $space);
         self::assertStringContainsString('onEncryptProgress', $space);
-        self::assertStringContainsString('filesUploadEncryptDismissModal', $space);
+        self::assertStringContainsString("register('upload_encrypt'", $space);
         self::assertStringContainsString('files:open-upload-task', $space);
         self::assertStringNotContainsString('pollUploadEncryptTask', $space);
         self::assertStringNotContainsString('window.confirm(body', $space);
 
-        $tasksJs = $this->readSource('public/js/files-background-tasks.js');
-        self::assertStringContainsString('files:open-upload-task', $tasksJs);
-        self::assertStringContainsString('FilesUploadEncrypt.cancelTask', $tasksJs);
+        $opsJs = $this->readSource('public/js/files-operations-center.js');
+        self::assertStringContainsString('FilesOperations.resume', $opsJs);
 
         $fr = $this->readSource('translations/messages.fr.yaml');
         self::assertStringContainsString("processing: 'Chiffrement…'", $fr);
         self::assertStringContainsString('disk_full:', $fr);
-        self::assertStringContainsString('dismiss_continue:', $fr);
+        self::assertStringContainsString('dismiss_body:', $fr);
 
         $index = $this->readSource('templates/files/index.html.twig');
-        self::assertStringContainsString("_upload_encrypt_dismiss_modal.html.twig", $index);
+        self::assertStringContainsString('data-ops-family="b"', $index);
 
         $base = $this->readSource('templates/base.html.twig');
         self::assertStringContainsString('files-upload-encrypt.js', $base);
-        self::assertStringContainsString('files-background-tasks.js', $base);
+        self::assertStringContainsString('files-operations-center.js', $base);
 
         $nav = $this->readSource('templates/components/_storage_nav.html.twig');
-        self::assertStringContainsString('files-background-tasks', $nav);
-        self::assertStringContainsString('files_tasks_list', $nav);
+        self::assertStringContainsString('_operations_center_nav.html.twig', $nav);
+        self::assertStringContainsString('files_operations_list', $this->readSource('templates/components/_operations_center_nav.html.twig'));
 
         $controller = $this->readSource('src/Controller/FilesController.php');
         self::assertStringContainsString('files_upload_encrypt_tick', $controller);
         self::assertStringContainsString('files_upload_encrypt_cancel', $controller);
         self::assertStringContainsString('UploadEncryptJobService', $controller);
 
-        $dismiss = $this->readSource('templates/files/_upload_encrypt_dismiss_modal.html.twig');
-        self::assertStringContainsString('data-files-encrypt-dismiss-continue', $dismiss);
-        self::assertStringContainsString('data-files-encrypt-dismiss-cancel', $dismiss);
-        self::assertStringContainsString('data-files-encrypt-dismiss-stay', $dismiss);
+        $dismiss = $this->readSource('templates/operations/_ops_dismiss_modal.html.twig');
+        self::assertStringContainsString('data-ops-dismiss-reduce', $dismiss);
+        self::assertStringContainsString('data-ops-dismiss-cancel', $dismiss);
+        self::assertStringContainsString('data-ops-dismiss-stay', $dismiss);
     }
 }

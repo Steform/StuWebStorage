@@ -11,6 +11,7 @@ use App\Repository\FolderRepository;
 use App\Repository\PublicDownloadChallengeRepository;
 use App\Repository\ShareGrantRepository;
 use App\Repository\SharedFileRepository;
+use App\Service\Infrastructure\RuntimePermissionFailure;
 use App\Service\Share\FolderTreeService;
 use App\Service\Share\ZipEntryNameSanitizer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -112,10 +113,7 @@ final class ZipExtractService
         }
 
         $jobId = bin2hex(random_bytes(16));
-        $baseDir = $this->sessionBaseDir($ownerUserId);
-        if (!is_dir($baseDir) && !mkdir($baseDir, 0775, true) && !is_dir($baseDir)) {
-            throw new \RuntimeException('zip_extract.storage_failed');
-        }
+        RuntimePermissionFailure::ensureWritableDirectory($this->sessionBaseDir($ownerUserId));
 
         $targetFolder = $sourceFile->getFolder();
         $startedAt = microtime(true);
@@ -129,6 +127,7 @@ final class ZipExtractService
             'delete_zip_after' => $deleteZipAfter,
             'target_folder_id' => $targetFolder instanceof Folder ? (int) ($targetFolder->getId() ?? 0) : 0,
             'extract_root_folder_id' => 0,
+            'source_file_name' => $sourceFile->getOriginalFileName(),
             'created_at' => time(),
             'started_at' => $startedAt,
             'phase' => 'pending',
@@ -481,6 +480,95 @@ final class ZipExtractService
     }
 
     /**
+     * @brief List extract jobs for one owner as OPS task payloads.
+     * @param int $ownerUserId Owner namespace.
+     * @return list<array<string, mixed>>
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function listForOwner(int $ownerUserId): array
+    {
+        $this->purgeExpiredForOwner($ownerUserId);
+        $dir = $this->sessionBaseDir($ownerUserId);
+        if (!is_dir($dir)) {
+            return [];
+        }
+        $globbed = glob($dir.'/*'.self::META_SUFFIX);
+        $metaFiles = \is_array($globbed) ? $globbed : [];
+        $out = [];
+        foreach ($metaFiles as $metaFile) {
+            $raw = @file_get_contents($metaFile);
+            if (!is_string($raw)) {
+                continue;
+            }
+            try {
+                /** @var array<string, mixed> $meta */
+                $meta = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                continue;
+            }
+            $jobId = basename($metaFile, self::META_SUFFIX);
+            $out[] = $this->toOperationArray($jobId, $meta);
+        }
+
+        return $out;
+    }
+
+    /**
+     * @brief Map extract meta to the OPS task contract.
+     * @param string $jobId Job id.
+     * @param array<string, mixed> $meta Job meta.
+     * @return array<string, mixed>
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    public function toOperationArray(string $jobId, array $meta): array
+    {
+        $phase = (string) ($meta['phase'] ?? 'pending');
+        $status = match ($phase) {
+            'done' => 'done',
+            'failed' => 'failed',
+            'cancelled' => 'cancelled',
+            default => 'running',
+        };
+        $total = (int) ($meta['total_entries'] ?? 0);
+        $doneCount = (int) ($meta['extracted'] ?? 0) + (int) ($meta['skipped'] ?? 0);
+        $label = trim((string) ($meta['source_file_name'] ?? ''));
+        if ($label === '') {
+            $label = (string) ($meta['current_entry'] ?? 'ZIP');
+        }
+
+        return [
+            'taskId' => $jobId,
+            'type' => 'zip_extract',
+            'status' => $status,
+            'label' => $label,
+            'phaseKey' => 'files.ops.phase.extract',
+            'doneBytes' => (int) ($meta['total_bytes'] ?? 0) > 0 ? $doneCount : 0,
+            'totalBytes' => (int) ($meta['total_bytes'] ?? 0),
+            'percent' => $this->computeProgressPercent($phase, $doneCount, $total),
+            'progressKnown' => true,
+            'cancelSupported' => $status === 'running',
+            'modalKey' => 'files_extract_zip',
+            'errorKey' => $phase === 'failed' || $phase === 'cancelled'
+                ? (string) ($meta['error_message'] ?? '')
+                : null,
+            'notified' => $status !== 'running',
+            'createdAt' => (int) ($meta['created_at'] ?? 0),
+            'updatedAt' => time(),
+            'finishedAt' => $status === 'running' ? null : time(),
+            'payload' => [
+                'extractJobId' => $jobId,
+                'phase' => $phase,
+                'extracted' => (int) ($meta['extracted'] ?? 0),
+                'skipped' => (int) ($meta['skipped'] ?? 0),
+                'total' => $total,
+                'current_entry' => (string) ($meta['current_entry'] ?? ''),
+            ],
+        ];
+    }
+
+    /**
      * @brief Map service exception message keys to flash translation keys.
      * @param \RuntimeException $exception Thrown service exception.
      * @return string Message key in messages domain.
@@ -502,6 +590,7 @@ final class ZipExtractService
             'zip_extract.quota_exceeded' => 'files.flash.quota_exceeded',
             'zip_extract.conflict_abort' => 'files.flash.extract_conflict_abort',
             'zip_extract.cancelled' => 'files.flash.extract_cancelled',
+            RuntimePermissionFailure::EXCEPTION, 'zip_extract.storage_failed' => RuntimePermissionFailure::FLASH_KEY,
             default => 'files.flash.extract_failed',
         };
     }
@@ -681,9 +770,11 @@ final class ZipExtractService
 
         $relativeDir = \sprintf('var/shared/%d', $ownerUserId);
         $absoluteDir = $this->projectDir.'/'.$relativeDir;
-        if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
+        try {
+            RuntimePermissionFailure::ensureWritableDirectory($absoluteDir);
+        } catch (\RuntimeException $e) {
             @unlink($tempExtract);
-            throw new \RuntimeException('zip_extract.storage_failed');
+            throw $e;
         }
 
         $storageName = bin2hex(random_bytes(16)).'.dat';
@@ -982,7 +1073,10 @@ final class ZipExtractService
     private function saveMeta(int $ownerUserId, string $jobId, array $meta): void
     {
         $path = $this->metaPath($ownerUserId, $jobId);
-        file_put_contents($path, json_encode($meta, JSON_THROW_ON_ERROR));
+        $written = @file_put_contents($path, json_encode($meta, JSON_THROW_ON_ERROR));
+        if ($written === false) {
+            throw new \RuntimeException(RuntimePermissionFailure::EXCEPTION);
+        }
     }
 
     /**
