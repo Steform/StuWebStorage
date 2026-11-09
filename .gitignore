@@ -25,6 +25,12 @@
 !/var/download_prepare/.gitkeep
 /var/tasks/*
 !/var/tasks/.gitkeep
+/var/extract/*
+!/var/extract/.gitkeep
+/var/bug-reports/*
+!/var/bug-reports/.gitkeep
+/var/config/*
+!/var/config/.gitkeep
 
 ### Local / test artefacts ###
 /var/test/

@@ -253,6 +253,29 @@ php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
 
 **Never commit** `.env.local`, production credentials, or a real `APP_FILE_ENCRYPTION_KEY`.
 
+### Runtime permissions (PHP / Apache)
+
+PHP must be able to **create and write** under `var/` (cache, logs, encrypted files, chunk uploads, encrypt jobs `var/tasks`, ZIP extract, bug-report screenshots, locale config). A directory owned by the deploy user with mode `775` causes `mkdir(): Permission denied` at encrypt finalize — the UI then shows the misleading “server unreachable” message.
+
+Run the root script **as the PHP/Apache user** (Debian: `www-data`):
+
+```bash
+# Apply mkdir + chmod 2775 on runtime trees, then probe write access
+sudo -u www-data ./fix-runtime-permissions.sh
+
+# Verify only
+sudo -u www-data ./fix-runtime-permissions.sh --check
+```
+
+If `var/tasks` (or any runtime dir) belongs to the deploy account, fix ownership **once** as root, then re-check as `www-data`:
+
+```bash
+sudo ./fix-runtime-permissions.sh --web-user www-data
+sudo -u www-data ./fix-runtime-permissions.sh --check
+```
+
+The script does **not** chmod `src/`, `public/`, or `vendor/`. Details: [`docs/epics/EPIC-PERM-droits-runtime.md`](docs/epics/EPIC-PERM-droits-runtime.md).
+
 ---
 
 ## Tests & quality
