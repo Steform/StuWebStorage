@@ -168,6 +168,10 @@ services:
       $downloadDirectMaxBytes: '%app.download_direct_max_bytes%'
       $downloadManagerUiThresholdBytes: '%app.download_manager_ui_threshold_bytes%'
 
+  App\Service\Audit\UploadDiagnosticLogger:
+    arguments:
+      $projectDir: '%kernel.project_dir%'
+
   App\Service\File\ChunkedUploadService:
     arguments:
       $chunkBytesDefault: '%app.upload_chunk_bytes%'

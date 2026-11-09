@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use App\Service\Audit\UploadDiagnosticLogger;
 use App\Service\Infrastructure\RuntimePermissionFailure;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,11 +24,13 @@ final class JsonApiExceptionSubscriber implements EventSubscriberInterface
     /**
      * @brief Construct the JSON API exception translator.
      * @param TranslatorInterface $translator Translator.
+     * @param UploadDiagnosticLogger $uploadDiagnosticLogger Upload diagnostics for uncaught upload faults.
      * @date 2026-11-09
      * @author Stephane H.
      */
     public function __construct(
         private readonly TranslatorInterface $translator,
+        private readonly UploadDiagnosticLogger $uploadDiagnosticLogger,
     ) {
     }
 
@@ -78,6 +81,34 @@ final class JsonApiExceptionSubscriber implements EventSubscriberInterface
             'message_key' => $messageKey,
             'message' => $message,
         ], 500));
+
+        if ($this->isUploadRequest($request)) {
+            $this->uploadDiagnosticLogger->fail('upload.uncaught', [
+                'route' => (string) $request->attributes->get('_route'),
+                'path' => $request->getPathInfo(),
+                'error_key' => $messageKey,
+                'http_status' => 500,
+                'upload_id' => trim((string) $request->request->get('upload_id', '')),
+                'task_id' => (string) $request->attributes->get('taskId', ''),
+            ], $throwable);
+        }
+    }
+
+    /**
+     * @brief Whether the request is an upload/encrypt JSON endpoint.
+     * @param Request $request HTTP request.
+     * @return bool
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function isUploadRequest(Request $request): bool
+    {
+        $route = (string) $request->attributes->get('_route');
+        if (str_starts_with($route, 'files_upload')) {
+            return true;
+        }
+
+        return str_starts_with($request->getPathInfo(), '/files/upload');
     }
 
     /**

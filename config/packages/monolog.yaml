@@ -3,6 +3,7 @@ monolog:
         - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
         - bug_report
         - cv_experience_admin
+        - upload
 
 when@dev:
     monolog:
@@ -53,7 +54,12 @@ when@prod:
                 type: stream
                 path: "%kernel.logs_dir%/%kernel.environment%.log"
                 level: error
-                channels: ["!event", "!deprecation"]
+                channels: ["!event", "!deprecation", "!upload"]
+            upload:
+                type: stream
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: info
+                channels: ["upload"]
             bug_report:
                 type: stream
                 path: "%kernel.logs_dir%/bug_report_%kernel.environment%.log"

@@ -7,6 +7,7 @@ namespace App\Service\File;
 use App\Entity\Folder;
 use App\Entity\SharedFile;
 use App\Service\Admin\ServerDiskSpaceService;
+use App\Service\Audit\UploadDiagnosticLogger;
 use App\Service\Infrastructure\RuntimePermissionFailure;
 use App\Service\Share\FolderTreeService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -47,6 +48,7 @@ final class UploadEncryptJobService
         private readonly FolderPathMaterializerService $folderPathMaterializerService,
         private readonly ServerDiskSpaceService $serverDiskSpaceService,
         private readonly ChunkedUploadService $chunkedUploadService,
+        private readonly UploadDiagnosticLogger $uploadDiagnosticLogger,
         private readonly string $projectDir,
     ) {
     }
@@ -63,26 +65,34 @@ final class UploadEncryptJobService
     public function createFromUploadSession(int $ownerUserId, string $uploadId, int $maxUploadBytes): array
     {
         $this->purgeExpiredForOwner($ownerUserId);
+        $jobCtx = [
+            'owner_user_id' => $ownerUserId,
+            'upload_id' => $uploadId,
+            'max_upload_bytes' => $maxUploadBytes,
+        ];
         $session = $this->chunkedUploadService->loadSessionMeta($ownerUserId, $uploadId);
         if ($session === null) {
-            throw new \RuntimeException('chunk_upload.session_not_found');
+            $this->throwLogged('upload.encrypt.session', 'chunk_upload.session_not_found', $jobCtx);
         }
 
         $expectedTotal = (int) ($session['expected_bytes'] ?? 0);
         $received = (int) ($session['received_bytes'] ?? 0);
+        $jobCtx['plain_total'] = $expectedTotal;
+        $jobCtx['received_bytes'] = $received;
         if ($received !== $expectedTotal || $expectedTotal < 1) {
-            throw new \RuntimeException('chunk_upload.incomplete');
+            $this->throwLogged('upload.encrypt.incomplete', 'chunk_upload.incomplete', $jobCtx);
         }
         if ($expectedTotal > $maxUploadBytes) {
-            throw new \RuntimeException('chunk_upload.too_large');
+            $this->throwLogged('upload.encrypt.too_large', 'chunk_upload.too_large', $jobCtx);
         }
 
         try {
             $this->userStorageQuotaService->assertOwnerCanStoreBytes($ownerUserId, $expectedTotal);
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED) {
-                throw new \RuntimeException('chunk_upload.quota_exceeded', 0, $e);
+                $this->throwLogged('upload.encrypt.quota', 'chunk_upload.quota_exceeded', $jobCtx, $e);
             }
+            $this->uploadDiagnosticLogger->fail('upload.encrypt.quota', $jobCtx, $e);
             throw $e;
         }
 
@@ -91,15 +101,16 @@ final class UploadEncryptJobService
             $this->serverDiskSpaceService->assertFreeBytesForRemainingCipher($expectedTotal);
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === ServerDiskSpaceService::EXCEPTION_DISK_FULL) {
-                throw new \RuntimeException('chunk_upload.disk_full', 0, $e);
+                $this->throwLogged('upload.encrypt.disk', 'chunk_upload.disk_full', $jobCtx, $e);
             }
+            $this->uploadDiagnosticLogger->fail('upload.encrypt.disk', $jobCtx, $e);
             throw $e;
         }
 
         $resolved = $this->resolveDisplayAndFolder($ownerUserId, $session);
         $partPath = $this->chunkedUploadService->resolvePartPath($ownerUserId, $uploadId);
         if (!is_readable($partPath)) {
-            throw new \RuntimeException('chunk_upload.part_missing');
+            $this->throwLogged('upload.encrypt.part', 'chunk_upload.part_missing', $jobCtx + ['path' => $partPath]);
         }
 
         $relativeDir = \sprintf('var/shared/%d', $ownerUserId);
@@ -134,6 +145,14 @@ final class UploadEncryptJobService
         ];
         $this->saveMeta($ownerUserId, $taskId, $meta);
 
+        $this->uploadDiagnosticLogger->info('upload.encrypt.created', [
+            'owner_user_id' => $ownerUserId,
+            'upload_id' => $uploadId,
+            'task_id' => $taskId,
+            'plain_total' => $expectedTotal,
+            'path' => $cipherPath,
+            'part_path' => $partPath,
+        ]);
 
         return $this->toPublicArray($meta);
     }
@@ -150,7 +169,11 @@ final class UploadEncryptJobService
     {
         $meta = $this->loadMeta($ownerUserId, $taskId);
         if ($meta === null) {
-            throw new \RuntimeException('upload_encrypt.not_found');
+            $this->throwLogged('upload.encrypt.not_found', 'upload_encrypt.not_found', [
+                'owner_user_id' => $ownerUserId,
+                'task_id' => $taskId,
+                'path' => $this->metaPath($ownerUserId, $taskId),
+            ]);
         }
         if (($meta['status'] ?? '') !== self::STATUS_RUNNING) {
             return $this->toPublicArray($meta);
@@ -166,8 +189,12 @@ final class UploadEncryptJobService
             );
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === ServerDiskSpaceService::EXCEPTION_DISK_FULL) {
-                return $this->fail($ownerUserId, $meta, 'files.flash.disk_full');
+                return $this->fail($ownerUserId, $meta, 'files.flash.disk_full', $e);
             }
+            $this->uploadDiagnosticLogger->fail('upload.encrypt.disk', [
+                'owner_user_id' => $ownerUserId,
+                'task_id' => $taskId,
+            ], $e);
             throw $e;
         }
 
@@ -190,10 +217,10 @@ final class UploadEncryptJobService
                 return $this->cancel($ownerUserId, $taskId);
             }
             if (RuntimePermissionFailure::matches($e)) {
-                return $this->fail($ownerUserId, $meta, RuntimePermissionFailure::FLASH_KEY);
+                return $this->fail($ownerUserId, $meta, RuntimePermissionFailure::FLASH_KEY, $e);
             }
 
-            return $this->fail($ownerUserId, $meta, 'files.flash.storage_failed');
+            return $this->fail($ownerUserId, $meta, 'files.flash.storage_failed', $e);
         }
 
         $meta['encrypt_state'] = $tick['state'];
@@ -218,8 +245,12 @@ final class UploadEncryptJobService
         } catch (\RuntimeException $e) {
             $this->cleanupCipherArtifacts($cipherPath);
             if ($e->getMessage() === UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED) {
-                return $this->fail($ownerUserId, $meta, 'files.flash.quota_exceeded');
+                return $this->fail($ownerUserId, $meta, 'files.flash.quota_exceeded', $e);
             }
+            $this->uploadDiagnosticLogger->fail('upload.encrypt.quota', [
+                'owner_user_id' => $ownerUserId,
+                'task_id' => $taskId,
+            ], $e);
             throw $e;
         }
 
@@ -253,6 +284,15 @@ final class UploadEncryptJobService
         $this->saveMeta($ownerUserId, $taskId, $meta);
         @unlink($this->cancelPath($ownerUserId, $taskId));
 
+        $this->uploadDiagnosticLogger->info('upload.encrypt.done', [
+            'owner_user_id' => $ownerUserId,
+            'task_id' => $taskId,
+            'upload_id' => $uploadId,
+            'plain_total' => (int) $fingerprints['plain_total'],
+            'shared_file_id' => $sharedFile->getId(),
+            'path' => $cipherPath,
+        ]);
+
         return $this->toPublicArray($meta);
     }
 
@@ -268,13 +308,24 @@ final class UploadEncryptJobService
     {
         $meta = $this->loadMeta($ownerUserId, $taskId);
         if ($meta === null) {
-            throw new \RuntimeException('upload_encrypt.not_found');
+            $this->throwLogged('upload.encrypt.not_found', 'upload_encrypt.not_found', [
+                'owner_user_id' => $ownerUserId,
+                'task_id' => $taskId,
+                'path' => $this->metaPath($ownerUserId, $taskId),
+            ]);
         }
         if (\in_array(($meta['status'] ?? ''), [self::STATUS_DONE, self::STATUS_CANCELLED], true)) {
             return $this->toPublicArray($meta);
         }
 
-        file_put_contents($this->cancelPath($ownerUserId, $taskId), '1');
+        $cancelPath = $this->cancelPath($ownerUserId, $taskId);
+        if (@file_put_contents($cancelPath, '1') === false) {
+            $this->throwLogged('upload.encrypt.cancel_flag', RuntimePermissionFailure::EXCEPTION, [
+                'owner_user_id' => $ownerUserId,
+                'task_id' => $taskId,
+                'path' => $cancelPath,
+            ]);
+        }
         $cipherPath = (string) ($meta['cipher_path'] ?? '');
         $this->cleanupCipherArtifacts($cipherPath);
         $uploadId = (string) ($meta['upload_id'] ?? '');
@@ -286,7 +337,14 @@ final class UploadEncryptJobService
         $meta['finished_at'] = time();
         $meta['updated_at'] = time();
         $this->saveMeta($ownerUserId, $taskId, $meta);
-        @unlink($this->cancelPath($ownerUserId, $taskId));
+        @unlink($cancelPath);
+
+        $this->uploadDiagnosticLogger->info('upload.encrypt.cancelled', [
+            'owner_user_id' => $ownerUserId,
+            'task_id' => $taskId,
+            'upload_id' => $uploadId,
+            'path' => $cipherPath,
+        ]);
 
         return $this->toPublicArray($meta);
     }
@@ -451,15 +509,27 @@ final class UploadEncryptJobService
      * @param int $ownerUserId Owner.
      * @param array<string, mixed> $meta Meta.
      * @param string $errorKey Flash/i18n key.
+     * @param \Throwable|null $cause Optional root cause.
      * @return array<string, mixed>
      * @date 2026-11-09
      * @author Stephane H.
      */
-    private function fail(int $ownerUserId, array $meta, string $errorKey): array
+    private function fail(int $ownerUserId, array $meta, string $errorKey, ?\Throwable $cause = null): array
     {
         $taskId = (string) ($meta['task_id'] ?? '');
-        $this->cleanupCipherArtifacts((string) ($meta['cipher_path'] ?? ''));
+        $cipherPath = (string) ($meta['cipher_path'] ?? '');
         $uploadId = (string) ($meta['upload_id'] ?? '');
+        $this->uploadDiagnosticLogger->fail('upload.encrypt.failed', [
+            'owner_user_id' => $ownerUserId,
+            'task_id' => $taskId,
+            'upload_id' => $uploadId,
+            'error_key' => $errorKey,
+            'plain_done' => (int) ($meta['plain_done'] ?? 0),
+            'plain_total' => (int) ($meta['plain_total'] ?? 0),
+            'path' => $cipherPath,
+            'part_path' => (string) ($meta['part_path'] ?? ''),
+        ], $cause);
+        $this->cleanupCipherArtifacts($cipherPath);
         if ($uploadId !== '') {
             $this->chunkedUploadService->abortSession($ownerUserId, $uploadId);
         }
@@ -591,7 +661,11 @@ final class UploadEncryptJobService
             json_encode($meta, JSON_THROW_ON_ERROR),
         );
         if ($written === false) {
-            throw new \RuntimeException(RuntimePermissionFailure::EXCEPTION);
+            $this->throwLogged('upload.encrypt.meta_write', RuntimePermissionFailure::EXCEPTION, [
+                'owner_user_id' => $ownerUserId,
+                'task_id' => $taskId,
+                'path' => $this->metaPath($ownerUserId, $taskId),
+            ]);
         }
     }
 
@@ -638,6 +712,28 @@ final class UploadEncryptJobService
      */
     private function ensureWritableDirectory(string $dir): void
     {
-        RuntimePermissionFailure::ensureWritableDirectory($dir);
+        try {
+            RuntimePermissionFailure::ensureWritableDirectory($dir);
+        } catch (\RuntimeException $e) {
+            $this->uploadDiagnosticLogger->fail('upload.encrypt.mkdir', ['path' => $dir], $e);
+            throw $e;
+        }
+    }
+
+    /**
+     * @brief Log then throw an encrypt-job failure with a stable error code.
+     * @param string $event Diagnostic event name.
+     * @param string $code Exception message / error code.
+     * @param array<string, mixed> $ctx Scalar context.
+     * @param \Throwable|null $previous Optional cause.
+     * @return never
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function throwLogged(string $event, string $code, array $ctx, ?\Throwable $previous = null): never
+    {
+        $exception = new \RuntimeException($code, 0, $previous);
+        $this->uploadDiagnosticLogger->fail($event, $ctx + ['error_code' => $code], $exception);
+        throw $exception;
     }
 }

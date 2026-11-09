@@ -6,6 +6,7 @@ namespace App\Service\File;
 
 use App\Entity\Folder;
 use App\Service\Admin\ServerDiskSpaceService;
+use App\Service\Audit\UploadDiagnosticLogger;
 use App\Service\Infrastructure\RuntimePermissionFailure;
 use App\Service\Share\FolderTreeService;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -27,6 +28,7 @@ final class ChunkedUploadService
         private readonly FolderTreeService $folderTreeService,
         private readonly UserStorageQuotaService $userStorageQuotaService,
         private readonly ServerDiskSpaceService $serverDiskSpaceService,
+        private readonly UploadDiagnosticLogger $uploadDiagnosticLogger,
         private readonly string $projectDir,
         private readonly int $chunkBytesDefault,
     ) {
@@ -51,30 +53,35 @@ final class ChunkedUploadService
         ?string $relativePath = null,
     ): array {
         $this->purgeExpiredForOwner($ownerUserId);
+        $sessionCtx = [
+            'owner_user_id' => $ownerUserId,
+            'expected_bytes' => $expectedBytes,
+            'folder_retain_id' => $folderRetainId,
+        ];
         try {
             $this->userStorageQuotaService->assertOwnerCanStoreBytes($ownerUserId, $expectedBytes);
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED) {
-                throw new \RuntimeException('chunk_upload.quota_exceeded', 0, $e);
+                $this->throwLogged('upload.session.quota', 'chunk_upload.quota_exceeded', $sessionCtx, $e);
             }
-
+            $this->uploadDiagnosticLogger->fail('upload.session.quota', $sessionCtx, $e);
             throw $e;
         }
         try {
             $this->serverDiskSpaceService->assertFreeBytesForUploadEncryptPeak($expectedBytes);
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === ServerDiskSpaceService::EXCEPTION_DISK_FULL) {
-                throw new \RuntimeException('chunk_upload.disk_full', 0, $e);
+                $this->throwLogged('upload.session.disk', 'chunk_upload.disk_full', $sessionCtx, $e);
             }
-
+            $this->uploadDiagnosticLogger->fail('upload.session.disk', $sessionCtx, $e);
             throw $e;
         }
         if ($folderRetainId > 0 && !$this->folderTreeService->resolveCurrentFolder($ownerUserId, $folderRetainId) instanceof Folder) {
-            throw new \RuntimeException('chunk_upload.folder_invalid');
+            $this->throwLogged('upload.session.folder', 'chunk_upload.folder_invalid', $sessionCtx);
         }
         $sanitizedRelativePath = $this->sanitizeRelativePath($relativePath);
         if ($relativePath !== null && $relativePath !== '' && $sanitizedRelativePath === null) {
-            throw new \RuntimeException('chunk_upload.path_invalid');
+            $this->throwLogged('upload.session.path', 'chunk_upload.path_invalid', $sessionCtx);
         }
 
         $uploadId = bin2hex(random_bytes(16));
@@ -84,9 +91,10 @@ final class ChunkedUploadService
 
         $partPath = $this->partPath($ownerUserId, $uploadId);
         $metaPath = $this->metaPath($ownerUserId, $uploadId);
+        $sessionCtx['upload_id'] = $uploadId;
 
-        if (file_put_contents($partPath, '') === false) {
-            throw new \RuntimeException('chunk_upload.part_init_failed');
+        if (@file_put_contents($partPath, '') === false) {
+            $this->throwLogged('upload.session.part_init', RuntimePermissionFailure::EXCEPTION, $sessionCtx + ['path' => $partPath]);
         }
 
         $meta = [
@@ -101,11 +109,12 @@ final class ChunkedUploadService
         if ($sanitizedRelativePath !== null && $sanitizedRelativePath !== '') {
             $meta['relative_path'] = $sanitizedRelativePath;
         }
-        if (file_put_contents($metaPath, json_encode($meta, JSON_THROW_ON_ERROR)) === false) {
+        if (@file_put_contents($metaPath, json_encode($meta, JSON_THROW_ON_ERROR)) === false) {
             @unlink($partPath);
-            throw new \RuntimeException('chunk_upload.meta_write_failed');
+            $this->throwLogged('upload.session.meta_write', RuntimePermissionFailure::EXCEPTION, $sessionCtx + ['path' => $metaPath]);
         }
 
+        $this->uploadDiagnosticLogger->info('upload.session.created', $sessionCtx + ['path' => $partPath]);
 
         return [
             'upload_id' => $uploadId,
@@ -126,39 +135,68 @@ final class ChunkedUploadService
      */
     public function appendChunk(string $uploadId, int $ownerUserId, int $chunkIndex, UploadedFile $chunk): array
     {
+        $chunkCtx = [
+            'owner_user_id' => $ownerUserId,
+            'upload_id' => $uploadId,
+            'chunk_index' => $chunkIndex,
+        ];
         if (!$chunk->isValid()) {
-            throw new \RuntimeException('chunk_upload.chunk_invalid');
+            $this->throwLogged('upload.chunk.invalid', 'chunk_upload.chunk_invalid', $chunkCtx + [
+                'php_upload_error' => $chunk->getError(),
+            ]);
         }
 
         $meta = $this->loadMeta($ownerUserId, $uploadId);
         if ($meta === null) {
-            throw new \RuntimeException('chunk_upload.session_not_found');
+            $this->throwLogged('upload.chunk.session', 'chunk_upload.session_not_found', $chunkCtx + [
+                'path' => $this->metaPath($ownerUserId, $uploadId),
+            ]);
         }
 
         $expectedIndex = (int) ($meta['next_chunk_index'] ?? 0);
         if ($chunkIndex !== $expectedIndex) {
-            throw new \RuntimeException('chunk_upload.chunk_order');
+            $this->throwLogged('upload.chunk.order', 'chunk_upload.chunk_order', $chunkCtx + [
+                'expected_index' => $expectedIndex,
+            ]);
         }
 
         $partPath = $this->partPath($ownerUserId, $uploadId);
         $append = @file_get_contents($chunk->getRealPath());
         if (!is_string($append)) {
-            throw new \RuntimeException('chunk_upload.chunk_read_failed');
+            $this->throwLogged('upload.chunk.read', 'chunk_upload.chunk_read_failed', $chunkCtx + [
+                'path' => (string) $chunk->getRealPath(),
+            ]);
         }
 
         $len = strlen($append);
         $received = (int) ($meta['received_bytes'] ?? 0);
         $expectedTotal = (int) ($meta['expected_bytes'] ?? 0);
+        $chunkCtx['received_bytes'] = $received;
+        $chunkCtx['expected_bytes'] = $expectedTotal;
+        $chunkCtx['chunk_bytes'] = $len;
         if ($received + $len > $expectedTotal) {
-            throw new \RuntimeException('chunk_upload.size_overflow');
+            $this->throwLogged('upload.chunk.overflow', 'chunk_upload.size_overflow', $chunkCtx);
         }
 
-        $out = fopen($partPath, 'ab');
+        $out = @fopen($partPath, 'ab');
         if ($out === false) {
-            throw new \RuntimeException('chunk_upload.append_failed');
+            $this->throwLogged('upload.chunk.append', RuntimePermissionFailure::EXCEPTION, $chunkCtx + [
+                'path' => $partPath,
+            ]);
         }
         try {
-            fwrite($out, $append);
+            $written = fwrite($out, $append);
+            if ($written === false || $written !== $len) {
+                $last = error_get_last();
+                $lastMessage = is_array($last) ? (string) ($last['message'] ?? '') : '';
+                $code = RuntimePermissionFailure::matches(new \RuntimeException($lastMessage))
+                    ? RuntimePermissionFailure::EXCEPTION
+                    : 'chunk_upload.append_failed';
+                $this->throwLogged('upload.chunk.append', $code, $chunkCtx + [
+                    'path' => $partPath,
+                    'written_bytes' => is_int($written) ? $written : -1,
+                ]);
+            }
         } finally {
             fclose($out);
         }
@@ -287,7 +325,11 @@ final class ChunkedUploadService
         $path = $this->metaPath($ownerUserId, $uploadId);
         $written = @file_put_contents($path, json_encode($meta, JSON_THROW_ON_ERROR));
         if ($written === false) {
-            throw new \RuntimeException(RuntimePermissionFailure::EXCEPTION);
+            $this->throwLogged('upload.session.meta_write', RuntimePermissionFailure::EXCEPTION, [
+                'owner_user_id' => $ownerUserId,
+                'upload_id' => $uploadId,
+                'path' => $path,
+            ]);
         }
     }
 
@@ -306,7 +348,29 @@ final class ChunkedUploadService
      */
     private function ensureWritableDirectory(string $absoluteDir): void
     {
-        RuntimePermissionFailure::ensureWritableDirectory($absoluteDir);
+        try {
+            RuntimePermissionFailure::ensureWritableDirectory($absoluteDir);
+        } catch (\RuntimeException $e) {
+            $this->uploadDiagnosticLogger->fail('upload.mkdir', ['path' => $absoluteDir], $e);
+            throw $e;
+        }
+    }
+
+    /**
+     * @brief Log then throw a chunk-upload failure with a stable error code.
+     * @param string $event Diagnostic event name.
+     * @param string $code Exception message / error code.
+     * @param array<string, mixed> $ctx Scalar context.
+     * @param \Throwable|null $previous Optional cause.
+     * @return never
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function throwLogged(string $event, string $code, array $ctx, ?\Throwable $previous = null): never
+    {
+        $exception = new \RuntimeException($code, 0, $previous);
+        $this->uploadDiagnosticLogger->fail($event, $ctx + ['error_code' => $code], $exception);
+        throw $exception;
     }
 
     private function sessionBaseDir(int $ownerUserId): string

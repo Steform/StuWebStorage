@@ -17,6 +17,7 @@ use App\Repository\SharedFileRepository;
 use App\Repository\UserRepository;
 use App\Service\Admin\AdminGodviewSessionStateService;
 use App\Service\Audit\DownloadDiagnosticLogger;
+use App\Service\Audit\UploadDiagnosticLogger;
 use App\Service\Audit\DownloadAuditService;
 use App\Entity\DownloadArchive;
 use App\Service\Download\DownloadArchiveService;
@@ -179,6 +180,7 @@ class FilesController extends AbstractController
         private readonly UserFilesPaneBuilderService $userFilesPaneBuilderService,
         private readonly AdminGodviewSessionStateService $adminGodviewSessionStateService,
         private readonly DownloadDiagnosticLogger $downloadDiagnosticLogger,
+        private readonly UploadDiagnosticLogger $uploadDiagnosticLogger,
         private readonly EncryptedStreamDeliveryService $encryptedStreamDeliveryService,
         private readonly DownloadGrantService $downloadGrantService,
         private readonly EncryptedRangeReader $encryptedRangeReader,
@@ -1463,6 +1465,8 @@ class FilesController extends AbstractController
     public function uploadSession(Request $request, TranslatorInterface $translator): JsonResponse|Response
     {
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            $this->logUploadHttpReject('upload.session.csrf', 'files.flash.csrf_invalid', 403, $request);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.csrf_invalid', 403);
         }
 
@@ -1470,6 +1474,8 @@ class FilesController extends AbstractController
         $user = $this->getUser();
         $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
         if (isset($resolved['error'])) {
+            $this->logUploadHttpReject('upload.session.owner', $resolved['error'], 400, $request);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, $resolved['error'], 400);
         }
         $ownerId = $resolved['ownerId'];
@@ -1480,6 +1486,8 @@ class FilesController extends AbstractController
         }
         $resolvedFolder = $this->resolveUploadTargetFolderId($request, $ownerId);
         if (isset($resolvedFolder['error'])) {
+            $this->logUploadHttpReject('upload.session.folder', $resolvedFolder['error'], 400, $request, $ownerId);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, $resolvedFolder['error'], 400);
         }
         $folderRetain = $resolvedFolder['folderId'];
@@ -1488,6 +1496,11 @@ class FilesController extends AbstractController
 
         $maxUploadBytes = $this->resolveAppMaxUploadBytes();
         if ($expectedBytes < 0 || $expectedBytes > $maxUploadBytes) {
+            $this->logUploadHttpReject('upload.session.too_large', 'files.flash.upload_too_large', 400, $request, $ownerId, [
+                'expected_bytes' => $expectedBytes,
+                'max_upload_bytes' => $maxUploadBytes,
+            ]);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_too_large', 400);
         }
 
@@ -1500,6 +1513,10 @@ class FilesController extends AbstractController
                 $relativePath
             );
         } catch (\RuntimeException $e) {
+            $this->logUploadHttpFailure('upload.session.failed', $e, $request, $ownerId, [
+                'expected_bytes' => $expectedBytes,
+            ]);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, $this->mapChunkExceptionToFlashKey($e), 400);
         }
 
@@ -1519,6 +1536,8 @@ class FilesController extends AbstractController
     public function uploadChunk(Request $request, TranslatorInterface $translator): JsonResponse|Response
     {
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            $this->logUploadHttpReject('upload.chunk.csrf', 'files.flash.csrf_invalid', 403, $request);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.csrf_invalid', 403);
         }
 
@@ -1526,6 +1545,8 @@ class FilesController extends AbstractController
         $user = $this->getUser();
         $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
         if (isset($resolved['error'])) {
+            $this->logUploadHttpReject('upload.chunk.owner', $resolved['error'], 400, $request);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, $resolved['error'], 400);
         }
         $ownerId = $resolved['ownerId'];
@@ -1534,23 +1555,52 @@ class FilesController extends AbstractController
         /** @var UploadedFile|null $chunk */
         $chunk = $request->files->get('chunk');
         if ($uploadId === '' || $chunkIndex < 0 || !$chunk instanceof UploadedFile) {
+            $this->logUploadHttpReject('upload.chunk.invalid', 'files.flash.upload_invalid', 400, $request, $ownerId, [
+                'upload_id' => $uploadId,
+                'chunk_index' => $chunkIndex,
+            ]);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_invalid', 400);
         }
         if (!$chunk->isValid()) {
             if (\in_array((int) $chunk->getError(), [\UPLOAD_ERR_INI_SIZE, \UPLOAD_ERR_FORM_SIZE], true)) {
+                $this->logUploadHttpReject('upload.chunk.too_large', 'files.flash.upload_chunk_too_large', 413, $request, $ownerId, [
+                    'upload_id' => $uploadId,
+                    'chunk_index' => $chunkIndex,
+                    'php_upload_error' => $chunk->getError(),
+                ]);
+
                 return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_chunk_too_large', 413);
             }
+
+            $this->logUploadHttpReject('upload.chunk.invalid', 'files.flash.upload_invalid', 400, $request, $ownerId, [
+                'upload_id' => $uploadId,
+                'chunk_index' => $chunkIndex,
+                'php_upload_error' => $chunk->getError(),
+            ]);
 
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_invalid', 400);
         }
         $maxChunkBytes = $this->resolveMaxChunkRequestBytes();
         if ((int) $chunk->getSize() > $maxChunkBytes) {
+            $this->logUploadHttpReject('upload.chunk.too_large', 'files.flash.upload_chunk_too_large', 413, $request, $ownerId, [
+                'upload_id' => $uploadId,
+                'chunk_index' => $chunkIndex,
+                'chunk_bytes' => (int) $chunk->getSize(),
+                'max_chunk_bytes' => $maxChunkBytes,
+            ]);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_chunk_too_large', 413);
         }
 
         try {
             $progress = $this->chunkedUploadService->appendChunk($uploadId, $ownerId, $chunkIndex, $chunk);
         } catch (\RuntimeException $e) {
+            $this->logUploadHttpFailure('upload.chunk.failed', $e, $request, $ownerId, [
+                'upload_id' => $uploadId,
+                'chunk_index' => $chunkIndex,
+            ]);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, $this->mapChunkExceptionToFlashKey($e), 400);
         }
 
@@ -1570,6 +1620,8 @@ class FilesController extends AbstractController
     public function uploadFinalize(Request $request, TranslatorInterface $translator): JsonResponse|Response
     {
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            $this->logUploadHttpReject('upload.finalize.csrf', 'files.flash.csrf_invalid', 403, $request);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.csrf_invalid', 403);
         }
 
@@ -1577,11 +1629,15 @@ class FilesController extends AbstractController
         $user = $this->getUser();
         $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
         if (isset($resolved['error'])) {
+            $this->logUploadHttpReject('upload.finalize.owner', $resolved['error'], 400, $request);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, $resolved['error'], 400);
         }
         $ownerId = $resolved['ownerId'];
         $uploadId = trim((string) $request->request->get('upload_id', ''));
         if ($uploadId === '') {
+            $this->logUploadHttpReject('upload.finalize.invalid', 'files.flash.upload_invalid', 400, $request, $ownerId);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_invalid', 400);
         }
 
@@ -1592,6 +1648,10 @@ class FilesController extends AbstractController
             // First tick so tiny files finish without an extra round-trip.
             $task = $this->uploadEncryptJobService->tick($ownerId, (string) $task['taskId']);
         } catch (\RuntimeException $e) {
+            $this->logUploadHttpFailure('upload.finalize.failed', $e, $request, $ownerId, [
+                'upload_id' => $uploadId,
+            ]);
+
             return $this->chunkUploadJsonOrRedirect($request, $translator, $this->mapChunkExceptionToFlashKey($e), 400);
         }
 
@@ -1613,17 +1673,25 @@ class FilesController extends AbstractController
     public function uploadEncryptTick(Request $request, string $taskId, TranslatorInterface $translator): JsonResponse
     {
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            $this->logUploadHttpReject('upload.encrypt.tick.csrf', 'files.flash.csrf_invalid', 403, $request, extra: ['task_id' => $taskId]);
+
             return new JsonResponse(['status' => 'error', 'message' => $translator->trans('files.flash.csrf_invalid')], 403);
         }
         /** @var User $user */
         $user = $this->getUser();
         $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
         if (isset($resolved['error'])) {
+            $this->logUploadHttpReject('upload.encrypt.tick.owner', $resolved['error'], 400, $request, extra: ['task_id' => $taskId]);
+
             return new JsonResponse(['status' => 'error', 'message_key' => $resolved['error']], 400);
         }
         try {
             $task = $this->uploadEncryptJobService->tick((int) $resolved['ownerId'], $taskId);
         } catch (\RuntimeException $e) {
+            $this->logUploadHttpFailure('upload.encrypt.tick.failed', $e, $request, (int) $resolved['ownerId'], [
+                'task_id' => $taskId,
+            ]);
+
             return $this->jsonApiError($translator, $this->mapChunkExceptionToFlashKey($e), 400);
         }
 
@@ -1644,17 +1712,25 @@ class FilesController extends AbstractController
     public function uploadEncryptCancel(Request $request, string $taskId, TranslatorInterface $translator): JsonResponse
     {
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            $this->logUploadHttpReject('upload.encrypt.cancel.csrf', 'files.flash.csrf_invalid', 403, $request, extra: ['task_id' => $taskId]);
+
             return new JsonResponse(['status' => 'error', 'message' => $translator->trans('files.flash.csrf_invalid')], 403);
         }
         /** @var User $user */
         $user = $this->getUser();
         $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
         if (isset($resolved['error'])) {
+            $this->logUploadHttpReject('upload.encrypt.cancel.owner', $resolved['error'], 400, $request, extra: ['task_id' => $taskId]);
+
             return new JsonResponse(['status' => 'error', 'message_key' => $resolved['error']], 400);
         }
         try {
             $task = $this->uploadEncryptJobService->cancel((int) $resolved['ownerId'], $taskId);
         } catch (\RuntimeException $e) {
+            $this->logUploadHttpFailure('upload.encrypt.cancel.failed', $e, $request, (int) $resolved['ownerId'], [
+                'task_id' => $taskId,
+            ]);
+
             return $this->jsonApiError($translator, $this->mapChunkExceptionToFlashKey($e), 400);
         }
 
@@ -1996,6 +2072,85 @@ class FilesController extends AbstractController
             UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED => 413,
             default => 500,
         };
+    }
+
+    /**
+     * @brief Log an HTTP-layer upload rejection (CSRF, validation) to the environment log.
+     * @param string $event Diagnostic event name.
+     * @param string $errorKey Flash/i18n key returned to the client.
+     * @param int $httpStatus HTTP status.
+     * @param Request $request Current request.
+     * @param int|null $ownerId Resolved owner when known.
+     * @param array<string, mixed> $extra Extra scalar context.
+     * @return void
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function logUploadHttpReject(
+        string $event,
+        string $errorKey,
+        int $httpStatus,
+        Request $request,
+        ?int $ownerId = null,
+        array $extra = [],
+    ): void {
+        $this->uploadDiagnosticLogger->warn($event, $this->uploadHttpLogContext($request, $ownerId, $extra) + [
+            'error_key' => $errorKey,
+            'http_status' => $httpStatus,
+        ]);
+    }
+
+    /**
+     * @brief Log an HTTP-layer upload service failure with the mapped flash key.
+     * @param string $event Diagnostic event name.
+     * @param \RuntimeException $exception Caught service exception.
+     * @param Request $request Current request.
+     * @param int|null $ownerId Resolved owner when known.
+     * @param array<string, mixed> $extra Extra scalar context.
+     * @return void
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function logUploadHttpFailure(
+        string $event,
+        \RuntimeException $exception,
+        Request $request,
+        ?int $ownerId = null,
+        array $extra = [],
+    ): void {
+        $this->uploadDiagnosticLogger->fail($event, $this->uploadHttpLogContext($request, $ownerId, $extra) + [
+            'error_key' => $this->mapChunkExceptionToFlashKey($exception),
+            'error_code' => $exception->getMessage(),
+            'http_status' => 400,
+        ], $exception);
+    }
+
+    /**
+     * @brief Scalar HTTP context for upload diagnostics (ids, route; never file contents).
+     * @param Request $request Current request.
+     * @param int|null $ownerId Owner id.
+     * @param array<string, mixed> $extra Extra scalar context.
+     * @return array<string, mixed>
+     * @date 2026-11-09
+     * @author Stephane H.
+     */
+    private function uploadHttpLogContext(Request $request, ?int $ownerId, array $extra): array
+    {
+        $ctx = $extra;
+        if ($ownerId !== null) {
+            $ctx['owner_user_id'] = $ownerId;
+        }
+        $uploadId = trim((string) $request->request->get('upload_id', ''));
+        if ($uploadId !== '' && !isset($ctx['upload_id'])) {
+            $ctx['upload_id'] = $uploadId;
+        }
+        $taskId = (string) $request->attributes->get('taskId', '');
+        if ($taskId !== '' && !isset($ctx['task_id'])) {
+            $ctx['task_id'] = $taskId;
+        }
+        $ctx['route'] = (string) $request->attributes->get('_route');
+
+        return $ctx;
     }
 
     /**
