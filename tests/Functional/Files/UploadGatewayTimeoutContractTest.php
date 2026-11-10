@@ -29,7 +29,7 @@ final class UploadGatewayTimeoutContractTest extends TestCase
     }
 
     /**
-     * @brief Chunk/tick budgets and retries are wired to survive slow uplinks / proxy timeouts.
+     * @brief Fast default chunks with one-shot fallback restart after gateway timeout (EPIC-UP-504b).
      * @return void
      * @date 2026-11-09
      * @author Stephane H.
@@ -37,7 +37,8 @@ final class UploadGatewayTimeoutContractTest extends TestCase
     public function testUploadBudgetsAndRetriesAvoidGatewayTimeout(): void
     {
         $services = $this->readSource('config/services.yaml');
-        self::assertStringContainsString('app.upload_chunk_bytes: 1048576', $services);
+        self::assertStringContainsString('app.upload_chunk_bytes: 2097152', $services);
+        self::assertStringContainsString('app.upload_chunk_bytes_fallback: 1048576', $services);
         self::assertStringContainsString('app.upload_chunk_bytes_min: 262144', $services);
         self::assertStringContainsString('app.upload_chunk_time_budget_ms: 25000', $services);
 
@@ -52,12 +53,16 @@ final class UploadGatewayTimeoutContractTest extends TestCase
         );
         self::assertStringContainsString('files_upload_chunk_client_event', $controller);
         self::assertStringContainsString('reportClientGatewayTimeout', $controller);
+        self::assertStringContainsString("\$request->request->get('fallback'", $controller);
+        self::assertStringContainsString("\$request->request->get('previous_upload_id'", $controller);
 
         $chunked = $this->readSource('src/Service/File/ChunkedUploadService.php');
         self::assertStringContainsString('resolveAdvertisedChunkBytes', $chunked);
         self::assertStringContainsString('resolveMinChunkBytes', $chunked);
         self::assertStringContainsString('chunk_size_min_bytes', $chunked);
         self::assertStringContainsString('chunk_time_budget_ms', $chunked);
+        self::assertStringContainsString('chunkBytesFallback', $chunked);
+        self::assertStringContainsString("'fallback' => \$fallback", $chunked);
         self::assertStringContainsString('if ($chunkIndex < $expectedIndex)', $chunked);
         self::assertStringContainsString('upload.chunk.gateway_timeout', $chunked);
 
@@ -65,11 +70,13 @@ final class UploadGatewayTimeoutContractTest extends TestCase
         self::assertStringContainsString('CHUNK_MAX_ATTEMPTS', $space);
         self::assertStringContainsString('isUploadTransientStatus', $space);
         self::assertStringContainsString('msgXhrGatewayTimeout', $space);
-        self::assertStringContainsString('shrinkChunkSize', $space);
-        self::assertStringContainsString('adaptChunkSizeFromSpeed', $space);
+        self::assertStringContainsString('__upload_gateway__', $space);
+        self::assertStringContainsString('onFallbackRestart', $space);
+        self::assertStringContainsString("fallback: true", $space);
+        self::assertStringContainsString('previousUploadId', $space);
         self::assertStringContainsString('reportGatewayEvent', $space);
-        self::assertStringContainsString('chunk_size_min_bytes', $space);
-        self::assertStringContainsString('chunk_time_budget_ms', $space);
+        self::assertStringContainsString('shrinkChunkSize', $space);
+        self::assertStringContainsString('useFallback', $space);
 
         $encryptJs = $this->readSource('public/js/files-upload-encrypt.js');
         self::assertStringContainsString('TICK_MAX_ATTEMPTS', $encryptJs);
@@ -82,10 +89,13 @@ final class UploadGatewayTimeoutContractTest extends TestCase
         $index = $this->readSource('templates/files/index.html.twig');
         self::assertStringContainsString('data-files-upload-client-event-url', $index);
         self::assertStringContainsString('data-msg-chunk-retrying', $index);
+        self::assertStringContainsString('data-msg-chunk-fallback-restart', $index);
 
         $fr = $this->readSource('translations/messages.fr.yaml');
         $en = $this->readSource('translations/messages.en.yaml');
         self::assertStringContainsString('chunk_retrying:', $fr);
+        self::assertStringContainsString('chunk_fallback_restart:', $fr);
         self::assertStringContainsString('chunk_retrying:', $en);
+        self::assertStringContainsString('chunk_fallback_restart:', $en);
     }
 }

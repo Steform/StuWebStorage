@@ -327,6 +327,7 @@ files:
     xhr_server_error: 'Serverio klaida (HTTP %status%).'
     xhr_gateway_timeout: 'Baigesi laikas (HTTP 504). Serveris per ilgai neatsake; bandykite dar karta su stabilesniu rysiu.'
     chunk_retrying: 'Aptiktas serverio laiko limito virsijimas; bandoma is naujo su mazesniais gabalais…'
+    chunk_fallback_restart: 'Aptiktas serverio laiko limito virsijimas; pradedama is naujo stabiliu rezimu…'
     selected_byte_size_label: 'Dydis:'
     multi:
       modal_title: 'Įkelti failus'

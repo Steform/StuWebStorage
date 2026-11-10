@@ -3,7 +3,7 @@
 | Champ | Valeur |
 |---|---|
 | Identifiant | EPIC-UP-504 |
-| Statut | **Implémenté** (2026-11-10) |
+| Statut | Implémenté v1 (2026-11-10) — **stratégie remplacée par `EPIC-UP-504b`** (normal 2 Mio + fallback restart) |
 | Auteur | Stephane H. |
 | Date | 2026-11-10 |
 | Projet | StuWebStorage |

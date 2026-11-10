@@ -31,6 +31,7 @@ final class ChunkedUploadService
         private readonly UploadDiagnosticLogger $uploadDiagnosticLogger,
         private readonly string $projectDir,
         private readonly int $chunkBytesDefault,
+        private readonly int $chunkBytesFallback = 1048576,
         private readonly int $chunkBytesMin = 262144,
         private readonly int $chunkTimeBudgetMs = 25000,
     ) {
@@ -43,11 +44,14 @@ final class ChunkedUploadService
      * @param string $displayName Original filename.
      * @param int $folderRetainId Retained folder id from listing (0 root).
      * @param string|null $relativePath Optional client-relative path for folder tree uploads.
+     * @param bool $fallback When true, advertise the smaller fallback chunk size (EPIC-UP-504b).
+     * @param string|null $previousUploadId Optional prior session to abort before creating this one.
      * @return array{
      *     upload_id: string,
      *     chunk_size_bytes: int,
      *     chunk_size_min_bytes: int,
      *     chunk_time_budget_ms: int,
+     *     fallback: bool,
      *     temp_max_bytes: int
      * }
      * @date 2026-05-08
@@ -59,13 +63,24 @@ final class ChunkedUploadService
         string $displayName,
         int $folderRetainId,
         ?string $relativePath = null,
+        bool $fallback = false,
+        ?string $previousUploadId = null,
     ): array {
         $this->purgeExpiredForOwner($ownerUserId);
+        if ($previousUploadId !== null && preg_match('/^[a-f0-9]{32}$/', $previousUploadId)) {
+            $this->abortSession($ownerUserId, $previousUploadId);
+        } else {
+            $previousUploadId = null;
+        }
         $sessionCtx = [
             'owner_user_id' => $ownerUserId,
             'expected_bytes' => $expectedBytes,
             'folder_retain_id' => $folderRetainId,
+            'fallback' => $fallback ? 1 : 0,
         ];
+        if ($previousUploadId !== null && $previousUploadId !== '') {
+            $sessionCtx['previous_upload_id'] = $previousUploadId;
+        }
         try {
             $this->userStorageQuotaService->assertOwnerCanStoreBytes($ownerUserId, $expectedBytes);
         } catch (\RuntimeException $e) {
@@ -122,7 +137,7 @@ final class ChunkedUploadService
             $this->throwLogged('upload.session.meta_write', RuntimePermissionFailure::EXCEPTION, $sessionCtx + ['path' => $metaPath]);
         }
 
-        $chunkSize = $this->resolveAdvertisedChunkBytes();
+        $chunkSize = $this->resolveAdvertisedChunkBytes($fallback);
         $chunkMin = $this->resolveMinChunkBytes($chunkSize);
         $this->uploadDiagnosticLogger->info('upload.session.created', $sessionCtx + [
             'path' => $partPath,
@@ -136,6 +151,7 @@ final class ChunkedUploadService
             'chunk_size_bytes' => $chunkSize,
             'chunk_size_min_bytes' => $chunkMin,
             'chunk_time_budget_ms' => max(5000, $this->chunkTimeBudgetMs),
+            'fallback' => $fallback,
             'temp_max_bytes' => $expectedBytes,
         ];
     }
@@ -476,13 +492,20 @@ final class ChunkedUploadService
 
     /**
      * @brief Chunk size advertised to the client, clamped under PHP upload/post caps.
+     * @param bool $fallback Use the smaller fallback ceiling when true.
      * @return int
      * @date 2026-11-09
      * @author Stephane H.
      */
-    private function resolveAdvertisedChunkBytes(): int
+    private function resolveAdvertisedChunkBytes(bool $fallback = false): int
     {
-        $limits = [max(1024, $this->chunkBytesDefault)];
+        $preferred = $fallback
+            ? max(1024, $this->chunkBytesFallback)
+            : max(1024, $this->chunkBytesDefault);
+        if ($fallback) {
+            $preferred = min($preferred, max(1024, $this->chunkBytesDefault));
+        }
+        $limits = [$preferred];
         $uploadMax = $this->parseIniSizeToBytes((string) ini_get('upload_max_filesize'));
         $postMax = $this->parseIniSizeToBytes((string) ini_get('post_max_size'));
         // Leave headroom for multipart FormData fields around the binary part.

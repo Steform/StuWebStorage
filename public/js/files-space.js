@@ -410,11 +410,15 @@
      * @brief Upload one file through session, chunk, and finalize endpoints.
      * @param {*} entry Queue entry with file and relativePath.
      * @param {*} context Upload runtime context.
-     * @return {Promise<{ok: boolean, message: string}>}
+     * @param {{fallback?: boolean, previousUploadId?: string}|null} options Optional restart options (EPIC-UP-504b).
+     * @return {Promise<{ok: boolean, message: string, cancelled?: boolean}>}
      * @date 2026-06-25
      * @author Stephane H.
      */
-    function uploadSingleFile(entry, context) {
+    function uploadSingleFile(entry, context, options) {
+        var opts = options || {};
+        var useFallback = !!opts.fallback;
+        var previousUploadId = typeof opts.previousUploadId === 'string' ? opts.previousUploadId : '';
         var file = entry.file;
         var sessionUrl = context.sessionUrl;
         var chunkUrl = context.chunkUrl;
@@ -431,6 +435,10 @@
         var fdSession = new FormData();
         fdSession.append('expected_bytes', String(file.size));
         fdSession.append('original_name', file.name);
+        fdSession.append('fallback', useFallback ? '1' : '0');
+        if (previousUploadId !== '') {
+            fdSession.append('previous_upload_id', previousUploadId);
+        }
         if (entry.relativePath) {
             fdSession.append('relative_path', entry.relativePath);
         }
@@ -453,9 +461,10 @@
             })
             .then(function (sess) {
                 var uploadId = sess.upload_id;
-                var chunkMax = sess.chunk_size_bytes ? parseInt(sess.chunk_size_bytes, 10) : 1048576;
+                var defaultMax = useFallback ? 1048576 : 2097152;
+                var chunkMax = sess.chunk_size_bytes ? parseInt(sess.chunk_size_bytes, 10) : defaultMax;
                 if (!chunkMax || chunkMax < 1024) {
-                    chunkMax = 1048576;
+                    chunkMax = defaultMax;
                 }
                 var chunkMin = sess.chunk_size_min_bytes ? parseInt(sess.chunk_size_min_bytes, 10) : 262144;
                 if (!chunkMin || chunkMin < 1024) {
@@ -469,21 +478,25 @@
                 var chunkSz = chunkMax;
                 var offset = 0;
                 var idx = 0;
-                var CHUNK_MAX_ATTEMPTS = 4;
+                var CHUNK_MAX_ATTEMPTS = useFallback ? 4 : 2;
                 var clientEventUrl = context.clientEventUrl || '';
+                var lastGatewayStatus = 0;
 
                 /**
-                 * @brief Shrink chunk size toward the configured floor.
+                 * @brief Shrink chunk size toward the configured floor (fallback mode only).
                  * @return {void}
                  * @date 2026-11-10
                  * @author Stephane H.
                  */
                 function shrinkChunkSize() {
+                    if (!useFallback) {
+                        return;
+                    }
                     chunkSz = Math.max(chunkMin, Math.floor(chunkSz / 2));
                 }
 
                 /**
-                 * @brief Adapt next chunk size from measured uplink speed.
+                 * @brief Adapt next chunk size from measured uplink speed (fallback mode only).
                  * @param {number} bytesSent Bytes of the completed chunk.
                  * @param {number} elapsedMs Wall time for the request.
                  * @return {void}
@@ -491,6 +504,9 @@
                  * @author Stephane H.
                  */
                 function adaptChunkSizeFromSpeed(bytesSent, elapsedMs) {
+                    if (!useFallback) {
+                        return;
+                    }
                     var safeMs = Math.max(elapsedMs, 1);
                     var bytesPerMs = bytesSent / safeMs;
                     var target = Math.floor(bytesPerMs * timeBudgetMs * 0.8);
@@ -530,6 +546,30 @@
                     }).catch(function () {
                         return null;
                     });
+                }
+
+                /**
+                 * @brief Reject with a tagged gateway error so the outer catch can restart in fallback.
+                 * @param {number} status HTTP status.
+                 * @param {{status?: string, message?: string}|null} pj Parsed JSON body.
+                 * @param {string} raw Raw body.
+                 * @return {void}
+                 * @date 2026-11-10
+                 * @author Stephane H.
+                 */
+                function rejectGatewayOrHard(status, pj, raw) {
+                    var err = new Error(diagnoseUploadHttpError({
+                        ok: false,
+                        json: pj,
+                        status: status,
+                        raw: raw || ''
+                    }, msg));
+                    if (isUploadTransientStatus(status) || status === 0) {
+                        err.name = '__upload_gateway__';
+                        err.uploadId = uploadId;
+                        err.httpStatus = status;
+                    }
+                    throw err;
                 }
 
                 /**
@@ -575,6 +615,7 @@
                                 return;
                             }
                             if (isUploadTransientStatus(xhr.status) && attempt + 1 < CHUNK_MAX_ATTEMPTS) {
+                                lastGatewayStatus = xhr.status;
                                 reportGatewayEvent(xhr.status, attempt, elapsedMs, end - offset);
                                 shrinkChunkSize();
                                 if (typeof context.onChunkRetry === 'function') {
@@ -585,17 +626,21 @@
                                 }, 500 * (attempt + 1));
                                 return;
                             }
-                            reject(new Error(diagnoseUploadHttpError({
-                                ok: false,
-                                json: pj,
-                                status: xhr.status,
-                                raw: raw
-                            }, msg)));
+                            try {
+                                if (isUploadTransientStatus(xhr.status)) {
+                                    lastGatewayStatus = xhr.status;
+                                    reportGatewayEvent(xhr.status, attempt, elapsedMs, end - offset);
+                                }
+                                rejectGatewayOrHard(xhr.status, pj, raw);
+                            } catch (hardErr) {
+                                reject(hardErr);
+                            }
                         };
                         xhr.onerror = function () {
                             context.setActiveXhr(null);
                             var elapsedMs = Date.now() - startedAt;
                             if (attempt + 1 < CHUNK_MAX_ATTEMPTS) {
+                                lastGatewayStatus = 0;
                                 reportGatewayEvent(0, attempt, elapsedMs, end - offset);
                                 shrinkChunkSize();
                                 if (typeof context.onChunkRetry === 'function') {
@@ -606,12 +651,13 @@
                                 }, 500 * (attempt + 1));
                                 return;
                             }
-                            reject(new Error(diagnoseUploadHttpError({
-                                ok: false,
-                                json: null,
-                                status: 0,
-                                raw: ''
-                            }, msg)));
+                            try {
+                                lastGatewayStatus = 0;
+                                reportGatewayEvent(0, attempt, elapsedMs, end - offset);
+                                rejectGatewayOrHard(0, null, '');
+                            } catch (hardErr) {
+                                reject(hardErr);
+                            }
                         };
                         var fdC = new FormData();
                         fdC.append('upload_id', uploadId);
@@ -676,6 +722,17 @@
                             }
                         });
                     });
+                }).catch(function (chunkErr) {
+                    if (chunkErr && chunkErr.name === '__upload_gateway__' && !useFallback) {
+                        if (typeof context.onFallbackRestart === 'function') {
+                            context.onFallbackRestart(lastGatewayStatus || chunkErr.httpStatus || 504);
+                        }
+                        return uploadSingleFile(entry, context, {
+                            fallback: true,
+                            previousUploadId: uploadId
+                        });
+                    }
+                    throw chunkErr;
                 });
             })
             .catch(function (err) {
@@ -1688,6 +1745,12 @@
                 },
                 onChunkRetry: function () {
                     var soft = msg('msgChunkRetrying');
+                    if (soft && globalLabel) {
+                        globalLabel.textContent = soft;
+                    }
+                },
+                onFallbackRestart: function () {
+                    var soft = msg('msgChunkFallbackRestart') || msg('msgChunkRetrying');
                     if (soft && globalLabel) {
                         globalLabel.textContent = soft;
                     }

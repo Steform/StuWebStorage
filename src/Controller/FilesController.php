@@ -1497,6 +1497,10 @@ class FilesController extends AbstractController
         $folderRetain = $resolvedFolder['folderId'];
         $relativePathRaw = trim((string) $request->request->get('relative_path', ''));
         $relativePath = $relativePathRaw !== '' ? $relativePathRaw : null;
+        $fallbackRaw = strtolower(trim((string) $request->request->get('fallback', '0')));
+        $fallback = \in_array($fallbackRaw, ['1', 'true', 'yes', 'on'], true);
+        $previousUploadId = trim((string) $request->request->get('previous_upload_id', ''));
+        $previousUploadId = $previousUploadId !== '' ? $previousUploadId : null;
 
         $maxUploadBytes = $this->resolveAppMaxUploadBytes();
         if ($expectedBytes < 0 || $expectedBytes > $maxUploadBytes) {
@@ -1514,11 +1518,14 @@ class FilesController extends AbstractController
                 $expectedBytes,
                 $originalName,
                 $folderRetain,
-                $relativePath
+                $relativePath,
+                $fallback,
+                $previousUploadId
             );
         } catch (\RuntimeException $e) {
             $this->logUploadHttpFailure('upload.session.failed', $e, $request, $ownerId, [
                 'expected_bytes' => $expectedBytes,
+                'fallback' => $fallback ? 1 : 0,
             ]);
 
             return $this->chunkUploadJsonOrRedirect($request, $translator, $this->mapChunkExceptionToFlashKey($e), 400);
