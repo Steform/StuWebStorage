@@ -325,7 +325,8 @@ files:
     progress_bar_aria: 'Failo įkėlimo eiga'
     xhr_network_error: 'Serveris nepasiekiamas. Patikrinkite ryšį ir bandykite dar kartą.'
     xhr_server_error: 'Serverio klaida (HTTP %status%).'
-    xhr_gateway_timeout: 'Baigesi laikas (HTTP 504). Serveris per ilgai neatsake; bandykite dar karta.'
+    xhr_gateway_timeout: 'Baigesi laikas (HTTP 504). Serveris per ilgai neatsake; bandykite dar karta su stabilesniu rysiu.'
+    chunk_retrying: 'Aptiktas serverio laiko limito virsijimas; bandoma is naujo su mazesniais gabalais…'
     selected_byte_size_label: 'Dydis:'
     multi:
       modal_title: 'Įkelti failus'

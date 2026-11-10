@@ -325,7 +325,8 @@ files:
     progress_bar_aria: 'Fremdrift for filopplasting'
     xhr_network_error: 'Kunne ikke na serveren. Sjekk tilkoblingen og proev igjen.'
     xhr_server_error: 'Serverfeil (HTTP %status%).'
-    xhr_gateway_timeout: 'Tidsavbrudd (HTTP 504). Serveren brukte for lang tid; proev igjen.'
+    xhr_gateway_timeout: 'Tidsavbrudd (HTTP 504). Serveren brukte for lang tid; proev igjen med en mer stabil tilkobling.'
+    chunk_retrying: 'Server-tidsavbrudd oppdaget; prover paa nytt med mindre biter…'
     selected_byte_size_label: 'Storrelse:'
     multi:
       modal_title: 'Last opp filer'

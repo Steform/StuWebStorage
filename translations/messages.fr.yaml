@@ -332,7 +332,8 @@ files:
     progress_bar_aria: 'Progression de l''envoi du fichier'
     xhr_network_error: 'Le serveur est injoignable. Verifiez votre connexion et reessayez.'
     xhr_server_error: 'Erreur serveur (HTTP %status%).'
-    xhr_gateway_timeout: 'Delai depasse (HTTP 504). Le serveur a mis trop longtemps a repondre ; reessayez.'
+    xhr_gateway_timeout: 'Delai depasse (HTTP 504). Le serveur a mis trop longtemps a repondre ; reessayez avec une connexion plus stable.'
+    chunk_retrying: 'Delai serveur detecte ; reprise avec des morceaux plus petits…'
     selected_byte_size_label: 'Taille :'
     multi:
       modal_title: 'Envoyer des fichiers'

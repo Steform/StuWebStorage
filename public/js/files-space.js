@@ -453,13 +453,84 @@
             })
             .then(function (sess) {
                 var uploadId = sess.upload_id;
-                var chunkSz = sess.chunk_size_bytes ? parseInt(sess.chunk_size_bytes, 10) : 2097152;
-                if (!chunkSz || chunkSz < 1024) {
-                    chunkSz = 2097152;
+                var chunkMax = sess.chunk_size_bytes ? parseInt(sess.chunk_size_bytes, 10) : 1048576;
+                if (!chunkMax || chunkMax < 1024) {
+                    chunkMax = 1048576;
                 }
+                var chunkMin = sess.chunk_size_min_bytes ? parseInt(sess.chunk_size_min_bytes, 10) : 262144;
+                if (!chunkMin || chunkMin < 1024) {
+                    chunkMin = 262144;
+                }
+                chunkMin = Math.min(chunkMin, chunkMax);
+                var timeBudgetMs = sess.chunk_time_budget_ms ? parseInt(sess.chunk_time_budget_ms, 10) : 25000;
+                if (!timeBudgetMs || timeBudgetMs < 5000) {
+                    timeBudgetMs = 25000;
+                }
+                var chunkSz = chunkMax;
                 var offset = 0;
                 var idx = 0;
                 var CHUNK_MAX_ATTEMPTS = 4;
+                var clientEventUrl = context.clientEventUrl || '';
+
+                /**
+                 * @brief Shrink chunk size toward the configured floor.
+                 * @return {void}
+                 * @date 2026-11-10
+                 * @author Stephane H.
+                 */
+                function shrinkChunkSize() {
+                    chunkSz = Math.max(chunkMin, Math.floor(chunkSz / 2));
+                }
+
+                /**
+                 * @brief Adapt next chunk size from measured uplink speed.
+                 * @param {number} bytesSent Bytes of the completed chunk.
+                 * @param {number} elapsedMs Wall time for the request.
+                 * @return {void}
+                 * @date 2026-11-10
+                 * @author Stephane H.
+                 */
+                function adaptChunkSizeFromSpeed(bytesSent, elapsedMs) {
+                    var safeMs = Math.max(elapsedMs, 1);
+                    var bytesPerMs = bytesSent / safeMs;
+                    var target = Math.floor(bytesPerMs * timeBudgetMs * 0.8);
+                    if (target < chunkSz) {
+                        chunkSz = Math.max(chunkMin, Math.min(chunkMax, target));
+                    }
+                }
+
+                /**
+                 * @brief Best-effort log of a gateway timeout so prod.log sees the 504.
+                 * @param {number} status HTTP status.
+                 * @param {number} attempt Attempt index.
+                 * @param {number} durationMs Duration.
+                 * @param {number} chunkBytes Chunk size attempted.
+                 * @return {void}
+                 * @date 2026-11-10
+                 * @author Stephane H.
+                 */
+                function reportGatewayEvent(status, attempt, durationMs, chunkBytes) {
+                    if (!clientEventUrl) {
+                        return;
+                    }
+                    var fd = new FormData();
+                    fd.append('_csrf_token', csrf);
+                    fd.append('upload_id', uploadId);
+                    fd.append('chunk_index', String(idx));
+                    fd.append('chunk_bytes', String(chunkBytes));
+                    fd.append('duration_ms', String(durationMs));
+                    fd.append('http_status', String(status));
+                    fd.append('attempt', String(attempt));
+                    appendRetainFields(fd, true);
+                    fetch(clientEventUrl, {
+                        method: 'POST',
+                        body: fd,
+                        credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
+                    }).catch(function () {
+                        return null;
+                    });
+                }
 
                 /**
                  * @param {number} attempt Zero-based retry attempt.
@@ -471,6 +542,7 @@
                     }
                     var end = Math.min(offset + chunkSz, file.size);
                     var blob = file.slice(offset, end);
+                    var startedAt = Date.now();
                     return new Promise(function (resolve, reject) {
                         var xhr = new XMLHttpRequest();
                         context.setActiveXhr(xhr);
@@ -486,6 +558,7 @@
                         };
                         xhr.onload = function () {
                             context.setActiveXhr(null);
+                            var elapsedMs = Date.now() - startedAt;
                             var raw = xhr.responseText || '';
                             /** @type {{status?: string, message?: string}|null} */
                             var pj = null;
@@ -495,12 +568,18 @@
                                 pj = null;
                             }
                             if (xhr.status >= 200 && xhr.status < 300 && pj && pj.status === 'ok') {
+                                adaptChunkSizeFromSpeed(end - offset, elapsedMs);
                                 offset = end;
                                 idx += 1;
                                 resolve();
                                 return;
                             }
                             if (isUploadTransientStatus(xhr.status) && attempt + 1 < CHUNK_MAX_ATTEMPTS) {
+                                reportGatewayEvent(xhr.status, attempt, elapsedMs, end - offset);
+                                shrinkChunkSize();
+                                if (typeof context.onChunkRetry === 'function') {
+                                    context.onChunkRetry(xhr.status, chunkSz);
+                                }
                                 window.setTimeout(function () {
                                     postChunkOnce(attempt + 1).then(resolve, reject);
                                 }, 500 * (attempt + 1));
@@ -515,7 +594,13 @@
                         };
                         xhr.onerror = function () {
                             context.setActiveXhr(null);
+                            var elapsedMs = Date.now() - startedAt;
                             if (attempt + 1 < CHUNK_MAX_ATTEMPTS) {
+                                reportGatewayEvent(0, attempt, elapsedMs, end - offset);
+                                shrinkChunkSize();
+                                if (typeof context.onChunkRetry === 'function') {
+                                    context.onChunkRetry(0, chunkSz);
+                                }
                                 window.setTimeout(function () {
                                     postChunkOnce(attempt + 1).then(resolve, reject);
                                 }, 500 * (attempt + 1));
@@ -1501,6 +1586,7 @@
             var sessionUrl = modalEl.dataset.filesUploadSessionUrl || '';
             var chunkUrl = modalEl.dataset.filesUploadChunkUrl || '';
             var finalizeUrl = modalEl.dataset.filesUploadFinalizeUrl || '';
+            var clientEventUrl = modalEl.dataset.filesUploadClientEventUrl || '';
             if (!sessionUrl || !chunkUrl || !finalizeUrl) {
                 showError(msg('msgXhrNetworkError'));
                 return;
@@ -1573,6 +1659,7 @@
                 sessionUrl: sessionUrl,
                 chunkUrl: chunkUrl,
                 finalizeUrl: finalizeUrl,
+                clientEventUrl: clientEventUrl,
                 encryptTickUrlTemplate: (liveRegion && liveRegion.getAttribute('data-files-upload-encrypt-tick-url-template')) || '',
                 encryptCancelUrlTemplate: (liveRegion && liveRegion.getAttribute('data-files-upload-encrypt-cancel-url-template')) || '',
                 csrf: csrf,
@@ -1598,6 +1685,12 @@
                         }
                     }
                     updateQueueItemState(index, state, errorMessage);
+                },
+                onChunkRetry: function () {
+                    var soft = msg('msgChunkRetrying');
+                    if (soft && globalLabel) {
+                        globalLabel.textContent = soft;
+                    }
                 },
                 onEncryptProgress: function (done, total, task) {
                     activeEncryptTaskId = task && task.taskId ? String(task.taskId) : activeEncryptTaskId;

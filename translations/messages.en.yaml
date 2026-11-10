@@ -332,7 +332,8 @@ files:
     progress_bar_aria: 'File upload progress'
     xhr_network_error: 'The server could not be reached. Check your connection and try again.'
     xhr_server_error: 'Server error (HTTP %status%).'
-    xhr_gateway_timeout: 'Timed out (HTTP 504). The server took too long to respond; try again.'
+    xhr_gateway_timeout: 'Timed out (HTTP 504). The server took too long to respond; try again on a more stable connection.'
+    chunk_retrying: 'Server timeout detected; retrying with smaller chunks…'
     selected_byte_size_label: 'Size:'
     multi:
       modal_title: 'Upload files'

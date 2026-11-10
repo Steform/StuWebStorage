@@ -19,8 +19,10 @@ parameters:
   app.public_folder_zip_max_total_bytes: 524288000
   app.public_folder_zip_max_file_count: 2000
   app.public_folder_zip_max_build_seconds: 120
-  # Keep each chunk request well under typical reverse-proxy / PHP gateway timeouts on slow uplinks.
-  app.upload_chunk_bytes: 2097152
+  # Chunk upload: initial/max size, adaptive floor, and soft client time budget (EPIC-UP-504).
+  app.upload_chunk_bytes: 1048576
+  app.upload_chunk_bytes_min: 262144
+  app.upload_chunk_time_budget_ms: 25000
   app.download_direct_max_bytes: '%env(int:APP_DOWNLOAD_DIRECT_MAX_BYTES)%'
   app.download_manager_ui_threshold_bytes: '%env(int:APP_DOWNLOAD_DIRECT_MAX_BYTES)%'
   app.download_token_ttl_seconds: 7200
@@ -176,6 +178,8 @@ services:
   App\Service\File\ChunkedUploadService:
     arguments:
       $chunkBytesDefault: '%app.upload_chunk_bytes%'
+      $chunkBytesMin: '%app.upload_chunk_bytes_min%'
+      $chunkTimeBudgetMs: '%app.upload_chunk_time_budget_ms%'
       $projectDir: '%kernel.project_dir%'
 
   App\Service\File\UploadEncryptJobService:

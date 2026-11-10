@@ -371,6 +371,7 @@
         data-msg-xhr-network-error="{{ 'files.upload.xhr_network_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-xhr-server-error="{{ 'files.upload.xhr_server_error'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-xhr-gateway-timeout="{{ 'files.upload.xhr_gateway_timeout'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
+        data-msg-chunk-retrying="{{ 'files.upload.chunk_retrying'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-xhr-permission-error="{{ 'files.flash.runtime_permission_denied'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-global-label="{{ 'files.upload.multi.global_label'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
         data-msg-multi-global-bytes="{{ 'files.upload.multi.global_bytes'|trans({}, 'messages', currentLocale)|e('html_attr') }}"
@@ -403,6 +404,7 @@
         data-files-upload-session-url="{{ path('files_upload_session') }}"
         data-files-upload-chunk-url="{{ path('files_upload_chunk') }}"
         data-files-upload-finalize-url="{{ path('files_upload_finalize') }}"
+        data-files-upload-client-event-url="{{ path('files_upload_chunk_client_event') }}"
     >
         <div class="modal-dialog modal-lg modal-dialog-scrollable files-upload-modal-dialog">
             <div class="modal-content files-upload-modal-content">

@@ -1612,6 +1612,64 @@ class FilesController extends AbstractController
     }
 
     /**
+     * @brief Record a client-side gateway timeout so prod.log sees proxy cuts during chunks.
+     * @param Request $request HTTP request (upload_id, chunk_index, chunk_bytes, duration_ms, http_status, attempt).
+     * @param TranslatorInterface $translator Translator for JSON errors.
+     * @return JsonResponse|Response
+     * @date 2026-11-10
+     * @author Stephane H.
+     */
+    #[Route('/files/upload/chunk-client-event', name: 'files_upload_chunk_client_event', methods: ['POST'])]
+    #[IsGranted('ROLE_SHARE_SEND')]
+    public function uploadChunkClientEvent(Request $request, TranslatorInterface $translator): JsonResponse|Response
+    {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_UPLOAD, (string) $request->request->get('_csrf_token', '')))) {
+            $this->logUploadHttpReject('upload.chunk.client_event.csrf', 'files.flash.csrf_invalid', 403, $request);
+
+            return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.csrf_invalid', 403);
+        }
+
+        /** @var User $user */
+        $user = $this->getUser();
+        $resolved = $this->resolveUploadOrFolderTargetOwnerId($request, $user);
+        if (isset($resolved['error'])) {
+            $this->logUploadHttpReject('upload.chunk.client_event.owner', $resolved['error'], 400, $request);
+
+            return $this->chunkUploadJsonOrRedirect($request, $translator, $resolved['error'], 400);
+        }
+        $ownerId = $resolved['ownerId'];
+        $uploadId = trim((string) $request->request->get('upload_id', ''));
+        $chunkIndex = (int) $request->request->get('chunk_index', -1);
+        $chunkBytes = (int) $request->request->get('chunk_bytes', 0);
+        $durationMs = (int) $request->request->get('duration_ms', 0);
+        $httpStatus = (int) $request->request->get('http_status', 0);
+        $attempt = (int) $request->request->get('attempt', 0);
+        if ($uploadId === '' || $chunkIndex < 0) {
+            $this->logUploadHttpReject('upload.chunk.client_event.invalid', 'files.flash.upload_invalid', 400, $request, $ownerId, [
+                'upload_id' => $uploadId,
+                'chunk_index' => $chunkIndex,
+            ]);
+
+            return $this->chunkUploadJsonOrRedirect($request, $translator, 'files.flash.upload_invalid', 400);
+        }
+
+        $logged = $this->chunkedUploadService->reportClientGatewayTimeout(
+            $ownerId,
+            $uploadId,
+            $chunkIndex,
+            $chunkBytes,
+            $durationMs,
+            $httpStatus,
+            $attempt
+        );
+
+        return new JsonResponse([
+            'status' => 'ok',
+            'logged' => $logged,
+        ]);
+    }
+
+    /**
      * @brief Start background encryption job after chunk assembly is complete.
      * @param Request $request HTTP request (upload_id).
      * @param TranslatorInterface $translator Translator for JSON errors.

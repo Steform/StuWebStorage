@@ -31,6 +31,8 @@ final class ChunkedUploadService
         private readonly UploadDiagnosticLogger $uploadDiagnosticLogger,
         private readonly string $projectDir,
         private readonly int $chunkBytesDefault,
+        private readonly int $chunkBytesMin = 262144,
+        private readonly int $chunkTimeBudgetMs = 25000,
     ) {
     }
 
@@ -41,7 +43,13 @@ final class ChunkedUploadService
      * @param string $displayName Original filename.
      * @param int $folderRetainId Retained folder id from listing (0 root).
      * @param string|null $relativePath Optional client-relative path for folder tree uploads.
-     * @return array{upload_id: string, chunk_size_bytes: int, temp_max_bytes: int}
+     * @return array{
+     *     upload_id: string,
+     *     chunk_size_bytes: int,
+     *     chunk_size_min_bytes: int,
+     *     chunk_time_budget_ms: int,
+     *     temp_max_bytes: int
+     * }
      * @date 2026-05-08
      * @author Stephane H.
      */
@@ -115,14 +123,19 @@ final class ChunkedUploadService
         }
 
         $chunkSize = $this->resolveAdvertisedChunkBytes();
+        $chunkMin = $this->resolveMinChunkBytes($chunkSize);
         $this->uploadDiagnosticLogger->info('upload.session.created', $sessionCtx + [
             'path' => $partPath,
             'chunk_size_bytes' => $chunkSize,
+            'chunk_size_min_bytes' => $chunkMin,
+            'chunk_time_budget_ms' => max(5000, $this->chunkTimeBudgetMs),
         ]);
 
         return [
             'upload_id' => $uploadId,
             'chunk_size_bytes' => $chunkSize,
+            'chunk_size_min_bytes' => $chunkMin,
+            'chunk_time_budget_ms' => max(5000, $this->chunkTimeBudgetMs),
             'temp_max_bytes' => $expectedBytes,
         ];
     }
@@ -226,6 +239,57 @@ final class ChunkedUploadService
     }
 
     /**
+     * @brief Log a client-observed gateway timeout once per upload/chunk/attempt.
+     * @param int $ownerUserId Owner id.
+     * @param string $uploadId Upload session id.
+     * @param int $chunkIndex Chunk index that timed out.
+     * @param int $chunkBytes Attempted chunk payload size.
+     * @param int $durationMs Client-measured request duration.
+     * @param int $httpStatus HTTP status observed by the client (504/502/503/0).
+     * @param int $attempt Zero-based retry attempt.
+     * @return bool True when a new warning was written.
+     * @date 2026-11-10
+     * @author Stephane H.
+     */
+    public function reportClientGatewayTimeout(
+        int $ownerUserId,
+        string $uploadId,
+        int $chunkIndex,
+        int $chunkBytes,
+        int $durationMs,
+        int $httpStatus,
+        int $attempt,
+    ): bool {
+        if (!preg_match('/^[a-f0-9]{32}$/', $uploadId)) {
+            return false;
+        }
+        if ($this->loadMeta($ownerUserId, $uploadId) === null) {
+            return false;
+        }
+        $safeIndex = max(0, $chunkIndex);
+        $safeAttempt = max(0, $attempt);
+        $markerPath = $this->gatewayTimeoutMarkerPath($ownerUserId, $uploadId, $safeIndex, $safeAttempt);
+        if (is_file($markerPath)) {
+            return false;
+        }
+        if (@file_put_contents($markerPath, '1') === false) {
+            return false;
+        }
+        $this->uploadDiagnosticLogger->warn('upload.chunk.gateway_timeout', [
+            'owner_user_id' => $ownerUserId,
+            'upload_id' => $uploadId,
+            'chunk_index' => $safeIndex,
+            'chunk_bytes' => max(0, $chunkBytes),
+            'duration_ms' => max(0, $durationMs),
+            'http_status' => $httpStatus,
+            'attempt' => $safeAttempt,
+            'path' => $markerPath,
+        ]);
+
+        return true;
+    }
+
+    /**
      * @brief Remove session files if present (after error).
      * @param int $ownerUserId Owner id.
      * @param string $uploadId Upload id.
@@ -235,8 +299,17 @@ final class ChunkedUploadService
      */
     public function abortSession(int $ownerUserId, string $uploadId): void
     {
+        $meta = $this->loadMeta($ownerUserId, $uploadId);
         @unlink($this->partPath($ownerUserId, $uploadId));
         @unlink($this->metaPath($ownerUserId, $uploadId));
+        if (\is_array($meta)) {
+            $globbed = glob($this->sessionBaseDir($ownerUserId).'/'.$uploadId.'.gw.*');
+            if (\is_array($globbed)) {
+                foreach ($globbed as $marker) {
+                    @unlink($marker);
+                }
+            }
+        }
     }
 
     /**
@@ -424,6 +497,20 @@ final class ChunkedUploadService
     }
 
     /**
+     * @brief Adaptive floor for client chunk shrinking (never above the advertised max).
+     * @param int $advertisedMax Advertised max chunk size.
+     * @return int
+     * @date 2026-11-10
+     * @author Stephane H.
+     */
+    private function resolveMinChunkBytes(int $advertisedMax): int
+    {
+        $min = max(1024, $this->chunkBytesMin);
+
+        return min($min, max(1024, $advertisedMax));
+    }
+
+    /**
      * @brief Parse a PHP ini size string (e.g. 8M) into bytes.
      * @param string $value Ini size value.
      * @return int
@@ -480,6 +567,21 @@ final class ChunkedUploadService
     private function metaPath(int $ownerUserId, string $uploadId): string
     {
         return $this->sessionBaseDir($ownerUserId).'/'.$uploadId.self::META_SUFFIX;
+    }
+
+    /**
+     * @brief Marker path used to dedupe client gateway-timeout logs.
+     * @param int $ownerUserId Owner id.
+     * @param string $uploadId Upload id.
+     * @param int $chunkIndex Chunk index.
+     * @param int $attempt Attempt index.
+     * @return string
+     * @date 2026-11-10
+     * @author Stephane H.
+     */
+    private function gatewayTimeoutMarkerPath(int $ownerUserId, string $uploadId, int $chunkIndex, int $attempt): string
+    {
+        return $this->sessionBaseDir($ownerUserId).'/'.$uploadId.'.gw.'.$chunkIndex.'.'.$attempt;
     }
 
     /**

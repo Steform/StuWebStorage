@@ -37,7 +37,9 @@ final class UploadGatewayTimeoutContractTest extends TestCase
     public function testUploadBudgetsAndRetriesAvoidGatewayTimeout(): void
     {
         $services = $this->readSource('config/services.yaml');
-        self::assertStringContainsString('app.upload_chunk_bytes: 2097152', $services);
+        self::assertStringContainsString('app.upload_chunk_bytes: 1048576', $services);
+        self::assertStringContainsString('app.upload_chunk_bytes_min: 262144', $services);
+        self::assertStringContainsString('app.upload_chunk_time_budget_ms: 25000', $services);
 
         $job = $this->readSource('src/Service/File/UploadEncryptJobService.php');
         self::assertStringContainsString('TICK_PLAIN_BUDGET = 8388608', $job);
@@ -48,15 +50,26 @@ final class UploadGatewayTimeoutContractTest extends TestCase
             'uploadEncryptJobService->tick($ownerId, (string) $task[\'taskId\'])',
             $controller
         );
+        self::assertStringContainsString('files_upload_chunk_client_event', $controller);
+        self::assertStringContainsString('reportClientGatewayTimeout', $controller);
 
         $chunked = $this->readSource('src/Service/File/ChunkedUploadService.php');
         self::assertStringContainsString('resolveAdvertisedChunkBytes', $chunked);
+        self::assertStringContainsString('resolveMinChunkBytes', $chunked);
+        self::assertStringContainsString('chunk_size_min_bytes', $chunked);
+        self::assertStringContainsString('chunk_time_budget_ms', $chunked);
         self::assertStringContainsString('if ($chunkIndex < $expectedIndex)', $chunked);
+        self::assertStringContainsString('upload.chunk.gateway_timeout', $chunked);
 
         $space = $this->readSource('public/js/files-space.js');
         self::assertStringContainsString('CHUNK_MAX_ATTEMPTS', $space);
         self::assertStringContainsString('isUploadTransientStatus', $space);
         self::assertStringContainsString('msgXhrGatewayTimeout', $space);
+        self::assertStringContainsString('shrinkChunkSize', $space);
+        self::assertStringContainsString('adaptChunkSizeFromSpeed', $space);
+        self::assertStringContainsString('reportGatewayEvent', $space);
+        self::assertStringContainsString('chunk_size_min_bytes', $space);
+        self::assertStringContainsString('chunk_time_budget_ms', $space);
 
         $encryptJs = $this->readSource('public/js/files-upload-encrypt.js');
         self::assertStringContainsString('TICK_MAX_ATTEMPTS', $encryptJs);
@@ -65,5 +78,14 @@ final class UploadGatewayTimeoutContractTest extends TestCase
         $httpError = $this->readSource('public/js/files-http-error.js');
         self::assertStringContainsString('gatewayTimeout', $httpError);
         self::assertStringContainsString('isTransientGatewayStatus', $httpError);
+
+        $index = $this->readSource('templates/files/index.html.twig');
+        self::assertStringContainsString('data-files-upload-client-event-url', $index);
+        self::assertStringContainsString('data-msg-chunk-retrying', $index);
+
+        $fr = $this->readSource('translations/messages.fr.yaml');
+        $en = $this->readSource('translations/messages.en.yaml');
+        self::assertStringContainsString('chunk_retrying:', $fr);
+        self::assertStringContainsString('chunk_retrying:', $en);
     }
 }

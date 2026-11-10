@@ -325,7 +325,8 @@ files:
     progress_bar_aria: 'Fortschritt des Datei-Uploads'
     xhr_network_error: 'Server nicht erreichbar. Verbindung pruefen und erneut versuchen.'
     xhr_server_error: 'Serverfehler (HTTP %status%).'
-    xhr_gateway_timeout: 'Zeitueberschreitung (HTTP 504). Der Server hat zu lange gebraucht; bitte erneut versuchen.'
+    xhr_gateway_timeout: 'Zeitueberschreitung (HTTP 504). Der Server hat zu lange gebraucht; bitte mit einer stabileren Verbindung erneut versuchen.'
+    chunk_retrying: 'Server-Zeitueberschreitung erkannt; erneuter Versuch mit kleineren Teilen…'
     selected_byte_size_label: 'Groesse:'
     multi:
       modal_title: 'Dateien hochladen'
