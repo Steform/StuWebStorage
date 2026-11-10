@@ -144,8 +144,8 @@ class FolderRepository extends ServiceEntityRepository
         /** @var array<int, Folder> $rows */
         $rows = $this->createQueryBuilder('f')
             ->distinct()
-            ->innerJoin(SharedFile::class, 'sf', 'WITH', 'sf.folder = f')
-            ->innerJoin(ShareGrant::class, 'sg', 'WITH', 'sg.sharedFileId = sf.id')
+            ->innerJoin(SharedFile::class, 'sf', 'ON', 'sf.folder = f')
+            ->innerJoin(ShareGrant::class, 'sg', 'ON', 'sg.sharedFileId = sf.id')
             ->andWhere('sg.granteeUserId = :granteeUserId')
             ->andWhere('sg.expiresAt IS NULL OR sg.expiresAt > CURRENT_TIMESTAMP()')
             ->andWhere('sf.expiresAt IS NULL OR sf.expiresAt > CURRENT_TIMESTAMP()')

@@ -120,7 +120,7 @@ final class StorageHomeStatsService
 
         $grantCount = (int) $this->shareGrantRepository->createQueryBuilder('g')
             ->select('COUNT(g.id)')
-            ->innerJoin(SharedFile::class, 'sf', 'WITH', 'sf.id = g.sharedFileId')
+            ->innerJoin(SharedFile::class, 'sf', 'ON', 'sf.id = g.sharedFileId')
             ->andWhere('sf.ownerUserId = :owner')
             ->setParameter('owner', $ownerUserId)
             ->andWhere('g.expiresAt IS NULL OR g.expiresAt > :now')

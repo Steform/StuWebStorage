@@ -209,7 +209,7 @@ class ShareGrantRepository extends ServiceEntityRepository
         $column = $this->createQueryBuilder('g')
             ->select('g.granteeUserId')
             ->distinct()
-            ->join(SharedFile::class, 'sf', 'WITH', 'sf.id = g.sharedFileId')
+            ->join(SharedFile::class, 'sf', 'ON', 'sf.id = g.sharedFileId')
             ->andWhere('sf.ownerUserId = :owner')
             ->setParameter('owner', $ownerUserId)
             ->orderBy('g.granteeUserId', 'ASC')
@@ -237,7 +237,7 @@ class ShareGrantRepository extends ServiceEntityRepository
 
         $qb = $this->createQueryBuilder('g')
             ->select('COUNT(g.id)')
-            ->innerJoin(SharedFile::class, 'sf', 'WITH', 'sf.id = g.sharedFileId')
+            ->innerJoin(SharedFile::class, 'sf', 'ON', 'sf.id = g.sharedFileId')
             ->andWhere('g.granteeUserId = :gid')
             ->andWhere('sf.ownerUserId = :owner')
             ->andWhere('sf.folder IN (:folderIds)')
@@ -268,7 +268,7 @@ class ShareGrantRepository extends ServiceEntityRepository
         }
 
         $qb = $this->createQueryBuilder('g')
-            ->innerJoin(SharedFile::class, 'sf', 'WITH', 'sf.id = g.sharedFileId')
+            ->innerJoin(SharedFile::class, 'sf', 'ON', 'sf.id = g.sharedFileId')
             ->andWhere('g.granteeUserId = :gid')
             ->andWhere('sf.ownerUserId = :owner')
             ->andWhere('sf.folder IN (:folderIds)')

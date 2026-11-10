@@ -9,13 +9,12 @@ use Doctrine\ORM\Mapping as ORM;
  * Class BugReport.
  */
 #[ORM\Entity(repositoryClass: 'App\Repository\BugReportRepository')]
-#[ORM\Table(name: 'bug_report', indexes: [
-    new ORM\Index(name: 'idx_bug_report_status', columns: ['status']),
-    new ORM\Index(name: 'idx_bug_report_severity', columns: ['severity']),
-    new ORM\Index(name: 'idx_bug_report_route_name', columns: ['route_name']),
-    new ORM\Index(name: 'idx_bug_report_created_at', columns: ['created_at']),
-    new ORM\Index(name: 'idx_bug_report_archived_at', columns: ['archived_at']),
-])]
+#[ORM\Table(name: 'bug_report')]
+#[ORM\Index(name: 'idx_bug_report_status', columns: ['status'])]
+#[ORM\Index(name: 'idx_bug_report_severity', columns: ['severity'])]
+#[ORM\Index(name: 'idx_bug_report_route_name', columns: ['route_name'])]
+#[ORM\Index(name: 'idx_bug_report_created_at', columns: ['created_at'])]
+#[ORM\Index(name: 'idx_bug_report_archived_at', columns: ['archived_at'])]
 class BugReport
 {
     public const STATUS_NEW = 'new';

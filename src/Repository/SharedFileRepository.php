@@ -659,7 +659,7 @@ class SharedFileRepository extends ServiceEntityRepository
                 return;
             case 'pseudo':
                 $qb
-                    ->leftJoin(User::class, 'sortOwnerUser', 'WITH', 'sortOwnerUser.id = sf.ownerUserId')
+                    ->leftJoin(User::class, 'sortOwnerUser', 'ON', 'sortOwnerUser.id = sf.ownerUserId')
                     ->addSelect(
                         "(CASE
                             WHEN sortOwnerUser.pseudonym IS NULL OR sortOwnerUser.pseudonym = ''
