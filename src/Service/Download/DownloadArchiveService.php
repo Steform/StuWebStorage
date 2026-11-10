@@ -12,6 +12,7 @@ use App\Repository\DownloadArchiveRepository;
 use App\Repository\FolderRepository;
 use App\Repository\SharedFileRepository;
 use App\Service\File\FileEncryptionService;
+use App\Service\Infrastructure\DatabaseConnectionGuardian;
 use App\Service\Share\FolderTreeService;
 use App\Service\Share\FolderZipService;
 use App\Service\Share\ZipEntryNameSanitizer;
@@ -48,6 +49,7 @@ final class DownloadArchiveService
         private readonly FolderZipService $folderZipService,
         private readonly FileEncryptionService $fileEncryptionService,
         private readonly EntityManagerInterface $entityManager,
+        private readonly DatabaseConnectionGuardian $databaseConnectionGuardian,
         private readonly int $archiveTtlSeconds = 604800,
         private readonly int $maxTotalBytes = 0,
         private readonly int $maxEntries = 10000,
@@ -275,7 +277,12 @@ final class DownloadArchiveService
                 $entries[$index]['crc32'] = $fingerprints['content_crc32'];
                 $preparedBytes += $size;
                 $changed = true;
-                $this->entityManager->flush();
+                $this->databaseConnectionGuardian->withRetry(function () use ($archive): void {
+                    $this->entityManager->flush();
+                }, [
+                    'service' => 'archive_prepare',
+                    'archive_token' => $archive->getToken(),
+                ]);
             }
         } catch (\RuntimeException $e) {
             $archive->setStatus(DownloadArchive::STATUS_FAILED);

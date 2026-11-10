@@ -27,6 +27,7 @@ use App\Service\Download\FileDownloadResource;
 use App\Service\Download\RangeStreamResponder;
 use App\Service\File\ChunkedUploadService;
 use App\Service\File\EncryptedStreamDeliveryService;
+use App\Service\Infrastructure\DatabaseConnectionGuardian;
 use App\Service\Infrastructure\RuntimePermissionFailure;
 use App\Service\File\OperationsListService;
 use App\Service\File\OperationsPurgeService;
@@ -183,6 +184,7 @@ class FilesController extends AbstractController
         private readonly AdminGodviewSessionStateService $adminGodviewSessionStateService,
         private readonly DownloadDiagnosticLogger $downloadDiagnosticLogger,
         private readonly UploadDiagnosticLogger $uploadDiagnosticLogger,
+        private readonly DatabaseConnectionGuardian $databaseConnectionGuardian,
         private readonly EncryptedStreamDeliveryService $encryptedStreamDeliveryService,
         private readonly DownloadGrantService $downloadGrantService,
         private readonly EncryptedRangeReader $encryptedRangeReader,
@@ -1687,13 +1689,29 @@ class FilesController extends AbstractController
             return new JsonResponse(['status' => 'error', 'message_key' => $resolved['error']], 400);
         }
         try {
-            $task = $this->uploadEncryptJobService->tick((int) $resolved['ownerId'], $taskId);
-        } catch (\RuntimeException $e) {
-            $this->logUploadHttpFailure('upload.encrypt.tick.failed', $e, $request, (int) $resolved['ownerId'], [
+            $this->databaseConnectionGuardian->ensureAlive([
+                'route' => 'files_upload_encrypt_tick',
                 'task_id' => $taskId,
+                'owner_user_id' => (int) $resolved['ownerId'],
             ]);
+            $task = $this->uploadEncryptJobService->tick((int) $resolved['ownerId'], $taskId);
+        } catch (\Throwable $e) {
+            if ($e instanceof \RuntimeException) {
+                $this->logUploadHttpFailure('upload.encrypt.tick.failed', $e, $request, (int) $resolved['ownerId'], [
+                    'task_id' => $taskId,
+                ]);
 
-            return $this->jsonApiError($translator, $this->mapChunkExceptionToFlashKey($e), 400);
+                return $this->jsonApiError($translator, $this->mapChunkExceptionToFlashKey($e), 400);
+            }
+            if (DatabaseConnectionGuardian::matches($e)) {
+                $wrapped = new \RuntimeException(DatabaseConnectionGuardian::EXCEPTION, 0, $e);
+                $this->logUploadHttpFailure('upload.encrypt.tick.db_lost', $wrapped, $request, (int) $resolved['ownerId'], [
+                    'task_id' => $taskId,
+                ]);
+
+                return $this->jsonApiError($translator, DatabaseConnectionGuardian::FLASH_KEY, 503);
+            }
+            throw $e;
         }
 
         return new JsonResponse(['status' => 'ok', 'task' => $task]);
@@ -1948,9 +1966,25 @@ class FilesController extends AbstractController
         $ownerId = $resolved['ownerId'];
 
         try {
+            $this->databaseConnectionGuardian->ensureAlive([
+                'route' => 'files_extract_zip_tick',
+                'task_id' => $jobId,
+                'owner_user_id' => $ownerId,
+            ]);
             $progress = $this->zipExtractService->tickJob($ownerId, $jobId);
-        } catch (\RuntimeException $e) {
-            return $this->extractJsonOrRedirect($request, $translator, ZipExtractService::mapExceptionToFlashKey($e), 400);
+        } catch (\Throwable $e) {
+            if (DatabaseConnectionGuardian::matches($e)) {
+                return $this->extractJsonOrRedirect(
+                    $request,
+                    $translator,
+                    DatabaseConnectionGuardian::FLASH_KEY,
+                    503
+                );
+            }
+            if ($e instanceof \RuntimeException) {
+                return $this->extractJsonOrRedirect($request, $translator, ZipExtractService::mapExceptionToFlashKey($e), 400);
+            }
+            throw $e;
         }
 
         $payload = ['status' => 'ok'] + $progress;
@@ -2069,6 +2103,7 @@ class FilesController extends AbstractController
             'upload_encrypt.not_found' => 'files.flash.upload_invalid',
             'chunk_upload.storage_failed', 'chunk_upload.append_failed', 'chunk_upload.part_init_failed', 'chunk_upload.meta_write_failed' => 'files.flash.storage_failed',
             'chunk_upload.mkdir_failed', 'upload_encrypt.mkdir_failed', RuntimePermissionFailure::EXCEPTION => RuntimePermissionFailure::FLASH_KEY,
+            DatabaseConnectionGuardian::EXCEPTION => DatabaseConnectionGuardian::FLASH_KEY,
             default => 'files.flash.upload_invalid',
         };
     }

@@ -730,6 +730,7 @@ files:
     public_not_allowed: 'Jūsų rolės neleidžia viešo matomumo.'
     storage_failed: 'Nepavyko išsaugoti užšifruoto failo.'
     runtime_permission_denied: 'Serveris negali rasyti i var/ (sifravimas, isskleidimas, failai). Tai ne rysio problema. Admin: sudo ./fix-runtime-permissions.sh --web-user www-data'
+    db_connection_lost: 'Duomenu bazes rysys nutruko ilgos operacijos metu. Bandykite dar karta; sifravimas ar isskleidimas gali testi.'
     uploaded: 'Failas sėkmingai įkeltas.'
     not_found: 'Failas nerastas.'
     deleted: 'Failas pašalintas.'

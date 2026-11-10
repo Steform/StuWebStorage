@@ -795,6 +795,7 @@ files:
     public_not_allowed: 'Vos roles ne permettent pas la visibilite publique.'
     storage_failed: 'Impossible d''enregistrer le fichier chiffre.'
     runtime_permission_denied: 'Le serveur n''a pas le droit d''ecrire sous var/ (chiffrement, extraction, fichiers). Ce n''est pas un probleme de connexion. En administrateur : sudo ./fix-runtime-permissions.sh --web-user www-data'
+    db_connection_lost: 'La connexion a la base de donnees a ete perdue pendant une operation longue. Reessayez ; le chiffrement ou l''extraction peut reprendre.'
     uploaded: 'Fichier envoye avec succes.'
     not_found: 'Fichier introuvable.'
     deleted: 'Fichier supprime.'

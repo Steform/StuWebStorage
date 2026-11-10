@@ -14,6 +14,7 @@ use App\Repository\SharedFileRepository;
 use App\Service\Download\DownloadArchiveService;
 use App\Service\Download\DownloadGrantService;
 use App\Service\File\FilesQueryScopeResolver;
+use App\Service\Infrastructure\DatabaseConnectionGuardian;
 use App\Service\Share\FolderShareAuthorizationService;
 use App\Service\Share\FolderTreeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -49,6 +50,7 @@ final class DownloadArchiveController extends AbstractController
         private readonly FolderShareAuthorizationService $folderShareAuthorizationService,
         private readonly FilesQueryScopeResolver $filesQueryScopeResolver,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
+        private readonly DatabaseConnectionGuardian $databaseConnectionGuardian,
     ) {
     }
 
@@ -190,6 +192,21 @@ final class DownloadArchiveController extends AbstractController
     {
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_ARCHIVE, (string) $request->request->get('_csrf_token', '')))) {
             return new JsonResponse(['status' => 'error', 'message' => 'files.flash.csrf_invalid'], 403);
+        }
+        try {
+            $this->databaseConnectionGuardian->ensureAlive([
+                'route' => 'files_archives_tick',
+                'task_id' => $token,
+            ]);
+        } catch (\Throwable $e) {
+            if (DatabaseConnectionGuardian::matches($e)) {
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message_key' => DatabaseConnectionGuardian::FLASH_KEY,
+                    'message' => DatabaseConnectionGuardian::FLASH_KEY,
+                ], 503);
+            }
+            throw $e;
         }
         $archive = $this->requireOwnedArchive($token);
         $progress = $this->downloadArchiveService->tickPrepare($archive);

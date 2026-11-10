@@ -8,6 +8,7 @@ use App\Entity\Folder;
 use App\Entity\SharedFile;
 use App\Service\Admin\ServerDiskSpaceService;
 use App\Service\Audit\UploadDiagnosticLogger;
+use App\Service\Infrastructure\DatabaseConnectionGuardian;
 use App\Service\Infrastructure\RuntimePermissionFailure;
 use App\Service\Share\FolderTreeService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -49,6 +50,7 @@ final class UploadEncryptJobService
         private readonly ServerDiskSpaceService $serverDiskSpaceService,
         private readonly ChunkedUploadService $chunkedUploadService,
         private readonly UploadDiagnosticLogger $uploadDiagnosticLogger,
+        private readonly DatabaseConnectionGuardian $databaseConnectionGuardian,
         private readonly string $projectDir,
     ) {
     }
@@ -235,65 +237,91 @@ final class UploadEncryptJobService
 
         /** @var array{plain_total: int, content_crc32: int, content_sha256: string} $fingerprints */
         $fingerprints = $tick['fingerprints'];
-        $folderId = (int) ($meta['folder_id'] ?? 0);
-        $folder = $folderId > 0
-            ? $this->folderTreeService->resolveCurrentFolder($ownerUserId, $folderId)
-            : null;
-
-        try {
-            $this->userStorageQuotaService->assertOwnerCanStoreBytes($ownerUserId, (int) $fingerprints['plain_total']);
-        } catch (\RuntimeException $e) {
-            $this->cleanupCipherArtifacts($cipherPath);
-            if ($e->getMessage() === UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED) {
-                return $this->fail($ownerUserId, $meta, 'files.flash.quota_exceeded', $e);
-            }
-            $this->uploadDiagnosticLogger->fail('upload.encrypt.quota', [
-                'owner_user_id' => $ownerUserId,
-                'task_id' => $taskId,
-            ], $e);
-            throw $e;
-        }
-
-        $sharedFile = new SharedFile(
-            $ownerUserId,
-            $cipherPath,
-            'private',
-            bin2hex(random_bytes(16)),
-            (string) ($meta['label'] ?? 'file'),
-            (int) $fingerprints['plain_total'],
-            null,
-            null
-        );
-        $sharedFile->applyContentFingerprints($fingerprints);
-        if ($folder instanceof Folder) {
-            $sharedFile->setFolder($folder);
-        }
-        $this->entityManager->persist($sharedFile);
-        $this->entityManager->flush();
-
-        $uploadId = (string) ($meta['upload_id'] ?? '');
-        if ($uploadId !== '') {
-            $this->chunkedUploadService->abortSession($ownerUserId, $uploadId);
-        }
-
-        $meta['status'] = self::STATUS_DONE;
-        $meta['plain_done'] = (int) $fingerprints['plain_total'];
-        $meta['shared_file_id'] = $sharedFile->getId();
-        $meta['finished_at'] = time();
-        $meta['updated_at'] = time();
-        $this->saveMeta($ownerUserId, $taskId, $meta);
-        @unlink($this->cancelPath($ownerUserId, $taskId));
-
-        $this->uploadDiagnosticLogger->info('upload.encrypt.done', [
+        $dbContext = [
             'owner_user_id' => $ownerUserId,
             'task_id' => $taskId,
-            'upload_id' => $uploadId,
-            'plain_total' => (int) $fingerprints['plain_total'],
-            'shared_file_id' => $sharedFile->getId(),
-            'path' => $cipherPath,
-        ]);
+            'phase' => 'encrypt_finalize',
+        ];
 
-        return $this->toPublicArray($meta);
+        try {
+            return $this->databaseConnectionGuardian->withRetry(function () use (
+                $ownerUserId,
+                $taskId,
+                $meta,
+                $fingerprints,
+                $cipherPath,
+            ): array {
+                $folderId = (int) ($meta['folder_id'] ?? 0);
+                $folder = $folderId > 0
+                    ? $this->folderTreeService->resolveCurrentFolder($ownerUserId, $folderId)
+                    : null;
+
+                try {
+                    $this->userStorageQuotaService->assertOwnerCanStoreBytes(
+                        $ownerUserId,
+                        (int) $fingerprints['plain_total']
+                    );
+                } catch (\RuntimeException $e) {
+                    $this->cleanupCipherArtifacts($cipherPath);
+                    if ($e->getMessage() === UserStorageQuotaService::EXCEPTION_QUOTA_EXCEEDED) {
+                        return $this->fail($ownerUserId, $meta, 'files.flash.quota_exceeded', $e);
+                    }
+                    $this->uploadDiagnosticLogger->fail('upload.encrypt.quota', [
+                        'owner_user_id' => $ownerUserId,
+                        'task_id' => $taskId,
+                    ], $e);
+                    throw $e;
+                }
+
+                $sharedFile = new SharedFile(
+                    $ownerUserId,
+                    $cipherPath,
+                    'private',
+                    bin2hex(random_bytes(16)),
+                    (string) ($meta['label'] ?? 'file'),
+                    (int) $fingerprints['plain_total'],
+                    null,
+                    null
+                );
+                $sharedFile->applyContentFingerprints($fingerprints);
+                if ($folder instanceof Folder) {
+                    $sharedFile->setFolder($folder);
+                }
+                $this->entityManager->persist($sharedFile);
+                $this->entityManager->flush();
+
+                $uploadId = (string) ($meta['upload_id'] ?? '');
+                if ($uploadId !== '') {
+                    $this->chunkedUploadService->abortSession($ownerUserId, $uploadId);
+                }
+
+                $meta['status'] = self::STATUS_DONE;
+                $meta['plain_done'] = (int) $fingerprints['plain_total'];
+                $meta['shared_file_id'] = $sharedFile->getId();
+                $meta['finished_at'] = time();
+                $meta['updated_at'] = time();
+                $this->saveMeta($ownerUserId, $taskId, $meta);
+                @unlink($this->cancelPath($ownerUserId, $taskId));
+
+                $this->uploadDiagnosticLogger->info('upload.encrypt.done', [
+                    'owner_user_id' => $ownerUserId,
+                    'task_id' => $taskId,
+                    'upload_id' => $uploadId,
+                    'plain_total' => (int) $fingerprints['plain_total'],
+                    'shared_file_id' => $sharedFile->getId(),
+                    'path' => $cipherPath,
+                ]);
+
+                return $this->toPublicArray($meta);
+            }, $dbContext);
+        } catch (\RuntimeException $e) {
+            // Keep job running so the client can retry the final tick after a dead MySQL socket.
+            if ($e->getMessage() === DatabaseConnectionGuardian::EXCEPTION) {
+                $this->uploadDiagnosticLogger->fail('upload.encrypt.db_lost', $dbContext, $e);
+                throw $e;
+            }
+            throw $e;
+        }
     }
 
     /**

@@ -730,6 +730,7 @@ files:
     public_not_allowed: 'Rollene dine tillater ikke offentlig synlighet.'
     storage_failed: 'Kunne ikke lagre den krypterte filen.'
     runtime_permission_denied: 'Serveren kan ikke skrive under var/ (kryptering, utpakking, filer). Dette er ikke et tilkoblingsproblem. Som admin: sudo ./fix-runtime-permissions.sh --web-user www-data'
+    db_connection_lost: 'Databaseforbindelsen ble brutt under en lang operasjon. Proev igjen; kryptering eller utpakking kan fortsette.'
     uploaded: 'Filen er lastet opp.'
     not_found: 'Filen finnes ikke.'
     deleted: 'Filen er slettet.'

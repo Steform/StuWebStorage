@@ -730,6 +730,7 @@ files:
     public_not_allowed: 'Ihre Rollen erlauben keine oeffentliche Sichtbarkeit.'
     storage_failed: 'Verschluesselte Datei konnte nicht gespeichert werden.'
     runtime_permission_denied: 'Der Server darf unter var/ nicht schreiben (Verschluesselung, Entpacken, Dateien). Das ist kein Verbindungsproblem. Als Admin: sudo ./fix-runtime-permissions.sh --web-user www-data'
+    db_connection_lost: 'Die Datenbankverbindung ging waehrend einer langen Operation verloren. Bitte erneut versuchen; Verschluesselung oder Extraktion kann fortgesetzt werden.'
     uploaded: 'Datei erfolgreich hochgeladen.'
     not_found: 'Datei nicht gefunden.'
     deleted: 'Datei geloescht.'

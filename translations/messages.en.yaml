@@ -795,6 +795,7 @@ files:
     public_not_allowed: 'Your roles do not allow public visibility.'
     storage_failed: 'Could not store the encrypted file.'
     runtime_permission_denied: 'The server cannot write under var/ (encryption, extract, files). This is not a connection problem. As admin: sudo ./fix-runtime-permissions.sh --web-user www-data'
+    db_connection_lost: 'The database connection was lost during a long operation. Try again; encryption or extraction may resume.'
     uploaded: 'File uploaded successfully.'
     not_found: 'File not found.'
     deleted: 'File deleted.'

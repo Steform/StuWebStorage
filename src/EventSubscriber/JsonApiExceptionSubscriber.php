@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use App\Service\Audit\UploadDiagnosticLogger;
+use App\Service\Infrastructure\DatabaseConnectionGuardian;
 use App\Service\Infrastructure\RuntimePermissionFailure;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -70,24 +71,26 @@ final class JsonApiExceptionSubscriber implements EventSubscriberInterface
         }
 
         $permission = RuntimePermissionFailure::matches($throwable);
+        $dbLost = DatabaseConnectionGuardian::matches($throwable);
         $messageKey = $permission
             ? RuntimePermissionFailure::FLASH_KEY
-            : 'files.upload.xhr_server_error';
+            : ($dbLost ? DatabaseConnectionGuardian::FLASH_KEY : 'files.upload.xhr_server_error');
+        $httpStatus = $dbLost && !$permission ? 503 : 500;
         $locale = (string) $request->getLocale();
-        $message = $this->translator->trans($messageKey, ['%status%' => '500'], 'messages', $locale);
+        $message = $this->translator->trans($messageKey, ['%status%' => (string) $httpStatus], 'messages', $locale);
 
         $event->setResponse(new JsonResponse([
             'status' => 'error',
             'message_key' => $messageKey,
             'message' => $message,
-        ], 500));
+        ], $httpStatus));
 
         if ($this->isUploadRequest($request)) {
             $this->uploadDiagnosticLogger->fail('upload.uncaught', [
                 'route' => (string) $request->attributes->get('_route'),
                 'path' => $request->getPathInfo(),
                 'error_key' => $messageKey,
-                'http_status' => 500,
+                'http_status' => $httpStatus,
                 'upload_id' => trim((string) $request->request->get('upload_id', '')),
                 'task_id' => (string) $request->attributes->get('taskId', ''),
             ], $throwable);

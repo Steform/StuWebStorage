@@ -11,6 +11,7 @@ use App\Repository\FolderRepository;
 use App\Repository\PublicDownloadChallengeRepository;
 use App\Repository\ShareGrantRepository;
 use App\Repository\SharedFileRepository;
+use App\Service\Infrastructure\DatabaseConnectionGuardian;
 use App\Service\Infrastructure\RuntimePermissionFailure;
 use App\Service\Share\FolderTreeService;
 use App\Service\Share\ZipEntryNameSanitizer;
@@ -49,6 +50,7 @@ final class ZipExtractService
         private readonly ShareGrantRepository $shareGrantRepository,
         private readonly PublicDownloadChallengeRepository $publicDownloadChallengeRepository,
         private readonly FolderPathMaterializerService $folderPathMaterializerService,
+        private readonly DatabaseConnectionGuardian $databaseConnectionGuardian,
         private readonly string $projectDir,
     ) {
     }
@@ -413,7 +415,7 @@ final class ZipExtractService
             if ($folder === null) {
                 $folder = new Folder($ownerUserId, $resolved['name'], $targetFolder);
                 $this->entityManager->persist($folder);
-                $this->entityManager->flush();
+                $this->flushDatabase();
                 $fid = (int) ($folder->getId() ?? 0);
                 if ($fid > 0) {
                     /** @var list<int> $createdFolderIds */
@@ -645,6 +647,7 @@ final class ZipExtractService
             'zip_extract.conflict_abort' => 'files.flash.extract_conflict_abort',
             'zip_extract.cancelled' => 'files.flash.extract_cancelled',
             RuntimePermissionFailure::EXCEPTION, 'zip_extract.storage_failed' => RuntimePermissionFailure::FLASH_KEY,
+            DatabaseConnectionGuardian::EXCEPTION => DatabaseConnectionGuardian::FLASH_KEY,
             default => 'files.flash.extract_failed',
         };
     }
@@ -858,7 +861,7 @@ final class ZipExtractService
         $sharedFile->applyContentFingerprints($encrypted);
         $sharedFile->setFolder($parentFolder);
         $this->entityManager->persist($sharedFile);
-        $this->entityManager->flush();
+        $this->flushDatabase();
 
         $fileId = (int) ($sharedFile->getId() ?? 0);
         if ($fileId > 0) {
@@ -967,7 +970,7 @@ final class ZipExtractService
             }
             $this->entityManager->remove($folder);
         }
-        $this->entityManager->flush();
+        $this->flushDatabase();
 
         $meta['created_file_ids'] = [];
         $meta['created_folder_ids'] = [];
@@ -989,7 +992,7 @@ final class ZipExtractService
         $this->shareGrantRepository->deleteBySharedFileId((int) $sharedFile->getId());
         $this->publicDownloadChallengeRepository->deleteByPublicToken($token);
         $this->entityManager->remove($sharedFile);
-        $this->entityManager->flush();
+        $this->flushDatabase();
     }
 
     /**
@@ -1166,5 +1169,18 @@ final class ZipExtractService
     private function tempZipPath(int $ownerUserId, string $jobId): string
     {
         return $this->sessionBaseDir($ownerUserId).'/'.$jobId.self::TEMP_ZIP_SUFFIX;
+    }
+
+    /**
+     * @brief Flush ORM with a single reconnect retry on MySQL gone-away.
+     * @return void
+     * @date 2026-11-10
+     * @author Stephane H.
+     */
+    private function flushDatabase(): void
+    {
+        $this->databaseConnectionGuardian->withRetry(function (): void {
+            $this->entityManager->flush();
+        }, ['service' => 'zip_extract']);
     }
 }
